@@ -1,20 +1,15 @@
 # PhysiCOOL: A generalized framework for model Calibration and Optimization Of modeLing projects
 
-Once you have a compiled PhysiCell file, you can use it as a **black box** to see how the model changes in response to variations in the input values. In this repository, we present some Python-based routines that you can apply to your own research. 
+PhysiCOOL aims to be a generalized framework for **model calibration in PhysiCell**. PhysiCell projects can be used a **black-box** to characterize how the model outputs change in response to variations in the input values. With this in mind, PhysiCOOL introduces a **model-agnostic calibration workflow** that easily integrates with PhysiCell models, and that allows users to **find the best set of parameters for their study**. 
 
+![multisweep](src/calibration.gif)
 
-## Basic workflow
-
-For simple studies, it is possible to run studies by simply modifying the XML configuration file. 
-You will then need to run the compiled PhysiCell file and store your data, which you can use to perform some data analysis.
-
-![flowchart](src/img.png)
-
-For more information on each of these steps, check out the `tutorial.md` file.
+PhysiCOOL provides new functions that allow users to easily specify the parameters to vary, as well as the metrics to be quantified (i.g., number of cells through time, total traveled distance,...). Currently, our algorithm relies on the existence of some target data, provided by the user, which will be used to fit the model. 
 
 ## Creating an optimization black-box model
-
 The `OptModel` class creates a black-box function for your PhysiCell project. `OptModel` **takes in a parameters dictionary**, **runs a PhysiCell simulation** with the updated parameter values and then **computes the metric you select** when initializing the model. It outputs an array with the values for the metric you choose.
+
+![flowchart](src/workflow.png)
 
 ### Defining variables
 
@@ -34,14 +29,21 @@ Additionally, you can tune the **number of levels**, and the **number of points 
 
 ## Examples
 
-### ODE toy model
-`ode-toy-model.ipynb` guides you through a simple multilevel sweep example that considers logistic growth.
+- **ODE toy model:**
+Guides you through a simple example of logistic growth to showcase how the multilevel sweep works.
 
-### Motility study using PhysiCOOL's multilevel parameter sweep
+- **Single-cell motility:**
+Studies the effect of the migration bias and migration speed in the presence of a chemotactic gradient.
 
-Study the effect of the cell migration bias and migration speed in the presence of a chemotactic gradient.
+- **Cell growth:**
+Studies the effect of the cell cycling rates on population growth. It also introduces gradient-based approaches.
 
-### Calling external libraries
+- **Calling external libraries**
+Shows how you can build a pipeline to run parameter studies using external libraries, in particular [psweep](https://pypi.org/project/psweep/). The workflow can be adapted to other tools.
 
-`psweeo_example.ipynb` will show you how you can build a pipeline to run parameter studies using [psweep](https://pypi.org/project/psweep/). The workflow can be adapted to use other parameter testing algorithms.
+- **Data analysis and visualization:**
+TBA
 
+## Team
+
+Tool developed by Inês Gonçalves, David Hormuth, Caleb Phillips, Sandhya Prabhakaran. Runner-up team of the "Best Tool" prize at [PhysiCell 2021 Workshop & Hackaton](http://physicell.org/ws2021/#apply).
