@@ -94,8 +94,4 @@ me_variables = "microenvironment_setup/variable[@name='...']/..."
 cell_variables = "cell_definitions/cell_definition[@name=...]/phenotype/..."
 ```
 
-To simplify this process, use `pcxml`.
-
-## Processing output data
-
-To load variables into Python, you can use PhysiCell's Python loader, which loads all variables, or check `physipy.py`, to load some of the variables.
+PhysiCOOL allows you to simplify this process.
