@@ -1,3 +1,5 @@
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?filepath=examples%2Fode-toy-model.ipynb)
+
 # PhysiCOOL: A generalized framework for model Calibration and Optimization Of modeLing projects
 
 PhysiCOOL aims to be a generalized framework for **model calibration in PhysiCell**. PhysiCell projects can be used a **black-box** to characterize how the model outputs change in response to variations in the input values. With this in mind, PhysiCOOL introduces a **model-agnostic calibration workflow** that easily integrates with PhysiCell models, and that allows users to **find the best set of parameters for their study**. 
@@ -30,7 +32,7 @@ Additionally, you can tune the **number of levels**, and the **number of points 
 ## Examples
 
 - **ODE toy model:**
-Guides you through a simple example of logistic growth to showcase how the multilevel sweep works.
+Guides you through a simple example of logistic growth to showcase how the multilevel sweep works. (test it on Binder!)
 
 - **Single-cell motility:**
 Studies the effect of the migration bias and migration speed in the presence of a chemotactic gradient.
