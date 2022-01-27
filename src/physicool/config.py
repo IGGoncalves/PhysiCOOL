@@ -152,7 +152,7 @@ class CellParameters:
 class ConfigFileParser:
     """A class that acts as an interface between the user and the XML config file"""
 
-    def __init__(self, config_path: Path = Path("../config/PhysiCell_settings.xml")) -> None:
+    def __init__(self, config_path: Path = Path("config/PhysiCell_settings.xml")) -> None:
         self.config_file = config_path
         self.tree = ElementTree.parse(config_path)
 

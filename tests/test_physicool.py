@@ -1,1 +1,2 @@
-from physicool import physicool
+from physicool import config
+
