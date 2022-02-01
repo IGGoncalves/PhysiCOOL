@@ -84,7 +84,10 @@ class InvalidCellDefinition(PhysiCellConfigError):
 
 @dataclass
 class MechanicsParams:
-    """Class that represents the cell mechanics parameters stored in the config file"""
+    """
+    A class that represents the cell mechanics parameters stored in the config file.
+    """
+
     cell_cell_adhesion_strength: float
     cell_cell_repulsion_strength: float
     relative_maximum_adhesion_distance: float
@@ -137,9 +140,177 @@ class MechanicsParams:
 
 @dataclass
 class MotilityParams:
-    speed: str
-    persistence_time: str
-    bias: str
+    speed: float
+    persistence_time: float
+    bias: float
+    motility_enabled: bool
+    use_2d: bool
+    chemotaxis_enabled: bool
+    chemotaxis_substrate: str
+    chemotaxis_direction: float
+
+    _speed: float = field(init=False, repr=False)
+    _persistence_time: float = field(init=False, repr=False)
+    _bias: float = field(init=False, repr=False)
+    _motility_enabled: bool = field(init=False, repr=False)
+    _use_2d: bool = field(init=False, repr=False)
+    _chemotaxis_enabled: bool = field(init=False, repr=False)
+    _chemotaxis_substrate: str = field(init=False, repr=False)
+    _chemotaxis_direction: float = field(init=False, repr=False)
+
+
+    @property
+    def speed(self) -> float:
+        """Returns the cell speed value."""
+        return self._speed
+
+    @speed.setter
+    def speed(self, speed: float) -> None:
+        """Sets the cell speed value, with validation."""
+        if speed < 0.0:
+            raise NegativeValueError(speed, "cell speed")
+
+        self._speed = speed
+
+    @property
+    def persistence_time(self) -> float:
+        """Returns the cell persistence time value."""
+        return self._persistence_time
+
+    @persistence_time.setter
+    def persistence_time(self, persistence_time: float) -> None:
+        """Sets the cell persistence time value, with validation."""
+        if persistence_time < 0.0:
+            raise NegativeValueError(persistence_time, "cell persistence time")
+
+        self._persistence_time = persistence_time
+
+    @property
+    def bias(self) -> float:
+        """Returns the cell motility bias value."""
+        return self._bias
+
+    @bias.setter
+    def bias(self, bias: float) -> None:
+        """Sets the cell motility bias value, with validation."""
+        if bias < 0.0:
+            raise RangeValueError(bias, "cell motility bias")
+
+        self._bias = bias
+
+    @property
+    def motility_enabled(self) -> bool:
+        """Returns the cell motility status."""
+        return self._motility_enabled
+
+    @motility_enabled.setter
+    def motility_enabled(self, motility_enabled: bool) -> None:
+        """Sets the cell motility status."""
+        self._motility_enabled = motility_enabled
+
+    @property
+    def use_2d(self) -> bool:
+        """Returns the cell motility 2D status."""
+        return self._use_2d
+
+    @use_2d.setter
+    def use_2d(self, use_2d: bool) -> None:
+        """Sets the cell motility 2D status."""
+        self._use_2d = use_2d
+
+    @property
+    def chemotaxis_enabled(self) -> bool:
+        """Returns the chemotaxis status."""
+        return self._chemotaxis_enabled
+
+    @chemotaxis_enabled.setter
+    def chemotaxis_enabled(self, chemotaxis_enabled: bool) -> None:
+        """Sets the chemotaxis status."""
+        self._chemotaxis_enabled = chemotaxis_enabled
+
+    @property
+    def chemotaxis_substrate(self) -> str:
+        """Returns the chemotaxis substance."""
+        return self._chemotaxis_substrate
+
+    @chemotaxis_substrate.setter
+    def chemotaxis_substrate(self, chemotaxis_substrate: str) -> None:
+        """Sets the chemotaxis substance."""
+        self._chemotaxis_substrate = chemotaxis_substrate
+
+    @property
+    def chemotaxis_direction(self) -> float:
+        """Returns the chemotaxis direction."""
+        return self._chemotaxis_direction
+
+    @chemotaxis_direction.setter
+    def chemotaxis_direction(self, chemotaxis_direction: float) -> None:
+        """Sets the chemotaxis direction."""
+        self._chemotaxis_direction = chemotaxis_direction
+
+
+@dataclass
+class SecretionParams:
+    """
+    A class that represents the cell secretion parameters stored in the config file.
+    """
+
+    secretion_rate: float
+    secretion_target: float
+    uptake_rate: float
+    net_export_rate: float
+
+    @property
+    def secretion_rate(self) -> float:
+        """Returns the cell motility 2D status."""
+        return self._secretion_rate
+
+    @secretion_rate.setter
+    def secretion_rate(self, secretion_rate: float) -> None:
+        """Sets the cell motility 2D status."""
+        if secretion_rate < 0.0:
+            raise NegativeValueError(secretion_rate, "secretion rate")
+
+        self._secretion_rate = secretion_rate
+
+    @property
+    def secretion_target(self) -> float:
+        """Returns the cell motility 2D status."""
+        return self._secretion_target
+
+    @secretion_target.setter
+    def secretion_target(self, secretion_target: float) -> None:
+        """Sets the cell motility 2D status."""
+        if secretion_target < 0.0:
+            raise NegativeValueError(secretion_target, "secretion target")
+
+        self._secretion_target = secretion_target
+
+    @property
+    def uptake_rate(self) -> float:
+        """Returns the cell motility 2D status."""
+        return self._uptake_rate
+
+    @uptake_rate.setter
+    def uptake_rate(self, uptake_rate: float) -> None:
+        """Sets the cell motility 2D status."""
+        if uptake_rate < 0.0:
+            raise NegativeValueError(uptake_rate, "net export rate")
+
+        self._uptake_rate = uptake_rate
+
+    @property
+    def net_export_rate(self) -> float:
+        """Returns the cell motility 2D status."""
+        return self._net_export_rate
+
+    @net_export_rate.setter
+    def net_export_rate(self, net_export_rate: float) -> None:
+        """Sets the cell motility 2D status."""
+        if net_export_rate < 0.0:
+            raise NegativeValueError(net_export_rate, "net export rate")
+
+        self._net_export_rate = net_export_rate
 
 
 @dataclass
@@ -165,7 +336,7 @@ class ConfigFileParser:
         return [definition.attrib['name'] for definition in cell_definitions]
 
     @property
-    def me_substances_list(self) -> List[str]:
+    def me_substance_list(self) -> List[str]:
         """Returns a list with the names of the substances in the XML file"""
         root = self.tree.getroot()
         substances = root.find('microenvironment/domain/variables').findall('variable')
@@ -181,6 +352,7 @@ class ConfigFileParser:
         adhesion = float(self.tree.find(mech_string + "/cell_cell_adhesion_strength").text)
         repulsion = float(self.tree.find(mech_string + "/cell_cell_repulsion_strength").text)
         adhesion_distance = float(self.tree.find(mech_string + "/relative_maximum_adhesion_distance").text)
+
         mech = MechanicsParams(adhesion, repulsion, adhesion_distance)
 
         # Extract and save the optional mechanics data, if it exists
@@ -200,12 +372,37 @@ class ConfigFileParser:
         motility_string = cell_definition_key + "/phenotype/motility"
 
         # Extract and save the motility data from the config file
-        speed = self.tree.find(motility_string + "/speed").text
-        persistence_time = self.tree.find(motility_string + "/persistence_time").text
-        bias = self.tree.find(motility_string + "/migration_bias").text
-        motility = MotilityParams(speed, persistence_time, bias)
+        speed = float(self.tree.find(motility_string + "/speed").text)
+        persistence_time = float(self.tree.find(motility_string + "/persistence_time").text)
+        bias = float(self.tree.find(motility_string + "/migration_bias").text)
+
+        motility_enabled = self.tree.find(motility_string + "/options/enabled").text == "true"
+        use_2d = self.tree.find(motility_string + "/options/use_2D").text == "true"
+
+        chemotaxis_enabled = self.tree.find(motility_string + "/options/chemotaxis/enabled").text == "true"
+        chemotaxis_substrate = self.tree.find(motility_string + "/options/chemotaxis/substrate").text
+        chemotaxis_direction = float(self.tree.find(motility_string + "/options/chemotaxis/direction").text)
+
+        motility = MotilityParams(speed, persistence_time, bias, motility_enabled, use_2d, 
+                                  chemotaxis_enabled, chemotaxis_substrate, chemotaxis_direction)
 
         return motility
+
+    def read_secretion_params(self, cell_definition_key: str) -> SecretionParams:
+        """Reads the motility parameters from the config file into a custom data structure"""
+        # Build basic string stem to find secretion cell data for cell definition
+        secretion_string = cell_definition_key + "/phenotype/secretion"
+
+        # Extract and save the motility data from the config file
+        secretion_rate = float(self.tree.find(secretion_string + "/secretion_rate").text)
+        secretion_target = float(self.tree.find(secretion_string + "/secretion_target").text)
+        uptake_rate = float(self.tree.find(secretion_string + "/uptake_rate").text)
+        net_export_rate = float(self.tree.find(secretion_string + "/net_export_rate").text)
+
+        secretion = SecretionParams(secretion_rate, secretion_target, uptake_rate, net_export_rate)
+
+        return secretion
+
 
     def read_cell_data(self, cell_definition_name: str = "default") -> CellParameters:
         """Reads all the fields for a given cell definition into a custom data type"""
@@ -224,3 +421,15 @@ class ConfigFileParser:
 
         except InvalidCellDefinition:
             print(InvalidCellDefinition)
+
+    def read_user_params_data(self):
+        params = self.tree.find("user_parameters").getchildren()
+        user_params = {}
+
+        for parameter in params:
+            value = parameter.text
+            name = parameter.tag
+
+            user_params[name] = value
+
+        return user_params
