@@ -158,7 +158,6 @@ class MotilityParams:
     _chemotaxis_substrate: str = field(init=False, repr=False)
     _chemotaxis_direction: float = field(init=False, repr=False)
 
-
     @property
     def speed(self) -> float:
         """Returns the cell speed value."""
@@ -260,6 +259,11 @@ class SecretionParams:
     uptake_rate: float
     net_export_rate: float
 
+    _secretion_rate: float = field(init=False, repr=False)
+    _secretion_target: float = field(init=False, repr=False)
+    _uptake_rate: float = field(init=False, repr=False)
+    _net_export_rate: float = field(init=False, repr=False)
+
     @property
     def secretion_rate(self) -> float:
         """Returns the cell motility 2D status."""
@@ -315,9 +319,10 @@ class SecretionParams:
 
 @dataclass
 class CellParameters:
-    cell_type: str
+    cell_definition_name: str
     mechanics: MechanicsParams
     motility: MotilityParams
+    secretion: SecretionParams
 
 
 class ConfigFileParser:
@@ -343,10 +348,11 @@ class ConfigFileParser:
 
         return [substance.attrib['name'] for substance in substances]
 
-    def read_mechanics_params(self, cell_definition_key: str) -> MechanicsParams:
+    def read_mechanics_params(self, cell_definition_name: str) -> MechanicsParams:
         """Reads the mechanics parameters from the config file into a custom data structure"""
         # Build basic string stem to find mechanics cell data for cell definition
-        mech_string = cell_definition_key + "/phenotype/mechanics"
+        cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
+        mech_string = cell_string + "/phenotype/mechanics"
 
         # Extract and save the basic mechanics data from the config file
         adhesion = float(self.tree.find(mech_string + "/cell_cell_adhesion_strength").text)
@@ -366,10 +372,11 @@ class ConfigFileParser:
 
         return mech
 
-    def read_motility_params(self, cell_definition_key: str) -> MotilityParams:
+    def read_motility_params(self, cell_definition_name: str) -> MotilityParams:
         """Reads the motility parameters from the config file into a custom data structure"""
         # Build basic string stem to find motility cell data for cell definition
-        motility_string = cell_definition_key + "/phenotype/motility"
+        cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
+        motility_string = cell_string + "/phenotype/motility"
 
         # Extract and save the motility data from the config file
         speed = float(self.tree.find(motility_string + "/speed").text)
@@ -383,15 +390,14 @@ class ConfigFileParser:
         chemotaxis_substrate = self.tree.find(motility_string + "/options/chemotaxis/substrate").text
         chemotaxis_direction = float(self.tree.find(motility_string + "/options/chemotaxis/direction").text)
 
-        motility = MotilityParams(speed, persistence_time, bias, motility_enabled, use_2d, 
-                                  chemotaxis_enabled, chemotaxis_substrate, chemotaxis_direction)
+        return MotilityParams(speed, persistence_time, bias, motility_enabled, use_2d,
+                              chemotaxis_enabled, chemotaxis_substrate, chemotaxis_direction)
 
-        return motility
-
-    def read_secretion_params(self, cell_definition_key: str) -> SecretionParams:
+    def read_secretion_params(self, cell_definition_name: str) -> SecretionParams:
         """Reads the motility parameters from the config file into a custom data structure"""
         # Build basic string stem to find secretion cell data for cell definition
-        secretion_string = cell_definition_key + "/phenotype/secretion"
+        cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
+        secretion_string = cell_string + "/phenotype/secretion"
 
         # Extract and save the motility data from the config file
         secretion_rate = float(self.tree.find(secretion_string + "/secretion_rate").text)
@@ -399,10 +405,7 @@ class ConfigFileParser:
         uptake_rate = float(self.tree.find(secretion_string + "/uptake_rate").text)
         net_export_rate = float(self.tree.find(secretion_string + "/net_export_rate").text)
 
-        secretion = SecretionParams(secretion_rate, secretion_target, uptake_rate, net_export_rate)
-
-        return secretion
-
+        return SecretionParams(secretion_rate, secretion_target, uptake_rate, net_export_rate)
 
     def read_cell_data(self, cell_definition_name: str = "default") -> CellParameters:
         """Reads all the fields for a given cell definition into a custom data type"""
@@ -411,13 +414,11 @@ class ConfigFileParser:
                 raise InvalidCellDefinition(cell_definition_name, self.cell_definitions_list)
 
             # Read and save the cell data
-            cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
-            mechanics = self.read_mechanics_params(cell_string)
-            motility = self.read_motility_params(cell_string)
+            mechanics = self.read_mechanics_params(cell_definition_name)
+            motility = self.read_motility_params(cell_definition_name)
+            secretion = self.read_secretion_params(cell_definition_name)
 
-            params = CellParameters(cell_definition_name, mechanics, motility)
-
-            return params
+            return CellParameters(cell_definition_name, mechanics, motility, secretion)
 
         except InvalidCellDefinition:
             print(InvalidCellDefinition)

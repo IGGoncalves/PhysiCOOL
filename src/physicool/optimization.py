@@ -10,11 +10,6 @@ import mpl_toolkits.mplot3d.art3d as art3d
 import config
 
 
-def run_simulation(project):
-    command = project
-    subprocess.run(command, shell=True)
-
-
 def get_timesteps(storage_path):
     """Returns the number of output XML files in the storage directory."""
     number_of_output_files = len(list(storage_path.glob('output*.xml')))
@@ -43,13 +38,12 @@ def read_output(storage_path, variables):
     return cells_df
 
 
-class OptModel:
-    def __init__(self, metric, project='project',
+class ModelPipeline:
+    def __init__(self, project='project',
                  config_path='config/PhysiCell_settings.xml', storage_path='output'):
 
         # TODO: check system platform
         self.project = f'./{project}'
-        self.metric = metric
         self.storage_path = Path(storage_path)
         self.config_path = Path(config_path)
         self.variables = ['ID']
@@ -58,17 +52,15 @@ class OptModel:
         if metric == 'position_y':
             self.variables.append('position_y')
 
-    def model(self, params):
-        update_config_file(params, self.config_path)
-        run_simulation(self.project)
+    def run_model(self, params):
+        file = config.ConfigFileParser(self.config_path)
+        oupdate_config_file(params, self.config_path)
+        subprocess.run(self.project, shell=True)
         cells = read_output(self.storage_path, self.variables)
         if self.metric == 'position_y':
             distances = compute_traveled_distances(cells)
 
         return distances
-
-    def create_model(self):
-        return self.model
 
 
 def compute_error(model_data, reference_data):
