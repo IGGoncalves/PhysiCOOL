@@ -1,5 +1,6 @@
 # This module enables users to programmatically modify their PhysiCell XML config file
 from pathlib import Path
+from re import sub
 from xml.etree import ElementTree
 from dataclasses import dataclass, field
 from typing import List, Tuple, Optional
@@ -393,11 +394,11 @@ class ConfigFileParser:
         return MotilityParams(speed, persistence_time, bias, motility_enabled, use_2d,
                               chemotaxis_enabled, chemotaxis_substrate, chemotaxis_direction)
 
-    def read_secretion_params(self, cell_definition_name: str) -> SecretionParams:
+    def read_secretion_params(self, cell_definition_name: str, substrate_name: str) -> SecretionParams:
         """Reads the motility parameters from the config file into a custom data structure"""
         # Build basic string stem to find secretion cell data for cell definition
         cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
-        secretion_string = cell_string + "/phenotype/secretion"
+        secretion_string = cell_string + f"/phenotype/secretion/substrate[@name='{substrate_name}']"
 
         # Extract and save the motility data from the config file
         secretion_rate = float(self.tree.find(secretion_string + "/secretion_rate").text)
