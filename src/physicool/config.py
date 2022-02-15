@@ -332,6 +332,8 @@ class ConfigFileParser:
     def __init__(self, config_path: Path = Path("config/PhysiCell_settings.xml")) -> None:
         self.config_file = config_path
         self.tree = ElementTree.parse(config_path)
+        self.cell_data = {cell_definition: self.read_cell_data(cell_definition)
+                          for cell_definition in self.cell_definitions_list}
 
     @property
     def cell_definitions_list(self) -> List[str]:
@@ -408,7 +410,7 @@ class ConfigFileParser:
 
         return SecretionParams(secretion_rate, secretion_target, uptake_rate, net_export_rate)
 
-    def read_cell_data(self, cell_definition_name: str = "default") -> CellParameters:
+    def read_cell_data(self, cell_definition_name: str = "default", substrate_name: str = "substrate") -> CellParameters:
         """Reads all the fields for a given cell definition into a custom data type"""
         try:
             if cell_definition_name not in self.cell_definitions_list:
@@ -417,7 +419,7 @@ class ConfigFileParser:
             # Read and save the cell data
             mechanics = self.read_mechanics_params(cell_definition_name)
             motility = self.read_motility_params(cell_definition_name)
-            secretion = self.read_secretion_params(cell_definition_name)
+            secretion = self.read_secretion_params(cell_definition_name, substrate_name)
 
             return CellParameters(cell_definition_name, mechanics, motility, secretion)
 
@@ -435,3 +437,26 @@ class ConfigFileParser:
             user_params[name] = value
 
         return user_params
+
+    def write_motility_params(self, cell_definition_name: str) -> None:
+        cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
+        motility_string = cell_string + "/phenotype/motility"
+        motility_data = self.cell_data[cell_definition_name].motility
+
+        # Extract and save the motility data from the config file
+        self.tree.find(motility_string + "/speed").text = str(motility_data.speed)
+        self.tree.find(motility_string + "/persistence_time").text = str(motility_data.persistence_time)
+        self.tree.find(motility_string + "/migration_bias").text = str(motility_data.bias)
+
+        self.tree.find(motility_string + "/options/enabled").text = "true" if motility_data.motility_enabled else "false"
+        self.tree.find(motility_string + "/options/use_2D").text = "true" if motility_data.use_2d else "false"
+
+        self.tree.find(motility_string + "/options/chemotaxis/enabled").text = "true" if motility_data.chemotaxis_enabled else "false"
+        self.tree.find(motility_string + "/options/chemotaxis/substrate").text = motility_data.chemotaxis_substrate
+        self.tree.find(motility_string + "/options/chemotaxis/direction").text = str(motility_data.chemotaxis_direction)
+
+    def update_params(self) -> None:
+        for cell_definition in self.cell_definitions_list:
+            self.write_motility_params(cell_definition)
+        
+        self.tree.write(self.config_file)
