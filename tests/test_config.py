@@ -18,7 +18,6 @@ class PhysiCellConfigTest(unittest.TestCase):
         self.assertEqual(mechanics_data.cell_cell_repulsion_strength, 10.0)
         self.assertEqual(mechanics_data.relative_maximum_adhesion_distance, 1.25)
 
-
     def test_read_motility_params(self):
         """Asserts that the motility parameters extracted from the config file are correct."""
         motility_data = config.ConfigFileParser().read_motility_params("default")
