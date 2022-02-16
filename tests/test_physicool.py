@@ -1,2 +1,0 @@
-from physicool import config
-

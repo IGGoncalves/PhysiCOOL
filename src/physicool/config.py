@@ -417,8 +417,8 @@ class CellParameters:
     cell_definition_name: str
     volume: Optional[VolumeParams]
     mechanics: Optional[MechanicsParams]
-    motility: Optional[MechanicsParams]
-    secretion: Optional[MechanicsParams]
+    motility: Optional[MotilityParams]
+    secretion: Optional[SecretionParams]
 
 
 class ConfigFileParser:

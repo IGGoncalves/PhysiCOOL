@@ -1,5 +1,8 @@
 from pathlib import Path
+from sys import platform
+from abc import ABC, abstractmethod
 import subprocess
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,7 +10,7 @@ from matplotlib import cm, colors
 from matplotlib.patches import Rectangle
 import mpl_toolkits.mplot3d.art3d as art3d
 
-import config
+from config import CellParameters, ConfigFileParser
 
 
 def get_timesteps(storage_path):
@@ -38,36 +41,42 @@ def read_output(storage_path, variables):
     return cells_df
 
 
-class ModelPipeline:
-    def __init__(self, project='project',
-                 config_path='config/PhysiCell_settings.xml', storage_path='output'):
+class PhysiCellBlackBox:
+    def __init__(self, project_name: str = 'project',
+                 config_path: Path = Path("config"), storage_path: Path = Path("output")) -> None:
+        # Define the paths where the PhysiCell files/folders can be found
+        self.storage_path = storage_path
+        self.config_path = config_path / "PhysiCell_settings.xml"
+        # Define the command to be called to run the model based on the current OS
+        if platform == "win32":
+            self.project_command = f"{project_name}.exe"
+        else:
+            self.project_command = f"./{project_name}"
 
-        # TODO: check system platform
-        self.project = f'./{project}'
-        self.storage_path = Path(storage_path)
-        self.config_path = Path(config_path)
-        self.variables = ['ID']
-
-        # TODO: introduce other metrics
-        if metric == 'position_y':
-            self.variables.append('position_y')
-
-    def run_model(self, params):
-        file = config.ConfigFileParser(self.config_path)
-        oupdate_config_file(params, self.config_path)
-        subprocess.run(self.project, shell=True)
-        cells = read_output(self.storage_path, self.variables)
-        if self.metric == 'position_y':
-            distances = compute_traveled_distances(cells)
-
-        return distances
+    def run_black_box_model(self, params: CellParameters) -> None:
+        """Runs the black box pipeline: updates the config file, runs the model and retrieves the results."""
+        # TODO: extend to update multiple cell definitions
+        xml_parser = ConfigFileParser(self.config_path)
+        xml_parser.update_params(new_parameters=params, cell_definition_name="default")
+        # Run the PhysiCell simulation
+        subprocess.run(self.project_command, shell=True)
 
 
-def compute_error(model_data, reference_data):
-    """Returns the summ of the squared differences between model and reference data."""
-    error = ((model_data - reference_data) ** 2).sum()
+class ErrorFunction(ABC):
+    def __init__(self, model_data: np.ndarray, reference_data: np.ndarray):
+        self.model_data = model_data
+        self.reference_data = reference_data
 
-    return error
+    @abstractmethod
+    def compute_error(self) -> float:
+        """Returns the error value between the reference and simulated datasets."""
+        pass
+
+
+class MeanSquaredError(ErrorFunction):
+    def compute_error(self):
+        """Returns the mean squared error value between the reference and simulated datasets."""
+        return ((self.model_data - self.reference_data) ** 2).sum()
 
 
 class MultiSweep:
