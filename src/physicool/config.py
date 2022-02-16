@@ -84,6 +84,122 @@ class InvalidCellDefinition(PhysiCellConfigError):
 
 
 @dataclass
+class VolumeParams:
+    """
+    A class that represents the cell volume parameters stored in the config file.
+    """
+
+    _total_volume: float = field(init=False, repr=False)
+    _fluid_fraction: float = field(init=False, repr=False)
+    _nuclear: float = field(init=False, repr=False)
+    _fluid_change_rate: float = field(init=False, repr=False)
+    _cytoplasmic_bio_change_rate: float = field(init=False, repr=False)
+    _nuclear_bio_change_rate: float = field(init=False, repr=False)
+    _calcified_fraction: float = field(init=False, repr=False)
+    _calcification_rate: float = field(init=False, repr=False)
+    _relative_rupture_volume: float = field(init=False, repr=False)
+
+    @property
+    def total_volume(self) -> float:
+        return self._total_volume
+
+    @total_volume.setter
+    def total_volume(self, total_volume: float) -> None:
+        if total_volume < 0:
+            raise NegativeValueError(total_volume, "cell total volume")
+
+        self._total_volume = total_volume
+
+    @property
+    def fluid_fraction(self) -> float:
+        return self._fluid_fraction
+
+    @fluid_fraction.setter
+    def fluid_fraction(self, fluid_fraction: float) -> None:
+        if fluid_fraction < 0.0 or fluid_fraction > 1.0:
+            raise RangeValueError(fluid_fraction, "cell fluid fraction")
+
+        self._fluid_fraction = fluid_fraction
+
+    @property
+    def nuclear(self) -> float:
+        return self._nuclear
+
+    @nuclear.setter
+    def nuclear(self, nuclear: float) -> None:
+        if nuclear < 0:
+            raise NegativeValueError(nuclear, "cell nuclear volume")
+
+        self._nuclear = nuclear
+
+    @property
+    def fluid_change_rate(self) -> float:
+        return self._fluid_change_rate
+
+    @fluid_change_rate.setter
+    def fluid_change_rate(self, fluid_change_rate: float) -> None:
+        if fluid_change_rate < 0:
+            raise NegativeValueError(fluid_change_rate, "cell fluid change rate")
+
+        self._fluid_change_rate = fluid_change_rate
+
+    @property
+    def cytoplasmic_bio_change_rate(self) -> float:
+        return self._cytoplasmic_bio_change_rate
+
+    @cytoplasmic_bio_change_rate.setter
+    def cytoplasmic_bio_change_rate(self, cytoplasmic_bio_change_rate: float) -> None:
+        if cytoplasmic_bio_change_rate < 0:
+            raise NegativeValueError(cytoplasmic_bio_change_rate, "cell cytoplasmic biomass change rate")
+
+        self._cytoplasmic_bio_change_rate = cytoplasmic_bio_change_rate
+
+    @property
+    def nuclear_bio_change_rate(self) -> float:
+        return self._nuclear_bio_change_rate
+
+    @nuclear_bio_change_rate.setter
+    def nuclear_bio_change_rate(self, nuclear_bio_change_rate: float) -> None:
+        if nuclear_bio_change_rate < 0:
+            raise NegativeValueError(nuclear_bio_change_rate, "cell nuclear biomass change rate")
+
+        self._nuclear_bio_change_rate = nuclear_bio_change_rate
+
+    @property
+    def calcified_fraction(self) -> float:
+        return self._calcified_fraction
+
+    @calcified_fraction.setter
+    def calcified_fraction(self, calcified_fraction: float) -> None:
+        if calcified_fraction < 0.0 or calcified_fraction > 1.0:
+            raise RangeValueError(calcified_fraction, "cell calcified fraction")
+
+        self._calcified_fraction = calcified_fraction
+
+    @property
+    def calcification_rate(self) -> float:
+        return self._calcification_rate
+
+    @calcification_rate.setter
+    def calcification_rate(self, calcification_rate: float) -> None:
+        if calcification_rate < 0:
+            raise NegativeValueError(calcification_rate, "cell calcification rate")
+
+        self._calcification_rate = calcification_rate
+
+    @property
+    def relative_rupture_volume(self) -> float:
+        return self._relative_rupture_volume
+
+    @relative_rupture_volume.setter
+    def relative_rupture_volume(self, relative_rupture_volume: float) -> None:
+        if relative_rupture_volume < 0:
+            raise NegativeValueError(relative_rupture_volume, "cell total volume")
+
+        self._relative_rupture_volume = relative_rupture_volume
+
+
+@dataclass
 class MechanicsParams:
     """
     A class that represents the cell mechanics parameters stored in the config file.
@@ -177,7 +293,7 @@ class MotilityParams:
     @bias.setter
     def bias(self, bias: float) -> None:
         """Sets the cell motility bias value, with validation."""
-        if bias < 0.0:
+        if bias < 0.0 or bias > 1.0:
             raise RangeValueError(bias, "cell motility bias")
 
         self._bias = bias
@@ -299,6 +415,7 @@ class SecretionParams:
 @dataclass
 class CellParameters:
     cell_definition_name: str
+    volume: Optional[VolumeParams]
     mechanics: Optional[MechanicsParams]
     motility: Optional[MechanicsParams]
     secretion: Optional[MechanicsParams]
@@ -351,6 +468,27 @@ class ConfigFileParser:
 
         return mech
 
+    def read_volume_params(self, cell_definition_name: str) -> VolumeParams:
+        """Reads the motility parameters from the config file into a custom data structure"""
+        # Build basic string stem to find motility cell data for cell definition
+        cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
+        volume_string = cell_string + "/phenotype/volume"
+
+        volume = VolumeParams()
+
+        # Extract and save the volume data from the config file
+        volume.total_volume = float(self.tree.find(volume_string + "/total").text)
+        volume.fluid_fraction = float(self.tree.find(volume_string + "/fluid_fraction").text)
+        volume.nuclear = float(self.tree.find(volume_string + "/nuclear").text)
+        volume.fluid_change_rate = float(self.tree.find(volume_string + "/fluid_change_rate").text)
+        volume.cytoplasmic_bio_change_rate = float(self.tree.find(volume_string + "/cytoplasmic_biomass_change_rate").text)
+        volume.nuclear_bio_change_rate = float(self.tree.find(volume_string + "/nuclear_biomass_change_rate").text)
+        volume.calcified_fraction = float(self.tree.find(volume_string + "/calcified_fraction").text)
+        volume.calcification_rate = float(self.tree.find(volume_string + "/calcification_rate").text)
+        volume.relative_rupture_volume = float(self.tree.find(volume_string + "relative_rupture_volume").text)
+
+        return volume
+
     def read_motility_params(self, cell_definition_name: str) -> MotilityParams:
         """Reads the motility parameters from the config file into a custom data structure"""
         # Build basic string stem to find motility cell data for cell definition
@@ -396,6 +534,7 @@ class ConfigFileParser:
                 raise InvalidCellDefinition(cell_definition_name, self.cell_definitions_list)
 
             # Read and save the cell data
+            volume = self.read_volume_params(cell_definition_name)
             mechanics = self.read_mechanics_params(cell_definition_name)
             motility = self.read_motility_params(cell_definition_name)
             secretion = self.read_secretion_params(cell_definition_name, substrate_name)
