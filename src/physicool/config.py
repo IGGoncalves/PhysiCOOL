@@ -1,6 +1,5 @@
 # This module enables users to programmatically modify their PhysiCell XML config file
 from pathlib import Path
-from re import sub
 from xml.etree import ElementTree
 from dataclasses import dataclass, field
 from typing import List, Tuple, Optional
@@ -448,22 +447,22 @@ class ConfigFileParser:
         """Reads the mechanics parameters from the config file into a custom data structure"""
         # Build basic string stem to find mechanics cell data for cell definition
         cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
-        mech_string = cell_string + "/phenotype/mechanics"
+        stem = cell_string + "/phenotype/mechanics"
 
         mech = MechanicsParams()
 
         # Extract and save the basic mechanics data from the config file
-        mech.cell_cell_adhesion_strength = float(self.tree.find(mech_string + "/cell_cell_adhesion_strength").text)
-        mech.cell_cell_repulsion_strength = float(self.tree.find(mech_string + "/cell_cell_repulsion_strength").text)
-        mech.relative_maximum_adhesion_distance = float(self.tree.find(mech_string + "/relative_maximum_adhesion_distance").text)
+        mech.cell_cell_adhesion_strength = float(self.tree.find(stem + "/cell_cell_adhesion_strength").text)
+        mech.cell_cell_repulsion_strength = float(self.tree.find(stem + "/cell_cell_repulsion_strength").text)
+        mech.relative_maximum_adhesion_distance = float(self.tree.find(stem + "/relative_maximum_adhesion_distance").text)
 
         # TODO: Extract and save the optional mechanics data, if it exists
-        # if self.tree.find(mech_string + "/options/set_relative_equilibrium_distance").attrib["enabled"] == "true":
-        #    equilibrium_distance = self.tree.find(mech_string + "/options/set_relative_equilibrium_distance").text
+        # if self.tree.find(stem + "/options/set_relative_equilibrium_distance").attrib["enabled"] == "true":
+        #    equilibrium_distance = self.tree.find(stem + "/options/set_relative_equilibrium_distance").text
         #    mech.set_relative_equilibrium_distance = float(equilibrium_distance)
 
-        # if self.tree.find(mech_string + "/options/set_absolute_equilibrium_distance").attrib["enabled"] == "true":
-        #    absolute_distance = self.tree.find(mech_string + "/options/set_absolute_equilibrium_distance").text
+        # if self.tree.find(stem + "/options/set_absolute_equilibrium_distance").attrib["enabled"] == "true":
+        #    absolute_distance = self.tree.find(stem + "/options/set_absolute_equilibrium_distance").text
         #    mech.set_absolute_equilibrium_distance = float(absolute_distance)
 
         return mech
@@ -472,20 +471,20 @@ class ConfigFileParser:
         """Reads the motility parameters from the config file into a custom data structure"""
         # Build basic string stem to find motility cell data for cell definition
         cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
-        volume_string = cell_string + "/phenotype/volume"
+        stem = cell_string + "/phenotype/volume"
 
         volume = VolumeParams()
 
         # Extract and save the volume data from the config file
-        volume.total_volume = float(self.tree.find(volume_string + "/total").text)
-        volume.fluid_fraction = float(self.tree.find(volume_string + "/fluid_fraction").text)
-        volume.nuclear = float(self.tree.find(volume_string + "/nuclear").text)
-        volume.fluid_change_rate = float(self.tree.find(volume_string + "/fluid_change_rate").text)
-        volume.cytoplasmic_bio_change_rate = float(self.tree.find(volume_string + "/cytoplasmic_biomass_change_rate").text)
-        volume.nuclear_bio_change_rate = float(self.tree.find(volume_string + "/nuclear_biomass_change_rate").text)
-        volume.calcified_fraction = float(self.tree.find(volume_string + "/calcified_fraction").text)
-        volume.calcification_rate = float(self.tree.find(volume_string + "/calcification_rate").text)
-        volume.relative_rupture_volume = float(self.tree.find(volume_string + "relative_rupture_volume").text)
+        volume.total_volume = float(self.tree.find(stem + "/total").text)
+        volume.fluid_fraction = float(self.tree.find(stem + "/fluid_fraction").text)
+        volume.nuclear = float(self.tree.find(stem + "/nuclear").text)
+        volume.fluid_change_rate = float(self.tree.find(stem + "/fluid_change_rate").text)
+        volume.cytoplasmic_bio_change_rate = float(self.tree.find(stem + "/cytoplasmic_biomass_change_rate").text)
+        volume.nuclear_bio_change_rate = float(self.tree.find(stem + "/nuclear_biomass_change_rate").text)
+        volume.calcified_fraction = float(self.tree.find(stem + "/calcified_fraction").text)
+        volume.calcification_rate = float(self.tree.find(stem + "/calcification_rate").text)
+        volume.relative_rupture_volume = float(self.tree.find(stem + "relative_rupture_volume").text)
 
         return volume
 
@@ -493,21 +492,21 @@ class ConfigFileParser:
         """Reads the motility parameters from the config file into a custom data structure"""
         # Build basic string stem to find motility cell data for cell definition
         cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
-        motility_string = cell_string + "/phenotype/motility"
+        stem = cell_string + "/phenotype/motility"
 
         motility = MotilityParams()
 
         # Extract and save the motility data from the config file
-        motility.speed = float(self.tree.find(motility_string + "/speed").text)
-        motility.persistence_time = float(self.tree.find(motility_string + "/persistence_time").text)
-        motility.bias = float(self.tree.find(motility_string + "/migration_bias").text)
+        motility.speed = float(self.tree.find(stem + "/speed").text)
+        motility.persistence_time = float(self.tree.find(stem + "/persistence_time").text)
+        motility.bias = float(self.tree.find(stem + "/migration_bias").text)
 
-        motility.motility_enabled = self.tree.find(motility_string + "/options/enabled").text == "true"
-        motility.use_2d = self.tree.find(motility_string + "/options/use_2D").text == "true"
+        motility.motility_enabled = self.tree.find(stem + "/options/enabled").text == "true"
+        motility.use_2d = self.tree.find(stem + "/options/use_2D").text == "true"
 
-        motility.chemotaxis_enabled = self.tree.find(motility_string + "/options/chemotaxis/enabled").text == "true"
-        motility.chemotaxis_substrate = self.tree.find(motility_string + "/options/chemotaxis/substrate").text
-        motility.chemotaxis_direction = float(self.tree.find(motility_string + "/options/chemotaxis/direction").text)
+        motility.chemotaxis_enabled = self.tree.find(stem + "/options/chemotaxis/enabled").text == "true"
+        motility.chemotaxis_substrate = self.tree.find(stem + "/options/chemotaxis/substrate").text
+        motility.chemotaxis_direction = float(self.tree.find(stem + "/options/chemotaxis/direction").text)
 
         return motility
 
@@ -515,19 +514,20 @@ class ConfigFileParser:
         """Reads the motility parameters from the config file into a custom data structure"""
         # Build basic string stem to find secretion cell data for cell definition
         cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
-        secretion_string = cell_string + f"/phenotype/secretion/substrate[@name='{substrate_name}']"
+        stem = cell_string + f"/phenotype/secretion/substrate[@name='{substrate_name}']"
 
         secretion = SecretionParams()
 
         # Extract and save the motility data from the config file
-        secretion.secretion_rate = float(self.tree.find(secretion_string + "/secretion_rate").text)
-        secretion.secretion_target = float(self.tree.find(secretion_string + "/secretion_target").text)
-        secretion.uptake_rate = float(self.tree.find(secretion_string + "/uptake_rate").text)
-        secretion.net_export_rate = float(self.tree.find(secretion_string + "/net_export_rate").text)
+        secretion.secretion_rate = float(self.tree.find(stem + "/secretion_rate").text)
+        secretion.secretion_target = float(self.tree.find(stem + "/secretion_target").text)
+        secretion.uptake_rate = float(self.tree.find(stem + "/uptake_rate").text)
+        secretion.net_export_rate = float(self.tree.find(stem + "/net_export_rate").text)
 
         return secretion
 
-    def read_cell_data(self, cell_definition_name: str = "default", substrate_name: str = "substrate") -> CellParameters:
+    def read_cell_data(self, cell_definition_name: str = "default",
+                       substrate_name: str = "substrate") -> CellParameters:
         """Reads all the fields for a given cell definition into a custom data type"""
         try:
             if cell_definition_name not in self.cell_definitions_list:
@@ -558,19 +558,19 @@ class ConfigFileParser:
 
     def write_motility_params(self, cell_definition_name: str, motility: MotilityParams) -> None:
         cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
-        motility_string = cell_string + "/phenotype/motility"
+        stem = cell_string + "/phenotype/motility"
 
         # Extract and save the motility data from the config file
-        self.tree.find(motility_string + "/speed").text = str(motility.speed)
-        self.tree.find(motility_string + "/persistence_time").text = str(motility.persistence_time)
-        self.tree.find(motility_string + "/migration_bias").text = str(motility.bias)
+        self.tree.find(stem + "/speed").text = str(motility.speed)
+        self.tree.find(stem + "/persistence_time").text = str(motility.persistence_time)
+        self.tree.find(stem + "/migration_bias").text = str(motility.bias)
 
-        self.tree.find(motility_string + "/options/enabled").text = "true" if motility.motility_enabled else "false"
-        self.tree.find(motility_string + "/options/use_2D").text = "true" if motility.use_2d else "false"
+        self.tree.find(stem + "/options/enabled").text = "true" if motility.motility_enabled else "false"
+        self.tree.find(stem + "/options/use_2D").text = "true" if motility.use_2d else "false"
 
-        self.tree.find(motility_string + "/options/chemotaxis/enabled").text = "true" if motility.chemotaxis_enabled else "false"
-        self.tree.find(motility_string + "/options/chemotaxis/substrate").text = motility.chemotaxis_substrate
-        self.tree.find(motility_string + "/options/chemotaxis/direction").text = str(motility.chemotaxis_direction)
+        self.tree.find(stem + "/options/chemotaxis/enabled").text = "true" if motility.chemotaxis_enabled else "false"
+        self.tree.find(stem + "/options/chemotaxis/substrate").text = motility.chemotaxis_substrate
+        self.tree.find(stem + "/options/chemotaxis/direction").text = str(motility.chemotaxis_direction)
 
     def update_params(self, cell_definition_name, new_parameters: CellParameters) -> None:
         self.write_motility_params(cell_definition_name, new_parameters.motility)

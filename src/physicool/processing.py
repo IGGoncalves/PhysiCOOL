@@ -1,18 +1,35 @@
+from pathlib import Path
+from typing import List, Dict
+
 import numpy as np
+import pandas as pd
+from scipy import io as sio
 
 
-def get_cell_data(timestep, folder_name, variables='all'):
-    """Returns a dictionary with the cell output data for the selected variables.
+def get_number_of_timepoints(storage_path: Path = Path("output/")) -> int:
+    """Returns the number of output XML files in the storage directory."""
+    return len(list(storage_path.glob('output*.xml')))
 
-    Parameters
-    ----------
-    timestep : int
+
+def get_cell_data(timepoint: int, variables: List[str],
+                  output_path: Path = Path("output/")) -> Dict[str, np.ndarray]:
+    """
+    Returns a dictionary with the cell output data for the selected variables.
+
+    Arguments
+    ---------
+    timepoint : int
         The time point at which the output was recorded
-    folder_name: Path
+    output_path: Path
         The path to the folder where the output (.mat) files are stored
-    variables : list
+    variables : List[str]
         The variables to be extracted from the output files. If variables
         are not defined, all the available outputs will be saved.
+
+    Returns
+    -------
+    cells: Dict[str, np.ndarray]
+        A dictionary with the variable name and values for the passed variables.
     """
 
     # All possible output variables written by PhysiCell
@@ -35,9 +52,9 @@ def get_cell_data(timestep, folder_name, variables='all'):
     ]
 
     # Create path name
-    time_str = str(timestep).zfill(8)
+    time_str = str(timepoint).zfill(8)
     file_name = 'output{}_cells_physicell.mat'.format(time_str)
-    path_name = folder_name / file_name
+    path_name = output_path / file_name
 
     # Read output file
     cell_data = sio.loadmat(path_name)['cells']
@@ -48,6 +65,26 @@ def get_cell_data(timestep, folder_name, variables='all'):
              for var, index in zip(variables, variables_indexes)}
 
     return cells
+
+
+def read_output(storage_path, variables):
+    cells_through_time = []
+    timesteps = get_number_of_timepoints(storage_path)
+    for timestep in range(timesteps):
+        # Read the data saved at each time point
+        cells = get_cell_data(timestep, storage_path, variables)
+        number_of_cells = len(cells['ID'])
+
+        # Store the data for each cell
+        for i in range(number_of_cells):
+            cells_data = [cells[variable][i] for variable in variables] + [timestep]
+            cells_through_time.append(cells_data)
+
+    variables = variables + ['time']
+
+    cells_df = pd.DataFrame(cells_through_time, columns=variables)
+
+    return cells_df
 
 
 def compute_traveled_distances(cells_df):
@@ -63,3 +100,8 @@ def compute_traveled_distances(cells_df):
     distance_traveled_by_cells = np.mean(np.array(distance_traveled_by_cells), axis=1)
 
     return distance_traveled_by_cells
+
+
+def compute_error(self):
+    """Returns the mean squared error value between the reference and simulated datasets."""
+    return ((self.model_data - self.reference_data) ** 2).sum()

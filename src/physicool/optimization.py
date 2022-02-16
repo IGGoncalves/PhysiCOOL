@@ -3,42 +3,9 @@ from sys import platform
 from abc import ABC, abstractmethod
 import subprocess
 
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import cm, colors
-from matplotlib.patches import Rectangle
-import mpl_toolkits.mplot3d.art3d as art3d
 
-from config import CellParameters, ConfigFileParser
-
-
-def get_timesteps(storage_path):
-    """Returns the number of output XML files in the storage directory."""
-    number_of_output_files = len(list(storage_path.glob('output*.xml')))
-    timesteps = range(number_of_output_files)
-
-    return timesteps
-
-
-def read_output(storage_path, variables):
-    cells_through_time = []
-    timesteps = get_timesteps(storage_path)
-    for timestep in timesteps:
-        # Read the data saved at each time point
-        cells = get_cell_data(timestep, storage_path, variables)
-        number_of_cells = len(cells['ID'])
-
-        # Store the data for each cell
-        for i in range(number_of_cells):
-            cells_data = [cells[variable][i] for variable in variables] + [timestep]
-            cells_through_time.append(cells_data)
-
-    variables = variables + ['time']
-
-    cells_df = pd.DataFrame(cells_through_time, columns=variables)
-
-    return cells_df
+from physicool.config import CellParameters, ConfigFileParser
 
 
 class PhysiCellBlackBox:
@@ -60,23 +27,6 @@ class PhysiCellBlackBox:
         xml_parser.update_params(new_parameters=params, cell_definition_name="default")
         # Run the PhysiCell simulation
         subprocess.run(self.project_command, shell=True)
-
-
-class ErrorFunction(ABC):
-    def __init__(self, model_data: np.ndarray, reference_data: np.ndarray):
-        self.model_data = model_data
-        self.reference_data = reference_data
-
-    @abstractmethod
-    def compute_error(self) -> float:
-        """Returns the error value between the reference and simulated datasets."""
-        pass
-
-
-class MeanSquaredError(ErrorFunction):
-    def compute_error(self):
-        """Returns the mean squared error value between the reference and simulated datasets."""
-        return ((self.model_data - self.reference_data) ** 2).sum()
 
 
 class MultiSweep:
