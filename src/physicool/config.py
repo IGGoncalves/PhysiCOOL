@@ -443,6 +443,27 @@ class ConfigFileParser:
 
         return [substance.attrib['name'] for substance in substances]
 
+    def read_volume_params(self, cell_definition_name: str) -> VolumeParams:
+        """Reads the motility parameters from the config file into a custom data structure"""
+        # Build basic string stem to find motility cell data for cell definition
+        cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
+        stem = cell_string + "/phenotype/volume"
+
+        volume = VolumeParams()
+
+        # Extract and save the volume data from the config file
+        volume.total_volume = float(self.tree.find(stem + "/total").text)
+        volume.fluid_fraction = float(self.tree.find(stem + "/fluid_fraction").text)
+        volume.nuclear = float(self.tree.find(stem + "/nuclear").text)
+        volume.fluid_change_rate = float(self.tree.find(stem + "/fluid_change_rate").text)
+        volume.cytoplasmic_bio_change_rate = float(self.tree.find(stem + "/cytoplasmic_biomass_change_rate").text)
+        volume.nuclear_bio_change_rate = float(self.tree.find(stem + "/nuclear_biomass_change_rate").text)
+        volume.calcified_fraction = float(self.tree.find(stem + "/calcified_fraction").text)
+        volume.calcification_rate = float(self.tree.find(stem + "/calcification_rate").text)
+        volume.relative_rupture_volume = float(self.tree.find(stem + "/relative_rupture_volume").text)
+
+        return volume
+
     def read_mechanics_params(self, cell_definition_name: str) -> MechanicsParams:
         """Reads the mechanics parameters from the config file into a custom data structure"""
         # Build basic string stem to find mechanics cell data for cell definition
@@ -466,27 +487,6 @@ class ConfigFileParser:
         #    mech.set_absolute_equilibrium_distance = float(absolute_distance)
 
         return mech
-
-    def read_volume_params(self, cell_definition_name: str) -> VolumeParams:
-        """Reads the motility parameters from the config file into a custom data structure"""
-        # Build basic string stem to find motility cell data for cell definition
-        cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
-        stem = cell_string + "/phenotype/volume"
-
-        volume = VolumeParams()
-
-        # Extract and save the volume data from the config file
-        volume.total_volume = float(self.tree.find(stem + "/total").text)
-        volume.fluid_fraction = float(self.tree.find(stem + "/fluid_fraction").text)
-        volume.nuclear = float(self.tree.find(stem + "/nuclear").text)
-        volume.fluid_change_rate = float(self.tree.find(stem + "/fluid_change_rate").text)
-        volume.cytoplasmic_bio_change_rate = float(self.tree.find(stem + "/cytoplasmic_biomass_change_rate").text)
-        volume.nuclear_bio_change_rate = float(self.tree.find(stem + "/nuclear_biomass_change_rate").text)
-        volume.calcified_fraction = float(self.tree.find(stem + "/calcified_fraction").text)
-        volume.calcification_rate = float(self.tree.find(stem + "/calcification_rate").text)
-        volume.relative_rupture_volume = float(self.tree.find(stem + "relative_rupture_volume").text)
-
-        return volume
 
     def read_motility_params(self, cell_definition_name: str) -> MotilityParams:
         """Reads the motility parameters from the config file into a custom data structure"""
@@ -539,7 +539,7 @@ class ConfigFileParser:
             motility = self.read_motility_params(cell_definition_name)
             secretion = self.read_secretion_params(cell_definition_name, substrate_name)
 
-            return CellParameters(cell_definition_name, mechanics, motility, secretion)
+            return CellParameters(cell_definition_name, volume, mechanics, motility, secretion)
 
         except InvalidCellDefinition:
             print(InvalidCellDefinition)

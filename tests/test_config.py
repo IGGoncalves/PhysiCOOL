@@ -11,6 +11,20 @@ class PhysiCellConfigTest(unittest.TestCase):
         cell_list = xml_data.cell_definitions_list
         self.assertEqual(cell_list, ["default"])
 
+    def test_read_volume_params(self):
+        """Asserts that the volume parameters extracted from the config file are correct."""
+        volume_data = config.ConfigFileParser().read_volume_params("default")
+        self.assertEqual(volume_data.total_volume, 2494.0)
+        self.assertEqual(volume_data.fluid_fraction, 0.75)
+        self.assertEqual(volume_data.nuclear, 540.0)
+        self.assertEqual(volume_data.fluid_change_rate, 0.05)
+        self.assertEqual(volume_data.cytoplasmic_bio_change_rate, 0.0045)
+        self.assertEqual(volume_data.nuclear_bio_change_rate, 0.0055)
+        self.assertEqual(volume_data.calcified_fraction, 0.0)
+        self.assertEqual(volume_data.calcification_rate, 0.0)
+        self.assertEqual(volume_data.relative_rupture_volume, 2.0)
+
+
     def test_read_mechanics_params(self):
         """Asserts that the mechanics parameters extracted from the config file are correct."""
         mechanics_data = config.ConfigFileParser().read_mechanics_params("default")
