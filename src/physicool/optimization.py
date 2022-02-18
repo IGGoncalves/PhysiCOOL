@@ -1,32 +1,41 @@
 from pathlib import Path
 from sys import platform
-from abc import ABC, abstractmethod
+import os
 import subprocess
 
 import numpy as np
+from pandas import DataFrame
 
 from physicool.config import CellParameters, ConfigFileParser
+from physicool import processing
 
 
 class PhysiCellBlackBox:
     def __init__(self, project_name: str = 'project',
-                 config_path: Path = Path("config"), storage_path: Path = Path("output")) -> None:
+                 project_path: Path = Path.cwd()) -> None:
+        # Move to the project directory
+        os.chdir(project_path.__str__())
         # Define the paths where the PhysiCell files/folders can be found
-        self.storage_path = storage_path
-        self.config_path = config_path / "PhysiCell_settings.xml"
+        self.storage_path = Path("output/")
+        self.config_path = Path("config/PhysiCell_settings.xml")
+
         # Define the command to be called to run the model based on the current OS
         if platform == "win32":
             self.project_command = f"{project_name}.exe"
         else:
             self.project_command = f"./{project_name}"
 
-    def run_black_box_model(self, params: CellParameters) -> None:
+    def run(self, params: CellParameters = None) -> DataFrame:
         """Runs the black box pipeline: updates the config file, runs the model and retrieves the results."""
-        # TODO: extend to update multiple cell definitions
-        xml_parser = ConfigFileParser(self.config_path)
-        xml_parser.update_params(new_parameters=params, cell_definition_name="default")
+        if params:
+            # TODO: extend to update multiple cell definitions
+            xml_parser = ConfigFileParser(self.config_path)
+            xml_parser.update_params(new_parameters=params, cell_definition_name="default")
+
         # Run the PhysiCell simulation
         subprocess.run(self.project_command, shell=True)
+
+        return processing.read_output(self.storage_path, ["ID"])
 
 
 class MultiSweep:

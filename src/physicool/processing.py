@@ -72,7 +72,7 @@ def read_output(storage_path, variables):
     timesteps = get_number_of_timepoints(storage_path)
     for timestep in range(timesteps):
         # Read the data saved at each time point
-        cells = get_cell_data(timestep, storage_path, variables)
+        cells = get_cell_data(timestep, variables, storage_path,)
         number_of_cells = len(cells['ID'])
 
         # Store the data for each cell
