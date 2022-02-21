@@ -11,8 +11,7 @@ from physicool import processing
 
 
 class PhysiCellBlackBox:
-    def __init__(self, project_name: str = 'project',
-                 project_path: Path = Path.cwd()) -> None:
+    def __init__(self, project_name: str = 'project', project_path: Path = Path.cwd()) -> None:
         # Move to the project directory
         os.chdir(project_path.__str__())
         # Define the paths where the PhysiCell files/folders can be found
