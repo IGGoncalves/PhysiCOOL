@@ -160,13 +160,13 @@
 				</mechanics>
 				
 				<motility>  
-					<speed units="micron/min">1.0</speed>
+					<speed units="micron/min">20.0</speed>
 					<persistence_time units="min">1.0</persistence_time>
 					<migration_bias units="dimensionless">0.5</migration_bias>
 					
 					<options>
 						<enabled>false</enabled>
-						<use_2D>false</use_2D>
+						<use_2D>true</use_2D>
 						<chemotaxis>
 							<enabled>false</enabled>
 							<substrate>substrate</substrate>

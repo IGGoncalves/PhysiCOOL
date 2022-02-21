@@ -6,8 +6,7 @@
 :hidden:
 
 example.ipynb
+ode-toy-model.ipynb
 changelog.md
-contributing.md
-conduct.md
 autoapi/index
 ```

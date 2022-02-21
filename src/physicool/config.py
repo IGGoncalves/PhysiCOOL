@@ -17,7 +17,7 @@ class NegativeValueError(PhysiCellConfigError):
     """
     An exception to be raised when a non-negative config parameter is given a negative value.
 
-    Attributes
+    Parameters
     ----------
     value: float
         The value that raised the exception
@@ -39,7 +39,7 @@ class RangeValueError(PhysiCellConfigError):
     An exception to be raised when a config parameter is given a value that is not inside the fixed bounds.
     By default, the exception expects a range between 0 and 1, but other ranges can be used.
 
-    Attributes
+    Parameters
     ----------
     value: float
         The value that raised the exception
@@ -54,7 +54,7 @@ class RangeValueError(PhysiCellConfigError):
         self.parameter = parameter
         self.expected_range = expected_range
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation of the exception, to be printed when exception is raised"""
         return f"Invalid value for {self.parameter}: {self.value}.\n" \
                f"Should be between ({self.expected_range[0]}, {self.expected_range[1]})"
@@ -65,7 +65,7 @@ class InvalidCellDefinition(PhysiCellConfigError):
     An exception to be raised when the user tries to extract data from a cell definition that does not match
     any of the definitions found in the XML file.
 
-    Attributes
+    Parameters
     ----------
     value: float
         The value that raised the exception
@@ -73,30 +73,18 @@ class InvalidCellDefinition(PhysiCellConfigError):
         A list of the cell definitions found in the XML file
     """
 
-    def __init__(self, value: str, valid_cell_definitions: List[str]):
+    def __init__(self, value: str, valid_cell_definitions: List[str]) -> None:
         self.value = value
         self.valid_cell_definitions = valid_cell_definitions
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation of the exception, to be printed when exception is raised"""
         return f"Invalid cell definition: {self.value}. Choose a valid option: {self.valid_cell_definitions}"
 
 
 @dataclass
 class VolumeParams:
-    """
-    A class that represents the cell volume parameters stored in the config file.
-    """
-
-    _total_volume: float = field(init=False, repr=False)
-    _fluid_fraction: float = field(init=False, repr=False)
-    _nuclear: float = field(init=False, repr=False)
-    _fluid_change_rate: float = field(init=False, repr=False)
-    _cytoplasmic_bio_change_rate: float = field(init=False, repr=False)
-    _nuclear_bio_change_rate: float = field(init=False, repr=False)
-    _calcified_fraction: float = field(init=False, repr=False)
-    _calcification_rate: float = field(init=False, repr=False)
-    _relative_rupture_volume: float = field(init=False, repr=False)
+    """A class that represents the cell volume parameters stored in the config file."""
 
     @property
     def total_volume(self) -> float:
@@ -200,12 +188,7 @@ class VolumeParams:
 
 @dataclass
 class MechanicsParams:
-    """
-    A class that represents the cell mechanics parameters stored in the config file.
-    """
-    _cell_cell_adhesion_strength: float = field(init=False, repr=False)
-    _cell_cell_repulsion_strength: float = field(init=False, repr=False)
-    _relative_maximum_adhesion_distance: float = field(init=False, repr=False)
+    """A class that represents the cell mechanics parameters stored in the config file."""
 
     @property
     def cell_cell_adhesion_strength(self) -> float:
@@ -249,14 +232,7 @@ class MechanicsParams:
 
 @dataclass
 class MotilityParams:
-    _speed: float = field(init=False, repr=False)
-    _persistence_time: float = field(init=False, repr=False)
-    _bias: float = field(init=False, repr=False)
-    _motility_enabled: bool = field(init=False, repr=False)
-    _use_2d: bool = field(init=False, repr=False)
-    _chemotaxis_enabled: bool = field(init=False, repr=False)
-    _chemotaxis_substrate: str = field(init=False, repr=False)
-    _chemotaxis_direction: float = field(init=False, repr=False)
+    """A class that represents the cell motility parameters stored in the config file."""
 
     @property
     def speed(self) -> float:
@@ -352,20 +328,30 @@ class MotilityParams:
 class SecretionParams:
     """
     A class that represents the cell secretion parameters stored in the config file.
+    
+    Parameters
+    ----------
+    _secretion_rate: float
+        The secretion rate of a given substance.
+    _secretion_target: float
+        The secretion target of a given substance.
+    _uptake_rate: float
+        The uptake rate of a given substance.
+    _net_export_rate: float
+        The net export rate of a given substance.
     """
-    _secretion_rate: float = field(init=False, repr=False)
-    _secretion_target: float = field(init=False, repr=False)
-    _uptake_rate: float = field(init=False, repr=False)
-    _net_export_rate: float = field(init=False, repr=False)
+    # TODO: Add a substance name parameter
 
     @property
     def secretion_rate(self) -> float:
-        """Returns the cell motility 2D status."""
+        """
+        Returns the value of the secretion rate. Setting a new value will raise a
+        NegativeValueError if a negative number is passed.
+        """
         return self._secretion_rate
 
     @secretion_rate.setter
     def secretion_rate(self, secretion_rate: float) -> None:
-        """Sets the cell motility 2D status."""
         if secretion_rate < 0.0:
             raise NegativeValueError(secretion_rate, "secretion rate")
 
@@ -373,12 +359,14 @@ class SecretionParams:
 
     @property
     def secretion_target(self) -> float:
-        """Returns the cell motility 2D status."""
+        """
+        Returns the value of the secretion target Setting a new value will raise a
+        NegativeValueError if a negative number is passed.
+        """
         return self._secretion_target
 
     @secretion_target.setter
     def secretion_target(self, secretion_target: float) -> None:
-        """Sets the cell motility 2D status."""
         if secretion_target < 0.0:
             raise NegativeValueError(secretion_target, "secretion target")
 
@@ -386,12 +374,14 @@ class SecretionParams:
 
     @property
     def uptake_rate(self) -> float:
-        """Returns the cell motility 2D status."""
+        """
+        Returns the value of the uptake rate. Setting a new value will raise a
+        NegativeValueError if a negative number is passed.
+        """
         return self._uptake_rate
 
     @uptake_rate.setter
     def uptake_rate(self, uptake_rate: float) -> None:
-        """Sets the cell motility 2D status."""
         if uptake_rate < 0.0:
             raise NegativeValueError(uptake_rate, "net export rate")
 
@@ -399,12 +389,14 @@ class SecretionParams:
 
     @property
     def net_export_rate(self) -> float:
-        """Returns the cell motility 2D status."""
+        """
+        Returns the value of the net export rate. Setting a new value will raise a
+        NegativeValueError if a negative number is passed.
+        """
         return self._net_export_rate
 
     @net_export_rate.setter
     def net_export_rate(self, net_export_rate: float) -> None:
-        """Sets the cell motility 2D status."""
         if net_export_rate < 0.0:
             raise NegativeValueError(net_export_rate, "net export rate")
 
@@ -413,10 +405,12 @@ class SecretionParams:
 
 @dataclass
 class CellParameters:
+    """A class to store the cell data for a given cell definition of the config file."""
     cell_definition_name: str
     volume: Optional[VolumeParams]
     mechanics: Optional[MechanicsParams]
     motility: Optional[MotilityParams]
+    # TODO: turn the secretion params into a list of objects for multiple susbtrates
     secretion: Optional[SecretionParams]
 
 
@@ -511,7 +505,7 @@ class ConfigFileParser:
         return motility
 
     def read_secretion_params(self, cell_definition_name: str, substrate_name: str) -> SecretionParams:
-        """Reads the motility parameters from the config file into a custom data structure"""
+        """Reads the secretion parameters from the config file into a custom data structure"""
         # Build basic string stem to find secretion cell data for cell definition
         cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
         stem = cell_string + f"/phenotype/secretion/substrate[@name='{substrate_name}']"
@@ -528,7 +522,26 @@ class ConfigFileParser:
 
     def read_cell_data(self, cell_definition_name: str = "default",
                        substrate_name: str = "substrate") -> CellParameters:
-        """Reads all the fields for a given cell definition into a custom data type"""
+        """
+        Reads all the fields for a given cell definition into a custom cell data type.
+        
+        Parameters
+        ----------
+        cell_definition_name: str, default "default"
+            The name of the cell definition to be read
+        substrate_name: str, default "substrate"
+            The name of the substrate to be read.
+
+        Returns
+        -------
+        CellParameters
+            A custom cell data type that contains all the parameters of a cell definiton
+
+        Raises
+        ------
+        InvalidCellDefinition
+            If the input cell definition is not defined in the config file.
+        """
         try:
             if cell_definition_name not in self.cell_definitions_list:
                 raise InvalidCellDefinition(cell_definition_name, self.cell_definitions_list)
@@ -557,6 +570,17 @@ class ConfigFileParser:
         return user_params
 
     def write_motility_params(self, cell_definition_name: str, motility: MotilityParams) -> None:
+        """
+        Writes the new motility parameter values to the XML tree object, for a given cell definition.
+        Values will not be updated in the XML file.
+
+        Parameters
+        ----------
+        cell_definition_name: str
+            The name of the cell definition to be updated.
+        motility: MotilityParams
+            The new parameter values to be written to the XML object.
+        """
         cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
         stem = cell_string + "/phenotype/motility"
 
@@ -573,6 +597,16 @@ class ConfigFileParser:
         self.tree.find(stem + "/options/chemotaxis/direction").text = str(motility.chemotaxis_direction)
 
     def update_params(self, cell_definition_name, new_parameters: CellParameters) -> None:
+        """
+        Writes the new parameters to the XML tree object and also updates the XML file.
+
+        Parameters
+        ----------
+        cell_definition_name: str
+            The name of the cell definition to be updated.
+        new_parameters: CellParameters
+            The new cell parameters to be writeen to the XML file.
+        """
         self.write_motility_params(cell_definition_name, new_parameters.motility)
         
         self.tree.write(self.config_file)
