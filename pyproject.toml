@@ -20,8 +20,6 @@ jupyter = "^1.0.0"
 myst-nb = "^0.13.2"
 sphinx-autoapi = "^1.8.4"
 sphinx-rtd-theme = "^1.0.0"
-pyvista = "^0.33.2"
-ipyvtk-simple = "^0.1.4"
 
 
 [build-system]
