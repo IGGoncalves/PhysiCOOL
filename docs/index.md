@@ -7,6 +7,7 @@
 
 example.ipynb
 ode-toy-model.ipynb
+view.ipynb
 changelog.md
 autoapi/index
 ```
