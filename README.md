@@ -5,8 +5,6 @@
 
 PhysiCOOL aims to be a generalized framework for **model calibration in PhysiCell**. PhysiCell projects can be used a **black-box** to characterize how the model outputs change in response to variations in the input values. With this in mind, PhysiCOOL introduces a **model-agnostic calibration workflow** that easily integrates with PhysiCell models, and that allows users to **find the best set of parameters for their study**. 
 
-![multisweep](assets/calibration.gif)
-
 PhysiCOOL provides new functions that allow users to easily specify the parameters to vary, as well as the metrics to be quantified (i.g., number of cells through time, total traveled distance,...). Currently, our algorithm relies on the existence of some target data, provided by the user, which will be used to fit the model. 
 
 ## Instalation
@@ -18,8 +16,6 @@ pip install physicool
 
 ## Usage
 The `PhysiCellBlackBox` class creates a black-box function for your PhysiCell project. `PhysiCellBlackBox` **takes in a set of parameters**, **runs a PhysiCell simulation** with the updated parameter values and then **computes the metric you select** when initializing the model. It outputs an array with the values for the metric you choose.
-
-![flowchart](assets/workflow.png)
 
 
 ## TBA: PhysiCOOL's multilevel parameter sweep
