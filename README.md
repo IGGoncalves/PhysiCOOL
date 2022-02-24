@@ -25,7 +25,7 @@ The `MultiSweep` class will let you run a **multilevel parameter sweep in which 
 Additionally, you can tune the **number of levels**, and the **number of points and ranges to explore at each level**. Additionally, you can define parameter bounds.
 
 ## Examples
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/docs?labpath=%2Ftree%2Fexamples)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)
 
 You can run our examples on Binder! 
 
