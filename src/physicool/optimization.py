@@ -38,7 +38,7 @@ class PhysiCellBlackBox:
 
 
 class MultiSweep:
-    def __init__(self, model, data, n_levels, npdir, ppdir):
+    def __init__(self, model, data, n_levels: int, npdir: int, ppdir: int):
         """Initialized the multisweep class."""
 
         # Settings
