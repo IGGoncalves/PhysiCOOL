@@ -2,7 +2,7 @@
 from pathlib import Path
 from xml.etree import ElementTree
 from dataclasses import dataclass
-from typing import List, Tuple, Optional, Protocol
+from typing import Callable, List, Tuple, Optional
 
 
 class PhysiCellConfigError(Exception):
@@ -636,21 +636,16 @@ class ConfigFileParser:
         self.tree.write(self.config_file)
 
 
-class ParamsUpdater(Protocol):
-    """Class to deal with updating the values of the config file."""
-    def update(self, new_values: List[float], cell_data: CellParameters) -> None:
-        pass
+ParamsUpdater = Callable([List[float], CellParameters], None)
 
-class MotilityUpdater(ParamsUpdater):
-    """Class that updates the motility parameters of the config file."""
-    def update(self, new_values: List[float], cell_data: CellParameters) -> None:
-        cell_data.motility.speed = new_values[0]
-        cell_data.motility.persistence_time = new_values[1]
-        cell_data.motility.bias = new_values[2]
 
-class MechanicsUpdater(ParamsUpdater):
-    """Class that updates the mechanics parameters of the config file."""
-    def update(self, new_values: List[float], cell_data: CellParameters) -> None:
-        cell_data.mechanics.cell_cell_adhesion_strength = new_values[0]
-        cell_data.mechanics.cell_cell_repulsion_strength = new_values[1]
-        cell_data.mechanics.relative_maximum_adhesion_distance = new_values[2]
+def update_motility_params(self, new_values: List[float], cell_data: CellParameters) -> None:
+    cell_data.motility.speed = new_values[0]
+    cell_data.motility.persistence_time = new_values[1]
+    cell_data.motility.bias = new_values[2]
+
+
+def update_mechanics_params(self, new_values: List[float], cell_data: CellParameters) -> None:
+    cell_data.mechanics.cell_cell_adhesion_strength = new_values[0]
+    cell_data.mechanics.cell_cell_repulsion_strength = new_values[1]
+    cell_data.mechanics.relative_maximum_adhesion_distance = new_values[2]

@@ -1,100 +1,154 @@
 from pathlib import Path
-from typing import List, Dict, Protocol
+from typing import Callable, Union
 
 import numpy as np
 import pandas as pd
 from scipy import io as sio
 
 
-def get_number_of_timepoints(output_path: Path = Path("output/")) -> int:
-    """
-    Returns the number of time points saved into the XML files 
-    stored in the storage directory.
+CELL_OUTPUT_LABELS = [
+            'ID',
+            'position_x', 'position_y', 'position_z',
+            'total_volume',
+            'cell_type',
+            'cycle_model', 'current_phase', 'elapsed_time_in_phase',
+            'nuclear_volume', 'cytoplasmic_volume',
+            'fluid_fraction', 'calcified_fraction',
+            'orientation_x', 'orientation_y', 'orientation_z',
+            'polarity',
+            'migration_speed',
+            'motility_vector_x', 'motility_vector_y', 'motility_vector_z',
+            'migration_bias',
+            'motility_bias_direction_x', 'motility_bias_direction_y', 'motility_bias_direction_z',
+            'persistence_time',
+            'motility_reserved']
 
-    Parameters
-    ----------
-    output_path
-        The path to the folder where the output (.xml) files are stored
+class Microenvironment:
+    def __init__(self, time, storage_path):
 
-    Returns
-    -------
-    int
-        The number of time point records saved in the output folder.
-    """
+        self.storage = storage_path
+
+        self.time = time
+        self.substances = self.get_substances()
+        self.mesh = self.get_mesh()
+        self.mesh_shape = (len(self.mesh[1]), len(self.mesh[0]))
+
+        self.data = self.get_data()
+
+    def get_substances(self):
+        """Returns a list of the substances stored in the XML output files."""
+
+        # Open the first XML file to get list of stored substances
+        tree = ET.parse(self.storage / 'output00000000.xml')
+        root = tree.getroot()
+        var_node = root.find('microenvironment/domain/variables')
+        var_children = var_node.findall('variable')
+        variables = [var.get('name') for var in var_children]
+
+        return variables
+
+    def get_mesh(self):
+        """Returns a list with the coordinates of the microenvironment mesh."""
+        
+        # Open the first XML file to get list of stored substances
+        tree = ET.parse(self.storage / 'output00000000.xml')
+        root = tree.getroot()
+        mesh_node = root.find('microenvironment/domain/mesh')
+
+        # Get x, y and z coordinates
+        # X coordinates
+        coord_str = mesh_node.find('x_coordinates').text
+        delimiter = mesh_node.find('x_coordinates').get('delimiter')
+        x_coords = np.array(coord_str.split(delimiter), dtype=np.float)
+        # Y coordinates
+        coord_str = mesh_node.find('y_coordinates').text
+        delimiter = mesh_node.find('y_coordinates').get('delimiter')
+        y_coords = np.array(coord_str.split(delimiter), dtype=np.float)
+        # Z coordinates
+        coord_str = mesh_node.find('z_coordinates').text
+        delimiter = mesh_node.find('z_coordinates').get('delimiter')
+        z_coords = np.array(coord_str.split(delimiter), dtype=np.float)
+
+        return [x_coords, y_coords, z_coords]
+
+
+    def get_substance_data(self, substance):
+        """Returns an array with the substance concentrations for all the planes of the domain."""
+
+        timestep = str(self.time).zfill(8)
+
+        me_file = self.storage / \
+            'output{}_microenvironment0.mat'.format(timestep)
+
+        # Load substance data
+        me_data = sio.loadmat(me_file)['multiscale_microenvironment']
+
+        # Select the data corresponding to the chosen substance
+        substance_index = self.substances.index(substance)
+        substance_data = np.array([np.reshape(me_data[substance_index + 4, me_data[2, :] == z_level],
+                                              self.mesh_shape)
+                                   for z_level in self.mesh[2]])
+
+        return substance_data
     
-    return len(list(output_path.glob('output*.xml')))
+    def get_data(self):
+        """Returns a dictionary with the data for all the substances in the simulation."""
+
+        me_data = {substance: self.get_substance_data(substance)
+                   for substance in self.substances}
+
+        return me_data
+
+    def plot_heatmap(self, z_level):
+        fig, axes = plt.subplots(2, 2, figsize=(8, 12))
+        axes = axes.flatten()
+        
+        z_index = np.where(self.mesh[2] == z_level)
+
+        for sub_index, ax in enumerate(axes):
+            data = self.data[self.substances[sub_index]][z_index][0]
+            max_value = data.max()
+            sns.heatmap(data,
+                        ax=axes[sub_index],
+                        xticklabels=False, yticklabels=False,
+                        vmin=0, vmax=max_value,
+                        square=True,
+                        cmap='YlGnBu_r')
+
+            ax.set_title(f'Substance: {self.substances[sub_index]}')
+            
+        return fig, axes
 
 
-def get_cell_data(timepoint: int, variables: List[str],
-                  output_path: Path = Path("output/")) -> Dict[str, np.ndarray]:
-    """
-    Returns a dictionary with the cell output data for the selected variables.
+class Cells:
+    def __init__(self, time, storage_path):
+        self.time = time
+        self.storage = storage_path
+        
+        self.positions = self.get_cell_positions()
+        
+    def get_cell_positions(self):
+        """Returns a dictionary with the cell output data for the selected variables."""
+        
+        variables = ['position_x', 'position_y', 'position_z']
 
-    Arguments
-    ---------
-    timepoint : int
-        The time point at which the output was recorded
-    output_path: Path
-        The path to the folder where the output (.mat) files are stored
-    variables : List[str]
-        The variables to be extracted from the output files. If variables
-        are not defined, all the available outputs will be saved.
+        # Create path name
+        time_str = str(self.time).zfill(8)
+        file_name = 'output{}_cells_physicell.mat'.format(time_str)
+        path_name = self.storage / file_name
 
-    Returns
-    -------
-    cells: Dict[str, np.ndarray]
-        A dictionary with the variable name and values for the passed variables.
-    """
+        # Read output file
+        cell_data = sio.loadmat(path_name)['cells']
 
-    # All possible output variables written by PhysiCell
-    data_labels = [
-        'ID',
-        'position_x', 'position_y', 'position_z',
-        'total_volume',
-        'cell_type',
-        'cycle_model', 'current_phase', 'elapsed_time_in_phase',
-        'nuclear_volume', 'cytoplasmic_volume',
-        'fluid_fraction', 'calcified_fraction',
-        'orientation_x', 'orientation_y', 'orientation_z',
-        'polarity',
-        'migration_speed',
-        'motility_vector_x', 'motility_vector_y', 'motility_vector_z',
-        'migration_bias',
-        'motility_bias_direction_x', 'motility_bias_direction_y', 'motility_bias_direction_z',
-        'persistence_time',
-        'motility_reserved'
-    ]
-
-    # Create path name
-    time_str = str(timepoint).zfill(8)
-    file_name = 'output{}_cells_physicell.mat'.format(time_str)
-    path_name = output_path / file_name
-
-    # Read output file
-    cell_data = sio.loadmat(path_name)['cells']
-
-    # Select and save the variables of interest
-    variables_indexes = [data_labels.index(var) for var in variables]
-    cells = {var: cell_data[index, :]
-             for var, index in zip(variables, variables_indexes)}
-
-    return cells
-
-
-def compute_traveled_distances(cells_df: pd.DataFrame) -> float:
-    distance_traveled_by_cells = []
-    cells_df = cells_df[cells_df['time'] == 0]
-
-    # For each cell, compute the Euclidian distances between time points and get the total distance
-    for cell_id in cells_df['ID'].unique():
-        single_cell = cells_df[cells_df['ID'] == cell_id]
-        y_distance = single_cell['position_y'].values
-
-        distance_traveled_by_cells.append(y_distance)
-
-    distance_traveled_by_cells = np.mean(np.array(distance_traveled_by_cells), axis=1)
-
-    return distance_traveled_by_cells
+        # Select and save the variables of interest
+        variables_indexes = [CELL_OUTPUT_LABELS.index(var) for var in variables]
+        cells = {var: cell_data[index, :]
+                 for var, index in zip (variables, variables_indexes)}
+        
+        return [(x, y, z)
+                       for x, y, z in zip(cells['position_x'], 
+                                          cells['position_y'],
+                                          cells['position_z'])]
 
 
 def compute_error(self):
@@ -102,30 +156,11 @@ def compute_error(self):
     return ((self.model_data - self.reference_data) ** 2).sum()
 
 
-class OutputProcessor(Protocol):
-    def read_data(self, storage_path):
-        cells_through_time = []
-        variables = ["ID", "position_y", "position_x"]
-        timesteps = get_number_of_timepoints(storage_path)
-        for timestep in range(timesteps):
-            # Read the data saved at each time point
-            cells = get_cell_data(timestep, variables, storage_path)
-            number_of_cells = len(cells['ID'])
+OutputProcessor = Callable(Path, Union[float, np.ndarray])
 
-            # Store the data for each cell
-            for i in range(number_of_cells):
-                cells_data = [cells[variable][i] for variable in variables] + [timestep]
-                cells_through_time.append(cells_data)
-
-        variables = variables + ['time']
-
-        cells_df = pd.DataFrame(cells_through_time, columns=variables)
-
-        return cells_df
-
-    def process(self, cell_df: pd.DataFrame) -> float:
-        pass
-
-class DistanceProcessor(OutputProcessor):
-    def process(self, cell_df: pd.DataFrame) -> float:
-        return compute_traveled_distances(cell_df)
+def process_final_y_distance_data(storage_path: Path) -> np.ndarray:
+    # Read the data saved at each time point
+    coordinates = Cells(0, storage_path).get_cell_positions()
+    y_component = [coordinate[1] for coordinate in coordinates]
+    
+    return np.array(y_component)
