@@ -2,16 +2,18 @@ from pathlib import Path
 from sys import platform
 import os
 import subprocess
+from typing import List
 
 import numpy as np
 from pandas import DataFrame
 
-from physicool.config import CellParameters, ConfigFileParser
-from physicool import processing
+from physicool.config import ParamsUpdater, ConfigFileParser
+from physicool.processing import OutputProcessor
 
 
 class PhysiCellBlackBox:
-    def __init__(self, project_name: str = 'project', project_path: Path = Path.cwd()) -> None:
+    def __init__(self, updater: ParamsUpdater, processor: OutputProcessor,
+                 project_name: str = 'project', project_path: Path = Path.cwd()) -> None:
         # Move to the project directory
         os.chdir(project_path.__str__())
         # Define the paths where the PhysiCell files/folders can be found
@@ -24,17 +26,21 @@ class PhysiCellBlackBox:
         else:
             self.project_command = f"./{project_name}"
 
-    def run(self, params: CellParameters = None) -> DataFrame:
+        self.updater = updater
+        self.processor = processor
+
+    def run(self, params: List[float]) -> DataFrame:
         """Runs the black box pipeline: updates the config file, runs the model and retrieves the results."""
-        if params:
-            # TODO: extend to update multiple cell definitions
-            xml_parser = ConfigFileParser(self.config_path)
-            xml_parser.update_params(new_parameters=params, cell_definition_name="default")
+        xml_parser = ConfigFileParser(self.config_path)
+        cell_data = xml_parser.read_cell_data(cell_definition_name="default")
+        self.updater.update(new_values=params, cell_data=cell_data)
+        xml_parser.update_params(new_parameters=cell_data, cell_definition_name="default")
 
         # Run the PhysiCell simulation
         subprocess.run(self.project_command, shell=True)
 
-        return processing.read_output(self.storage_path, ["ID"])
+        cells_df = self.processor.read_data(self.storage_path)
+        return self.processor.process(cells_df)
 
 
 class MultiSweep:

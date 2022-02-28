@@ -25,24 +25,24 @@
   </g>
   <g id="cells">
    <g id="cell0">
-  <circle cx="548.814" cy="592.845" r="10.4102" stroke-width="0.5" stroke="black" fill="grey"/>
-  <circle cx="548.814" cy="592.845" r="6.2825" stroke-width="0.5" stroke="grey" fill="grey"/>
+  <circle cx="548.814" cy="592.845" r="10.1238" stroke-width="0.5" stroke="black" fill="grey"/>
+  <circle cx="548.814" cy="592.845" r="6.13347" stroke-width="0.5" stroke="grey" fill="grey"/>
    </g>
    <g id="cell1">
-  <circle cx="844.266" cy="602.763" r="10.3545" stroke-width="0.5" stroke="black" fill="grey"/>
-  <circle cx="844.266" cy="602.763" r="6.25485" stroke-width="0.5" stroke="grey" fill="grey"/>
+  <circle cx="844.266" cy="602.763" r="8.41271" stroke-width="0.5" stroke="black" fill="grey"/>
+  <circle cx="844.266" cy="602.763" r="5.05167" stroke-width="0.5" stroke="grey" fill="grey"/>
    </g>
    <g id="cell2">
-  <circle cx="544.883" cy="847.252" r="10.2911" stroke-width="0.5" stroke="black" fill="grey"/>
-  <circle cx="544.883" cy="847.252" r="6.22246" stroke-width="0.5" stroke="grey" fill="grey"/>
+  <circle cx="544.883" cy="847.252" r="1.67958" stroke-width="0.5" stroke="black" fill="grey"/>
+  <circle cx="544.883" cy="847.252" r="1.66305" stroke-width="0.5" stroke="black" fill="black"/>
    </g>
    <g id="cell3">
-  <circle cx="623.564" cy="645.894" r="10.3873" stroke-width="0.5" stroke="black" fill="grey"/>
-  <circle cx="623.564" cy="645.894" r="6.2712" stroke-width="0.5" stroke="grey" fill="grey"/>
+  <circle cx="623.564" cy="645.894" r="10.3084" stroke-width="0.5" stroke="black" fill="grey"/>
+  <circle cx="623.564" cy="645.894" r="6.23137" stroke-width="0.5" stroke="grey" fill="grey"/>
    </g>
    <g id="cell4">
-  <circle cx="437.587" cy="297.535" r="10.1996" stroke-width="0.5" stroke="black" fill="grey"/>
-  <circle cx="437.587" cy="297.535" r="6.17434" stroke-width="0.5" stroke="grey" fill="grey"/>
+  <circle cx="437.587" cy="297.535" r="10.3084" stroke-width="0.5" stroke="black" fill="grey"/>
+  <circle cx="437.587" cy="297.535" r="6.23137" stroke-width="0.5" stroke="grey" fill="grey"/>
    </g>
   </g>
  </g>
@@ -53,7 +53,7 @@
   </text>
   <text x="25" y="1045"
    font-family="Arial" font-size="18.75" fill="black" >
-   0 days, 0 hours, 0 minutes, and 12.3863 seconds
+   0 days, 0 hours, 0 minutes, and 11.9327 seconds
   </text>
   <rect x="0" y="70" width="1000" height="1000" stroke-width="2" stroke="rgb(0,0,0)" fill="none"/>
 </svg>

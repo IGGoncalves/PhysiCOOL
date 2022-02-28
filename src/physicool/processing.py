@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Protocol
 
 import numpy as np
 import pandas as pd
@@ -81,28 +81,9 @@ def get_cell_data(timepoint: int, variables: List[str],
     return cells
 
 
-def read_output(variables, output_path: Path = Path("output/")):
-    cells_through_time = []
-    timesteps = get_number_of_timepoints(output_path)
-    for timestep in range(timesteps):
-        # Read the data saved at each time point
-        cells = get_cell_data(timestep, variables, output_path,)
-        number_of_cells = len(cells['ID'])
-
-        # Store the data for each cell
-        for i in range(number_of_cells):
-            cells_data = [cells[variable][i] for variable in variables] + [timestep]
-            cells_through_time.append(cells_data)
-
-    variables = variables + ['time']
-
-    cells_df = pd.DataFrame(cells_through_time, columns=variables)
-
-    return cells_df
-
-
 def compute_traveled_distances(cells_df: pd.DataFrame) -> float:
     distance_traveled_by_cells = []
+    cells_df = cells_df[cells_df['time'] == 0]
 
     # For each cell, compute the Euclidian distances between time points and get the total distance
     for cell_id in cells_df['ID'].unique():
@@ -119,3 +100,32 @@ def compute_traveled_distances(cells_df: pd.DataFrame) -> float:
 def compute_error(self):
     """Returns the mean squared error value between the reference and simulated datasets."""
     return ((self.model_data - self.reference_data) ** 2).sum()
+
+
+class OutputProcessor(Protocol):
+    def read_data(self, storage_path):
+        cells_through_time = []
+        variables = ["ID", "position_y", "position_x"]
+        timesteps = get_number_of_timepoints(storage_path)
+        for timestep in range(timesteps):
+            # Read the data saved at each time point
+            cells = get_cell_data(timestep, variables, storage_path)
+            number_of_cells = len(cells['ID'])
+
+            # Store the data for each cell
+            for i in range(number_of_cells):
+                cells_data = [cells[variable][i] for variable in variables] + [timestep]
+                cells_through_time.append(cells_data)
+
+        variables = variables + ['time']
+
+        cells_df = pd.DataFrame(cells_through_time, columns=variables)
+
+        return cells_df
+
+    def process(self, cell_df: pd.DataFrame) -> float:
+        pass
+
+class DistanceProcessor(OutputProcessor):
+    def process(self, cell_df: pd.DataFrame) -> float:
+        return compute_traveled_distances(cell_df)
