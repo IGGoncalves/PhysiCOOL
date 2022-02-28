@@ -2,84 +2,7 @@
 from pathlib import Path
 from xml.etree import ElementTree
 from dataclasses import dataclass
-from typing import Callable, List, Tuple, Optional
-
-
-class PhysiCellConfigError(Exception):
-    """
-    A class of exceptions to deal with errors that do not fit the expected formatting for the
-    PhysiCell XML configuration file.
-    """
-    pass
-
-
-class NegativeValueError(PhysiCellConfigError):
-    """
-    An exception to be raised when a non-negative config parameter is given a negative value.
-
-    Parameters
-    ----------
-    value
-        The value that raised the exception
-    parameter
-        The parameter from the config file for which the exception was raised
-    """
-
-    def __init__(self, value: float, parameter: str) -> None:
-        self.value = value
-        self.parameter = parameter
-
-    def __str__(self) -> str:
-        """String representation of the exception, to be printed when exception is raised"""
-        return f"Invalid value for {self.parameter}: {self.value}. Should be positive"
-
-
-class RangeValueError(PhysiCellConfigError):
-    """
-    An exception to be raised when a config parameter is given a value that is not inside the fixed bounds.
-    By default, the exception expects a range between 0 and 1, but other ranges can be used.
-
-    Parameters
-    ----------
-    value
-        The value that raised the exception
-    parameter
-        The parameter from the config file for which the exception was raised
-    expected_range
-        The range of values in which the invalid value should have been
-    """
-
-    def __init__(self, value: float, parameter: str, expected_range: Tuple[float, float] = (0.0, 1.0)) -> None:
-        self.value = value
-        self.parameter = parameter
-        self.expected_range = expected_range
-
-    def __str__(self) -> str:
-        """String representation of the exception, to be printed when exception is raised"""
-        return f"Invalid value for {self.parameter}: {self.value}.\n" \
-               f"Should be between ({self.expected_range[0]}, {self.expected_range[1]})"
-
-
-class InvalidCellDefinition(PhysiCellConfigError):
-    """
-    An exception to be raised when the user tries to extract data from a cell definition that does not match
-    any of the definitions found in the XML file.
-
-    Parameters
-    ----------
-    value
-        The value that raised the exception
-    valid_cell_definitions
-        A list of the cell definitions found in the XML file
-    """
-
-    def __init__(self, value: str, valid_cell_definitions: List[str]) -> None:
-        self.value = value
-        self.valid_cell_definitions = valid_cell_definitions
-
-    def __str__(self) -> str:
-        """String representation of the exception, to be printed when exception is raised"""
-        return f"Invalid cell definition: {self.value}. Choose a valid option: {self.valid_cell_definitions}"
+from typing import Callable, List, Optional
 
 
 @dataclass
@@ -90,14 +13,14 @@ class VolumeParams:
     def total_volume(self) -> float:
         """
         Returns the total volume value.
-        Raises a NegativeValueError if the passed value is negative.
+        Raises a ValueError if the passed value is negative.
         """
         return self._total_volume
 
     @total_volume.setter
     def total_volume(self, total_volume: float) -> None:
         if total_volume < 0:
-            raise NegativeValueError(total_volume, "cell total volume")
+            raise ValueError("Total volume should be positve.")
 
         self._total_volume = total_volume
 
@@ -105,14 +28,14 @@ class VolumeParams:
     def fluid_fraction(self) -> float:
         """
         Returns the fluid fraction value.
-        Raises a NegativeValueError if the passed value is negative.
+        Raises a ValueError if the passed value is negative.
         """
         return self._fluid_fraction
 
     @fluid_fraction.setter
     def fluid_fraction(self, fluid_fraction: float) -> None:
         if fluid_fraction < 0.0 or fluid_fraction > 1.0:
-            raise RangeValueError(fluid_fraction, "cell fluid fraction")
+            raise ValueError("Fluid fraction should be between 0 and 1.")
 
         self._fluid_fraction = fluid_fraction
 
@@ -120,14 +43,14 @@ class VolumeParams:
     def nuclear(self) -> float:
         """
         Returns the nuclear voulme value.
-        Raises a NegativeValueError if the passed value is negative.
+        Raises a ValueError if the passed value is negative.
         """
         return self._nuclear
 
     @nuclear.setter
     def nuclear(self, nuclear: float) -> None:
         if nuclear < 0:
-            raise NegativeValueError(nuclear, "cell nuclear volume")
+            raise ValueError("Cell nuclear volume should be positive.")
 
         self._nuclear = nuclear
 
@@ -135,59 +58,59 @@ class VolumeParams:
     def fluid_change_rate(self) -> float:
         """
         Returns the fluid change rate value.
-        Raises a NegativeValueError if the passed value is negative.
+        Raises a ValueError if the passed value is negative.
         """
         return self._fluid_change_rate
 
     @fluid_change_rate.setter
     def fluid_change_rate(self, fluid_change_rate: float) -> None:
         if fluid_change_rate < 0:
-            raise NegativeValueError(fluid_change_rate, "cell fluid change rate")
+            raise ValueError("Fluid change rate should be positive.")
 
         self._fluid_change_rate = fluid_change_rate
 
     @property
-    def cytoplasmic_bio_change_rate(self) -> float:
+    def cyto_bio_rate(self) -> float:
         """
         Returns the cytoplasmic biomass change rate value.
-        Raises a NegativeValueError if the passed value is negative.
+        Raises a ValueError if the passed value is negative.
         """
-        return self._cytoplasmic_bio_change_rate
+        return self._cyto_bio_rate
 
-    @cytoplasmic_bio_change_rate.setter
-    def cytoplasmic_bio_change_rate(self, cytoplasmic_bio_change_rate: float) -> None:
-        if cytoplasmic_bio_change_rate < 0:
-            raise NegativeValueError(cytoplasmic_bio_change_rate, "cell cytoplasmic biomass change rate")
+    @cyto_bio_rate.setter
+    def cyto_bio_rate(self, cyto_bio_rate: float) -> None:
+        if cyto_bio_rate < 0:
+            raise ValueError("Cytoplasmic biomass change rate should be positive.")
 
-        self._cytoplasmic_bio_change_rate = cytoplasmic_bio_change_rate
+        self._cyto_bio_rate = cyto_bio_rate
 
     @property
-    def nuclear_bio_change_rate(self) -> float:
+    def nuclear_bio_rate(self) -> float:
         """
         Returns the nuclear biomass change rate value.
-        Raises a NegativeValueError if the passed value is negative.
+        Raises a ValueError if the passed value is negative.
         """
-        return self._nuclear_bio_change_rate
+        return self._nuclear_bio_rate
 
-    @nuclear_bio_change_rate.setter
-    def nuclear_bio_change_rate(self, nuclear_bio_change_rate: float) -> None:
-        if nuclear_bio_change_rate < 0:
-            raise NegativeValueError(nuclear_bio_change_rate, "cell nuclear biomass change rate")
+    @nuclear_bio_rate.setter
+    def nuclear_bio_rate(self, nuclear_bio_rate: float) -> None:
+        if nuclear_bio_rate < 0:
+            raise ValueError("Nuclear biomass change rate should be positive.")
 
-        self._nuclear_bio_change_rate = nuclear_bio_change_rate
+        self._nuclear_bio_rate = nuclear_bio_rate
 
     @property
     def calcified_fraction(self) -> float:
         """
         Returns the calcified fraction value.
-        Raises a NegativeValueError if the passed value is negative.
+        Raises a ValueError if the passed value is negative.
         """
         return self._calcified_fraction
 
     @calcified_fraction.setter
     def calcified_fraction(self, calcified_fraction: float) -> None:
         if calcified_fraction < 0.0 or calcified_fraction > 1.0:
-            raise RangeValueError(calcified_fraction, "cell calcified fraction")
+            raise ValueError("Calcified fraction should be betwween 0 and 1.")
 
         self._calcified_fraction = calcified_fraction
 
@@ -195,31 +118,31 @@ class VolumeParams:
     def calcification_rate(self) -> float:
         """
         Returns the calcification rate value.
-        Raises a NegativeValueError if the passed value is negative.
+        Raises a ValueError if the passed value is negative.
         """
         return self._calcification_rate
 
     @calcification_rate.setter
     def calcification_rate(self, calcification_rate: float) -> None:
         if calcification_rate < 0:
-            raise NegativeValueError(calcification_rate, "cell calcification rate")
+            raise ValueError("Calcification rate should be positive.")
 
         self._calcification_rate = calcification_rate
 
     @property
-    def relative_rupture_volume(self) -> float:
+    def rupture_volume(self) -> float:
         """
         Returns the relative rupture voulme value.
-        Raises a NegativeValueError if the passed value is negative.
+        Raises a ValueError if the passed value is negative.
         """
-        return self._relative_rupture_volume
+        return self._rupture_volume
 
-    @relative_rupture_volume.setter
-    def relative_rupture_volume(self, relative_rupture_volume: float) -> None:
-        if relative_rupture_volume < 0:
-            raise NegativeValueError(relative_rupture_volume, "cell total volume")
+    @rupture_volume.setter
+    def rupture_volume(self, rupture_volume: float) -> None:
+        if rupture_volume < 0:
+            raise ValueError("Relative rupture volume shoulde be positive.")
 
-        self._relative_rupture_volume = relative_rupture_volume
+        self._rupture_volume = rupture_volume
 
 
 @dataclass
@@ -227,44 +150,44 @@ class MechanicsParams:
     """A class that represents the cell mechanics parameters stored in the config file."""
 
     @property
-    def cell_cell_adhesion_strength(self) -> float:
+    def adhesion_strength(self) -> float:
         """
         Returns the cell-cell adhesion value.
         """
-        return self._cell_cell_adhesion_strength
+        return self._adhesion_strength
 
-    @cell_cell_adhesion_strength.setter
-    def cell_cell_adhesion_strength(self, cell_cell_adhesion_strength: float) -> None:
-        if cell_cell_adhesion_strength < 0:
-            raise NegativeValueError(cell_cell_adhesion_strength, "cell-cell adhesion")
+    @adhesion_strength.setter
+    def adhesion_strength(self, adhesion_strength: float) -> None:
+        if adhesion_strength < 0:
+            raise ValueError("Cell-cell adhesion should be positive.")
 
-        self._cell_cell_adhesion_strength = cell_cell_adhesion_strength
+        self._adhesion_strength = adhesion_strength
 
     @property
-    def cell_cell_repulsion_strength(self) -> float:
+    def repulsion_strength(self) -> float:
         """Returns the cell-cell repulsion value"""
-        return self._cell_cell_repulsion_strength
+        return self._repulsion_strength
 
-    @cell_cell_repulsion_strength.setter
-    def cell_cell_repulsion_strength(self, cell_cell_repulsion_strength: float) -> None:
+    @repulsion_strength.setter
+    def repulsion_strength(self, repulsion_strength: float) -> None:
         """Sets the cell-cell repulsion value, with validation"""
-        if cell_cell_repulsion_strength < 0:
-            raise NegativeValueError(cell_cell_repulsion_strength, "cell-cell repulsion")
+        if repulsion_strength < 0:
+            raise ValueError("Cell-cell repulsion should be positive.")
 
-        self._cell_cell_repulsion_strength = cell_cell_repulsion_strength
+        self._repulsion_strength = repulsion_strength
 
     @property
-    def relative_maximum_adhesion_distance(self) -> float:
+    def adhesion_distance(self) -> float:
         """Returns the relative maximum distance value"""
-        return self._relative_maximum_adhesion_distance
+        return self._adhesion_distance
 
-    @relative_maximum_adhesion_distance.setter
-    def relative_maximum_adhesion_distance(self, relative_maximum_adhesion_distance: float) -> None:
+    @adhesion_distance.setter
+    def adhesion_distance(self, adhesion_distance: float) -> None:
         """Sets the relative maximum distance value, with validation"""
-        if relative_maximum_adhesion_distance < 0:
-            raise NegativeValueError(relative_maximum_adhesion_distance, "cell-cell repulsion")
+        if adhesion_distance < 0:
+            raise ValueError("Adhesion distance should be positive.")
 
-        self._relative_maximum_adhesion_distance = relative_maximum_adhesion_distance
+        self._adhesion_distance = adhesion_distance
 
 
 @dataclass
@@ -280,22 +203,22 @@ class MotilityParams:
     def speed(self, speed: float) -> None:
         """Sets the cell speed value, with validation."""
         if speed < 0.0:
-            raise NegativeValueError(speed, "cell speed")
+            raise ValueError(speed, "cell speed")
 
         self._speed = speed
 
     @property
-    def persistence_time(self) -> float:
+    def persistence(self) -> float:
         """Returns the cell persistence time value."""
-        return self._persistence_time
+        return self._persistence
 
-    @persistence_time.setter
-    def persistence_time(self, persistence_time: float) -> None:
+    @persistence.setter
+    def persistence(self, persistence: float) -> None:
         """Sets the cell persistence time value, with validation."""
-        if persistence_time < 0.0:
-            raise NegativeValueError(persistence_time, "cell persistence time")
+        if persistence < 0.0:
+            raise ValueError(persistence, "cell persistence time")
 
-        self._persistence_time = persistence_time
+        self._persistence = persistence
 
     @property
     def bias(self) -> float:
@@ -306,7 +229,7 @@ class MotilityParams:
     def bias(self, bias: float) -> None:
         """Sets the cell motility bias value, with validation."""
         if bias < 0.0 or bias > 1.0:
-            raise RangeValueError(bias, "cell motility bias")
+            raise ValueError(bias, "cell motility bias")
 
         self._bias = bias
 
@@ -331,34 +254,34 @@ class MotilityParams:
         self._use_2d = use_2d
 
     @property
-    def chemotaxis_enabled(self) -> bool:
+    def chemo_enabled(self) -> bool:
         """Returns the chemotaxis status."""
-        return self._chemotaxis_enabled
+        return self._chemo_enabled
 
-    @chemotaxis_enabled.setter
-    def chemotaxis_enabled(self, chemotaxis_enabled: bool) -> None:
+    @chemo_enabled.setter
+    def chemo_enabled(self, chemo_enabled: bool) -> None:
         """Sets the chemotaxis status."""
-        self._chemotaxis_enabled = chemotaxis_enabled
+        self._chemo_enabled = chemo_enabled
 
     @property
-    def chemotaxis_substrate(self) -> str:
+    def chemo_substrate(self) -> str:
         """Returns the chemotaxis substance."""
-        return self._chemotaxis_substrate
+        return self._chemo_substrate
 
-    @chemotaxis_substrate.setter
-    def chemotaxis_substrate(self, chemotaxis_substrate: str) -> None:
+    @chemo_substrate.setter
+    def chemo_substrate(self, chemo_substrate: str) -> None:
         """Sets the chemotaxis substance."""
-        self._chemotaxis_substrate = chemotaxis_substrate
+        self._chemo_substrate = chemo_substrate
 
     @property
-    def chemotaxis_direction(self) -> float:
+    def chemo_direction(self) -> float:
         """Returns the chemotaxis direction."""
-        return self._chemotaxis_direction
+        return self._chemo_direction
 
-    @chemotaxis_direction.setter
-    def chemotaxis_direction(self, chemotaxis_direction: float) -> None:
+    @chemo_direction.setter
+    def chemo_direction(self, chemo_direction: float) -> None:
         """Sets the chemotaxis direction."""
-        self._chemotaxis_direction = chemotaxis_direction
+        self._chemo_direction = chemo_direction
 
 
 @dataclass
@@ -370,14 +293,14 @@ class SecretionParams:
     def secretion_rate(self) -> float:
         """
         Returns the value of the secretion rate. Setting a new value will raise a
-        NegativeValueError if a negative number is passed.
+        ValueError if a negative number is passed.
         """
         return self._secretion_rate
 
     @secretion_rate.setter
     def secretion_rate(self, secretion_rate: float) -> None:
         if secretion_rate < 0.0:
-            raise NegativeValueError(secretion_rate, "secretion rate")
+            raise ValueError(secretion_rate, "secretion rate")
 
         self._secretion_rate = secretion_rate
 
@@ -385,14 +308,14 @@ class SecretionParams:
     def secretion_target(self) -> float:
         """
         Returns the value of the secretion target Setting a new value will raise a
-        NegativeValueError if a negative number is passed.
+        ValueError if a negative number is passed.
         """
         return self._secretion_target
 
     @secretion_target.setter
     def secretion_target(self, secretion_target: float) -> None:
         if secretion_target < 0.0:
-            raise NegativeValueError(secretion_target, "secretion target")
+            raise ValueError(secretion_target, "secretion target")
 
         self._secretion_target = secretion_target
 
@@ -400,14 +323,14 @@ class SecretionParams:
     def uptake_rate(self) -> float:
         """
         Returns the value of the uptake rate. Setting a new value will raise a
-        NegativeValueError if a negative number is passed.
+        ValueError if a negative number is passed.
         """
         return self._uptake_rate
 
     @uptake_rate.setter
     def uptake_rate(self, uptake_rate: float) -> None:
         if uptake_rate < 0.0:
-            raise NegativeValueError(uptake_rate, "net export rate")
+            raise ValueError(uptake_rate, "net export rate")
 
         self._uptake_rate = uptake_rate
 
@@ -415,14 +338,14 @@ class SecretionParams:
     def net_export_rate(self) -> float:
         """
         Returns the value of the net export rate. Setting a new value will raise a
-        NegativeValueError if a negative number is passed.
+        ValueError if a negative number is passed.
         """
         return self._net_export_rate
 
     @net_export_rate.setter
     def net_export_rate(self, net_export_rate: float) -> None:
         if net_export_rate < 0.0:
-            raise NegativeValueError(net_export_rate, "net export rate")
+            raise ValueError(net_export_rate, "net export rate")
 
         self._net_export_rate = net_export_rate
 
@@ -474,11 +397,11 @@ class ConfigFileParser:
         volume.fluid_fraction = float(self.tree.find(stem + "/fluid_fraction").text)
         volume.nuclear = float(self.tree.find(stem + "/nuclear").text)
         volume.fluid_change_rate = float(self.tree.find(stem + "/fluid_change_rate").text)
-        volume.cytoplasmic_bio_change_rate = float(self.tree.find(stem + "/cytoplasmic_biomass_change_rate").text)
-        volume.nuclear_bio_change_rate = float(self.tree.find(stem + "/nuclear_biomass_change_rate").text)
+        volume.cyto_bio_rate = float(self.tree.find(stem + "/cytoplasmic_biomass_change_rate").text)
+        volume.nuclear_bio_rate = float(self.tree.find(stem + "/nuclear_biomass_change_rate").text)
         volume.calcified_fraction = float(self.tree.find(stem + "/calcified_fraction").text)
         volume.calcification_rate = float(self.tree.find(stem + "/calcification_rate").text)
-        volume.relative_rupture_volume = float(self.tree.find(stem + "/relative_rupture_volume").text)
+        volume.rupture_volume = float(self.tree.find(stem + "/rupture_volume").text)
 
         return volume
 
@@ -491,9 +414,9 @@ class ConfigFileParser:
         mech = MechanicsParams()
 
         # Extract and save the basic mechanics data from the config file
-        mech.cell_cell_adhesion_strength = float(self.tree.find(stem + "/cell_cell_adhesion_strength").text)
-        mech.cell_cell_repulsion_strength = float(self.tree.find(stem + "/cell_cell_repulsion_strength").text)
-        mech.relative_maximum_adhesion_distance = float(self.tree.find(stem + "/relative_maximum_adhesion_distance").text)
+        mech.adhesion_strength = float(self.tree.find(stem + "/adhesion_strength").text)
+        mech.repulsion_strength = float(self.tree.find(stem + "/repulsion_strength").text)
+        mech.adhesion_distance = float(self.tree.find(stem + "/adhesion_distance").text)
 
         # TODO: Extract and save the optional mechanics data, if it exists
         # if self.tree.find(stem + "/options/set_relative_equilibrium_distance").attrib["enabled"] == "true":
@@ -516,15 +439,15 @@ class ConfigFileParser:
 
         # Extract and save the motility data from the config file
         motility.speed = float(self.tree.find(stem + "/speed").text)
-        motility.persistence_time = float(self.tree.find(stem + "/persistence_time").text)
+        motility.persistence = float(self.tree.find(stem + "/persistence").text)
         motility.bias = float(self.tree.find(stem + "/migration_bias").text)
 
         motility.motility_enabled = self.tree.find(stem + "/options/enabled").text == "true"
         motility.use_2d = self.tree.find(stem + "/options/use_2D").text == "true"
 
-        motility.chemotaxis_enabled = self.tree.find(stem + "/options/chemotaxis/enabled").text == "true"
-        motility.chemotaxis_substrate = self.tree.find(stem + "/options/chemotaxis/substrate").text
-        motility.chemotaxis_direction = float(self.tree.find(stem + "/options/chemotaxis/direction").text)
+        motility.chemo_enabled = self.tree.find(stem + "/options/chemotaxis/enabled").text == "true"
+        motility.chemo_substrate = self.tree.find(stem + "/options/chemotaxis/substrate").text
+        motility.chemo_direction = float(self.tree.find(stem + "/options/chemotaxis/direction").text)
 
         return motility
 
@@ -563,12 +486,12 @@ class ConfigFileParser:
 
         Raises
         ------
-        InvalidCellDefinition
+        ValueError
             If the input cell definition is not defined in the config file.
         """
         try:
             if cell_definition_name not in self.cell_definitions_list:
-                raise InvalidCellDefinition(cell_definition_name, self.cell_definitions_list)
+                raise ValueError("Invalid cell definition")
 
             # Read and save the cell data
             volume = self.read_volume_params(cell_definition_name)
@@ -578,8 +501,8 @@ class ConfigFileParser:
 
             return CellParameters(cell_definition_name, volume, mechanics, motility, secretion)
 
-        except InvalidCellDefinition:
-            print(InvalidCellDefinition)
+        except ValueError:
+            print(ValueError)
 
     def read_user_params_data(self):
         params = self.tree.find("user_parameters").getchildren()
@@ -610,15 +533,28 @@ class ConfigFileParser:
 
         # Extract and save the motility data from the config file
         self.tree.find(stem + "/speed").text = str(motility.speed)
-        self.tree.find(stem + "/persistence_time").text = str(motility.persistence_time)
+        self.tree.find(stem + "/persistence").text = str(motility.persistence)
         self.tree.find(stem + "/migration_bias").text = str(motility.bias)
 
-        self.tree.find(stem + "/options/enabled").text = "true" if motility.motility_enabled else "false"
-        self.tree.find(stem + "/options/use_2D").text = "true" if motility.use_2d else "false"
+        if motility.motility_enabled:
+            self.tree.find(stem + "/options/enabled").text = "true" 
+        else:
+            self.tree.find(stem + "/options/enabled").text = "false" 
 
-        self.tree.find(stem + "/options/chemotaxis/enabled").text = "true" if motility.chemotaxis_enabled else "false"
-        self.tree.find(stem + "/options/chemotaxis/substrate").text = motility.chemotaxis_substrate
-        self.tree.find(stem + "/options/chemotaxis/direction").text = str(motility.chemotaxis_direction)
+        if motility.use_2d:
+            self.tree.find(stem + "/options/use_2D").text = "true" 
+        else:
+            self.tree.find(stem + "/options/use_2D").text = "false" 
+
+        chmo_str = stem + "/options/chemotaxis"
+
+        if motility.chemo_enabled:
+            self.tree.find(chmo_str + "/enabled").text = "true"
+        else:
+            self.tree.find(chmo_str + "/enabled").text = "false"
+
+        self.tree.find(chmo_str + "/substrate").text = motility.chemo_substrate
+        self.tree.find(chmo_str + "/direction").text = str(motility.chemo_direction)
 
     def update_params(self, cell_definition_name, new_parameters: CellParameters) -> None:
         """
@@ -641,11 +577,11 @@ ParamsUpdater = Callable([List[float], CellParameters], None)
 
 def update_motility_params(self, new_values: List[float], cell_data: CellParameters) -> None:
     cell_data.motility.speed = new_values[0]
-    cell_data.motility.persistence_time = new_values[1]
+    cell_data.motility.persistence = new_values[1]
     cell_data.motility.bias = new_values[2]
 
 
 def update_mechanics_params(self, new_values: List[float], cell_data: CellParameters) -> None:
-    cell_data.mechanics.cell_cell_adhesion_strength = new_values[0]
-    cell_data.mechanics.cell_cell_repulsion_strength = new_values[1]
-    cell_data.mechanics.relative_maximum_adhesion_distance = new_values[2]
+    cell_data.mechanics.adhesion_strength = new_values[0]
+    cell_data.mechanics.repulsion_strength = new_values[1]
+    cell_data.mechanics.adhesion_distance = new_values[2]

@@ -19,6 +19,7 @@ myst-nb = "^0.13.2"
 sphinx-autoapi = "^1.8.4"
 sphinx-rtd-theme = "^1.0.0"
 sphinx-autodoc-typehints = "^1.17.0"
+black = "^22.1.0"
 
 
 [build-system]

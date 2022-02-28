@@ -12,8 +12,13 @@ from physicool.processing import OutputProcessor
 
 
 class PhysiCellBlackBox:
-    def __init__(self, updater: ParamsUpdater, processor: OutputProcessor,
-                 project_name: str = 'project', project_path: Path = Path.cwd()) -> None:
+    def __init__(
+        self,
+        updater: ParamsUpdater,
+        processor: OutputProcessor,
+        project_name: str = "project",
+        project_path: Path = Path.cwd(),
+    ) -> None:
         # Move to the project directory
         os.chdir(project_path.__str__())
         # Define the paths where the PhysiCell files/folders can be found
@@ -34,7 +39,9 @@ class PhysiCellBlackBox:
         xml_parser = ConfigFileParser(self.config_path)
         cell_data = xml_parser.read_cell_data(cell_definition_name="default")
         self.updater.update(new_values=params, cell_data=cell_data)
-        xml_parser.update_params(new_parameters=cell_data, cell_definition_name="default")
+        xml_parser.update_params(
+            new_parameters=cell_data, cell_definition_name="default"
+        )
 
         # Run the PhysiCell simulation
         subprocess.run(self.project_command, shell=True)
@@ -66,7 +73,7 @@ class MultiSweep:
 
         self.level = 0
         self.opt_point = [0, 0]
-        self.param_labels = ['x', 'y']
+        self.param_labels = ["x", "y"]
         self.param_bounds = [[None, None], [None, None]]
 
     def set_param_bounds(self, param1=None, param2=None):
@@ -143,17 +150,23 @@ class MultiSweep:
         width = max(self.x) - min(self.x)
         heigth = max(self.y) - min(self.y)
 
-        p = Rectangle((min(self.x), min(self.y)), width, heigth,
-                      edgecolor='black', facecolor='none', linestyle='--')
+        p = Rectangle(
+            (min(self.x), min(self.y)),
+            width,
+            heigth,
+            edgecolor="black",
+            facecolor="none",
+            linestyle="--",
+        )
         ax.add_patch(p)
-        art3d.pathpatch_2d_to_3d(p, z=self.level, zdir='y')
+        art3d.pathpatch_2d_to_3d(p, z=self.level, zdir="y")
 
     def get_colormap(self):
         color_dimension = self.results[0]
         maxx = color_dimension.max()
         minn = 0
         norm = colors.Normalize(minn, maxx)
-        m = plt.cm.ScalarMappable(norm=norm, cmap='Spectral_r')
+        m = plt.cm.ScalarMappable(norm=norm, cmap="Spectral_r")
         return m
 
     def run_level(self, fig, ax):
@@ -179,8 +192,15 @@ class MultiSweep:
         fcolors = m.to_rgba(color_dimension)
 
         # Plot surface using color as a 4th dimension
-        ax.plot_surface(x, np.ones((len(self.x), len(self.y))) * self.level, y,
-                        facecolors=fcolors, linewidth=0.1, rstride=1, cstride=1)
+        ax.plot_surface(
+            x,
+            np.ones((len(self.x), len(self.y))) * self.level,
+            y,
+            facecolors=fcolors,
+            linewidth=0.1,
+            rstride=1,
+            cstride=1,
+        )
 
         if self.level == 0:
             fig.colorbar(m, shrink=0.6)
@@ -201,11 +221,11 @@ class MultiSweep:
     def run_sweep(self):
         # Creating figure
         fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        ax.view_init(elev=5., azim=75)
+        ax = plt.axes(projection="3d")
+        ax.view_init(elev=5.0, azim=75)
 
         ax.set_xlabel(self.param_labels[0], labelpad=5)
-        ax.set_ylabel('Optimization level', labelpad=10)
+        ax.set_ylabel("Optimization level", labelpad=10)
         ax.set_zlabel(self.param_labels[1], labelpad=10)
 
         fig.show()
