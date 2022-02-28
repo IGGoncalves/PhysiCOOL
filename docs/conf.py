@@ -20,8 +20,11 @@ extensions = [
     "autoapi.extension",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    "sphinx.ext.autodoc", 
+    "sphinx_autodoc_typehints"
 ]
 autoapi_dirs = ["../src"]
+autodoc_typehints = "description"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

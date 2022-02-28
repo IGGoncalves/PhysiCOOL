@@ -6,9 +6,23 @@ import pandas as pd
 from scipy import io as sio
 
 
-def get_number_of_timepoints(storage_path: Path = Path("output/")) -> int:
-    """Returns the number of output XML files in the storage directory."""
-    return len(list(storage_path.glob('output*.xml')))
+def get_number_of_timepoints(output_path: Path = Path("output/")) -> int:
+    """
+    Returns the number of time points saved into the XML files 
+    stored in the storage directory.
+
+    Parameters
+    ----------
+    output_path
+        The path to the folder where the output (.xml) files are stored
+
+    Returns
+    -------
+    int
+        The number of time point records saved in the output folder.
+    """
+    
+    return len(list(output_path.glob('output*.xml')))
 
 
 def get_cell_data(timepoint: int, variables: List[str],
@@ -67,12 +81,12 @@ def get_cell_data(timepoint: int, variables: List[str],
     return cells
 
 
-def read_output(storage_path, variables):
+def read_output(variables, output_path: Path = Path("output/")):
     cells_through_time = []
-    timesteps = get_number_of_timepoints(storage_path)
+    timesteps = get_number_of_timepoints(output_path)
     for timestep in range(timesteps):
         # Read the data saved at each time point
-        cells = get_cell_data(timestep, variables, storage_path,)
+        cells = get_cell_data(timestep, variables, output_path,)
         number_of_cells = len(cells['ID'])
 
         # Store the data for each cell
@@ -87,11 +101,11 @@ def read_output(storage_path, variables):
     return cells_df
 
 
-def compute_traveled_distances(cells_df):
+def compute_traveled_distances(cells_df: pd.DataFrame) -> float:
     distance_traveled_by_cells = []
 
     # For each cell, compute the Euclidian distances between time points and get the total distance
-    for cell_id in range(int(cells_df['ID'].max())):
+    for cell_id in cells_df['ID'].unique():
         single_cell = cells_df[cells_df['ID'] == cell_id]
         y_distance = single_cell['position_y'].values
 

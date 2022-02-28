@@ -1,7 +1,7 @@
 # This module enables users to programmatically modify their PhysiCell XML config file
 from pathlib import Path
 from xml.etree import ElementTree
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Tuple, Optional
 
 
@@ -19,9 +19,9 @@ class NegativeValueError(PhysiCellConfigError):
 
     Parameters
     ----------
-    value: float
+    value
         The value that raised the exception
-    parameter: str
+    parameter
         The parameter from the config file for which the exception was raised
     """
 
@@ -41,11 +41,11 @@ class RangeValueError(PhysiCellConfigError):
 
     Parameters
     ----------
-    value: float
+    value
         The value that raised the exception
-    parameter: str
+    parameter
         The parameter from the config file for which the exception was raised
-    expected_range: (float, float)
+    expected_range
         The range of values in which the invalid value should have been
     """
 
@@ -67,9 +67,9 @@ class InvalidCellDefinition(PhysiCellConfigError):
 
     Parameters
     ----------
-    value: float
+    value
         The value that raised the exception
-    valid_cell_definitions: [str]
+    valid_cell_definitions
         A list of the cell definitions found in the XML file
     """
 
@@ -88,6 +88,10 @@ class VolumeParams:
 
     @property
     def total_volume(self) -> float:
+        """
+        Returns the total volume value.
+        Raises a NegativeValueError if the passed value is negative.
+        """
         return self._total_volume
 
     @total_volume.setter
@@ -99,6 +103,10 @@ class VolumeParams:
 
     @property
     def fluid_fraction(self) -> float:
+        """
+        Returns the fluid fraction value.
+        Raises a NegativeValueError if the passed value is negative.
+        """
         return self._fluid_fraction
 
     @fluid_fraction.setter
@@ -110,6 +118,10 @@ class VolumeParams:
 
     @property
     def nuclear(self) -> float:
+        """
+        Returns the nuclear voulme value.
+        Raises a NegativeValueError if the passed value is negative.
+        """
         return self._nuclear
 
     @nuclear.setter
@@ -121,6 +133,10 @@ class VolumeParams:
 
     @property
     def fluid_change_rate(self) -> float:
+        """
+        Returns the fluid change rate value.
+        Raises a NegativeValueError if the passed value is negative.
+        """
         return self._fluid_change_rate
 
     @fluid_change_rate.setter
@@ -132,6 +148,10 @@ class VolumeParams:
 
     @property
     def cytoplasmic_bio_change_rate(self) -> float:
+        """
+        Returns the cytoplasmic biomass change rate value.
+        Raises a NegativeValueError if the passed value is negative.
+        """
         return self._cytoplasmic_bio_change_rate
 
     @cytoplasmic_bio_change_rate.setter
@@ -143,6 +163,10 @@ class VolumeParams:
 
     @property
     def nuclear_bio_change_rate(self) -> float:
+        """
+        Returns the nuclear biomass change rate value.
+        Raises a NegativeValueError if the passed value is negative.
+        """
         return self._nuclear_bio_change_rate
 
     @nuclear_bio_change_rate.setter
@@ -154,6 +178,10 @@ class VolumeParams:
 
     @property
     def calcified_fraction(self) -> float:
+        """
+        Returns the calcified fraction value.
+        Raises a NegativeValueError if the passed value is negative.
+        """
         return self._calcified_fraction
 
     @calcified_fraction.setter
@@ -165,6 +193,10 @@ class VolumeParams:
 
     @property
     def calcification_rate(self) -> float:
+        """
+        Returns the calcification rate value.
+        Raises a NegativeValueError if the passed value is negative.
+        """
         return self._calcification_rate
 
     @calcification_rate.setter
@@ -176,6 +208,10 @@ class VolumeParams:
 
     @property
     def relative_rupture_volume(self) -> float:
+        """
+        Returns the relative rupture voulme value.
+        Raises a NegativeValueError if the passed value is negative.
+        """
         return self._relative_rupture_volume
 
     @relative_rupture_volume.setter
@@ -192,12 +228,13 @@ class MechanicsParams:
 
     @property
     def cell_cell_adhesion_strength(self) -> float:
-        """Returns the cell-cell adhesion value"""
+        """
+        Returns the cell-cell adhesion value.
+        """
         return self._cell_cell_adhesion_strength
 
     @cell_cell_adhesion_strength.setter
     def cell_cell_adhesion_strength(self, cell_cell_adhesion_strength: float) -> None:
-        """Sets the cell-cell adhesion value, with validation"""
         if cell_cell_adhesion_strength < 0:
             raise NegativeValueError(cell_cell_adhesion_strength, "cell-cell adhesion")
 
@@ -326,20 +363,7 @@ class MotilityParams:
 
 @dataclass
 class SecretionParams:
-    """
-    A class that represents the cell secretion parameters stored in the config file.
-    
-    Parameters
-    ----------
-    _secretion_rate: float
-        The secretion rate of a given substance.
-    _secretion_target: float
-        The secretion target of a given substance.
-    _uptake_rate: float
-        The uptake rate of a given substance.
-    _net_export_rate: float
-        The net export rate of a given substance.
-    """
+    """A class that represents the cell secretion parameters stored in the config file."""
     # TODO: Add a substance name parameter
 
     @property
