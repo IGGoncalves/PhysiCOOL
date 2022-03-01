@@ -156,7 +156,7 @@ def compute_error(self):
     return ((self.model_data - self.reference_data) ** 2).sum()
 
 
-OutputProcessor = Callable(Path, Union[float, np.ndarray])
+OutputProcessor = Callable[[Path], Union[float, np.ndarray]]
 
 
 def process_final_y_distance_data(storage_path: Path) -> np.ndarray:

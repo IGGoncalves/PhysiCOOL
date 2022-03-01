@@ -1,5 +1,6 @@
 # This module enables users to programmatically modify their PhysiCell XML config file
 from pathlib import Path
+from re import sub
 from xml.etree import ElementTree
 from dataclasses import dataclass
 from typing import Callable, List, Optional
@@ -466,19 +467,24 @@ class ConfigFileParser:
 
         return motility
 
-    def read_secretion_params(self, name: str, substrate: str) -> SecretionParams:
+    def read_secretion_params(self, name: str) -> SecretionParams:
         """Reads the secretion parameters from the config file into a custom data structure"""
         # Build basic string stem to find secretion cell data for cell definition
         cell_string = f"cell_definitions/cell_definition[@name='{name}']"
-        stem = cell_string + f"/phenotype/secretion/substrate[@name='{substrate}']"
+        stem = cell_string + f"/phenotype/secretion"
 
-        secretion = SecretionParams()
+        substrates = [substrate.attrib["name"]
+                      for substrate in self.tree.find(stem).findall("substrate")]
 
-        # Extract and save the motility data from the config file
-        secretion.secretion_rate = float(self.tree.find(stem + "/secretion_rate").text)
-        secretion.secretion_target = float(self.tree.find(stem + "/secretion_target").text)
-        secretion.uptake_rate = float(self.tree.find(stem + "/uptake_rate").text)
-        secretion.net_export_rate = float(self.tree.find(stem + "/net_export_rate").text)
+        for substrate in substrates:
+            secretion = SecretionParams()
+            substrate_stem = stem + f"/substrate[@name='{substrate}']"
+
+            # Extract and save the motility data from the config file
+            secretion.secretion_rate = float(self.tree.find(substrate_stem + "/secretion_rate").text)
+            secretion.secretion_target = float(self.tree.find(substrate_stem + "/secretion_target").text)
+            secretion.uptake_rate = float(self.tree.find(substrate_stem + "/uptake_rate").text)
+            secretion.net_export_rate = float(self.tree.find(substrate_stem + "/net_export_rate").text)
 
         return secretion
 
@@ -507,18 +513,16 @@ class ConfigFileParser:
             if name not in self.cell_definitions_list:
                 raise ValueError("Invalid cell definition")
 
-            substrate = "substrate"
-
             # Read and save the cell data
             volume = self.read_volume_params(name)
             mechanics = self.read_mechanics_params(name)
             motility = self.read_motility_params(name)
-            secretion = self.read_secretion_params(name, substrate)
+            secretion = self.read_secretion_params(name)
 
             return CellParameters(name, volume, mechanics, motility, secretion)
 
-        except ValueError:
-            print(ValueError)
+        except ValueError as ve:
+            print(ve)
 
     def read_user_params_data(self):
         params = self.tree.find("user_parameters").getchildren()
@@ -588,16 +592,34 @@ class ConfigFileParser:
         self.tree.write(self.config_file)
 
 
-ParamsUpdater = Callable[[List[float], CellParameters], None]
+ParamsUpdater = Callable[[List[float]], None]
 
 
-def update_motility_params(self, new_values: List[float], cell_data: CellParameters) -> None:
+def update_motility_params(self, new_values: List[float]) -> None:
+    cell_definition_name = "default"
+
+    # Read the data from the file
+    xml_parser = ConfigFileParser()
+    cell_data = xml_parser.read_cell_data(cell_definition_name)
+
+    # Update the data
     cell_data.motility.speed = new_values[0]
     cell_data.motility.persistence = new_values[1]
     cell_data.motility.bias = new_values[2]
 
+    xml_parser.update_params(cell_data)
 
-def update_mechanics_params(self, new_values: List[float], cell_data: CellParameters) -> None:
+
+def update_mechanics_params(self, new_values: List[float]) -> None:
+    cell_definition_name = "default"
+
+    # Read the data from the file
+    xml_parser = ConfigFileParser()
+    cell_data = xml_parser.read_cell_data(cell_definition_name)
+
+    # Update the data
     cell_data.mechanics.adhesion_strength = new_values[0]
     cell_data.mechanics.repulsion_strength = new_values[1]
     cell_data.mechanics.adhesion_distance = new_values[2]
+
+    xml_parser.update_params(cell_data)

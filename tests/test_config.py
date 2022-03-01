@@ -48,7 +48,7 @@ class PhysiCellConfigTest(unittest.TestCase):
 
     def test_read_secretion_params(self):
         """Asserts that the secretion parameters extracted from the config file are correct."""
-        secretion_data = config.ConfigFileParser(CONFIG_PATH).read_secretion_params("default", "substrate")
+        secretion_data = config.ConfigFileParser(CONFIG_PATH).read_secretion_params("default")
         self.assertEqual(secretion_data.secretion_rate, 0.0)
         self.assertEqual(secretion_data.secretion_target, 1.0)
         self.assertEqual(secretion_data.uptake_rate, 0.0)

@@ -35,18 +35,12 @@ class PhysiCellBlackBox:
         Runs the black box pipeline: updates the config file, 
         runs the model and retrieves the results.
         """
-        xml_parser = ConfigFileParser(self.config_path)
-        cell_data = xml_parser.read_cell_data(cell_definition_name="default")
-        self.updater.update(new_values=params, cell_data=cell_data)
-        xml_parser.update_params(
-            new_parameters=cell_data, cell_definition_name="default"
-        )
+        self.updater(new_values=params)
 
         # Run the PhysiCell simulation
         subprocess.run(self.project_command, shell=True)
 
-        cells_df = self.processor.read_data(self.storage_path)
-        return self.processor.process(cells_df)
+        return self.processor(self.storage_path)
 
 
 class MultiSweep:
