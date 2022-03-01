@@ -1,11 +1,11 @@
+# PhysiCOOL: A generalized framework for model Calibration and Optimization Of modeLing projects
+
 ![GitHub](https://img.shields.io/github/license/iggoncalves/PhysiCOOL)
 [![Documentation Status](https://readthedocs.org/projects/physicool/badge/?version=latest)](https://physicool.readthedocs.io/en/latest/?badge=latest)
 
-# PhysiCOOL: A generalized framework for model Calibration and Optimization Of modeLing projects
+PhysiCOOL aims to be a generalized framework for **model calibration in PhysiCell**. PhysiCell projects can be used a **black-box** to characterize how the model outputs change in response to variations in the input values. With this in mind, PhysiCOOL introduces a **model-agnostic calibration workflow** that easily integrates with PhysiCell models, and that allows users to **find the best set of parameters for their study**.
 
-PhysiCOOL aims to be a generalized framework for **model calibration in PhysiCell**. PhysiCell projects can be used a **black-box** to characterize how the model outputs change in response to variations in the input values. With this in mind, PhysiCOOL introduces a **model-agnostic calibration workflow** that easily integrates with PhysiCell models, and that allows users to **find the best set of parameters for their study**. 
-
-PhysiCOOL provides new functions that allow users to easily specify the parameters to vary, as well as the metrics to be quantified (i.g., number of cells through time, total traveled distance,...). Currently, our algorithm relies on the existence of some target data, provided by the user, which will be used to fit the model.
+PhysiCOOL provides new functions that allow users to easily specify the parameters to vary, as well as the metrics to be quantified (i.g., number of cells through time, total traveled distance,...). Check our [documentation](https://physicool.readthedocs.io) for some examples.
 
 ## Instalation
 
@@ -27,16 +27,15 @@ graph LR
     B --> |Process results| C[Output value]
 ```
 
-Both the functions that update the config file and that process the results data can be defined by the user. Check our [documentation](https://physicool.readthedocs.io) for some examples.
+Both the functions that update the config file and that process the results data can be defined by the user.
 
 ### Multilevel parameter sweep
 
 The `MultiSweep` class will let you run a **multilevel parameter sweep in which the parameter bounds are iteratively adapted based on the minimum value found at each level**. To create it, you must **select the model you want to run at each level** as well as the **target data** you want to use. Additionally, you can tune the **number of levels**, and the **number of points and ranges to explore at each level**. Additionally, you can define parameter bounds.
 
-
 ### Other utilities
 
-PhysiCOOL implements a file parser (`ConfigFileParser()`) that lets you read and write data to the PhysiCell XML configuration file with simple Python commands.
+PhysiCOOL implements a file parser (`ConfigFileParser`) that lets you read and write data to the PhysiCell XML configuration file with simple Python commands.
 
 ## Examples
 

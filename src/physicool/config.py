@@ -1,7 +1,7 @@
 # This module enables users to programmatically modify their PhysiCell XML config file
 from pathlib import Path
 from xml.etree import ElementTree
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable, List, Optional
 
 

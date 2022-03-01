@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Callable, Union
-
+from xml.etree import ElementTree
 import numpy as np
 from scipy import io as sio
 
@@ -37,11 +37,11 @@ CELL_OUTPUT_LABELS = [
 
 
 class Microenvironment:
-    def __init__(self, time, storage_path):
+    def __init__(self, time_point: int, path: Union[Path, str]):
 
-        self.storage = storage_path
+        self.storage = path
 
-        self.time = time
+        self.time = time_point
         self.substances = self.get_substances()
         self.mesh = self.get_mesh()
         self.mesh_shape = (len(self.mesh[1]), len(self.mesh[0]))
@@ -52,7 +52,7 @@ class Microenvironment:
         """Returns a list of the substances stored in the XML output files."""
 
         # Open the first XML file to get list of stored substances
-        tree = ET.parse(self.storage / "output00000000.xml")
+        tree = ElementTree.parse(self.storage / "output00000000.xml")
         root = tree.getroot()
         var_node = root.find("microenvironment/domain/variables")
         var_children = var_node.findall("variable")
@@ -64,7 +64,7 @@ class Microenvironment:
         """Returns a list with the coordinates of the microenvironment mesh."""
 
         # Open the first XML file to get list of stored substances
-        tree = ET.parse(self.storage / "output00000000.xml")
+        tree = ElementTree.parse(self.storage / "output00000000.xml")
         root = tree.getroot()
         mesh_node = root.find("microenvironment/domain/mesh")
 
@@ -118,37 +118,11 @@ class Microenvironment:
 
         return me_data
 
-    def plot_heatmap(self, z_level):
-        fig, axes = plt.subplots(2, 2, figsize=(8, 12))
-        axes = axes.flatten()
-
-        z_index = np.where(self.mesh[2] == z_level)
-
-        for sub_index, ax in enumerate(axes):
-            data = self.data[self.substances[sub_index]][z_index][0]
-            max_value = data.max()
-            sns.heatmap(
-                data,
-                ax=axes[sub_index],
-                xticklabels=False,
-                yticklabels=False,
-                vmin=0,
-                vmax=max_value,
-                square=True,
-                cmap="YlGnBu_r",
-            )
-
-            ax.set_title(f"Substance: {self.substances[sub_index]}")
-
-        return fig, axes
-
 
 class Cells:
     def __init__(self, time, storage_path):
         self.time = time
         self.storage = storage_path
-
-        self.positions = self.get_cell_positions()
 
     def get_cell_positions(self):
         """Returns a dictionary with the cell output data for the selected variables."""
