@@ -41,7 +41,7 @@ PhysiCOOL implements a file parser (`ConfigFileParser`) that lets you read and w
 
 ## Examples
 
-You can run our examples on [Binder}([![Binder](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)!
+You can run our examples on [Binder]([![Binder](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)!
 
 - **Interactive parameter estimation example:**
 Guides you through a simple example of logistic growth to showcase how the multilevel sweep works.
