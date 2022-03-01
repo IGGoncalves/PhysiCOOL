@@ -3,6 +3,7 @@
 ![GitHub](https://img.shields.io/github/license/iggoncalves/PhysiCOOL)
 [![Documentation Status](https://readthedocs.org/projects/physicool/badge/?version=latest)](https://physicool.readthedocs.io/en/latest/?badge=latest)
 [![physicool](https://github.com/IGGoncalves/PhysiCOOL/actions/workflows/python-package.yml/badge.svg)](https://github.com/IGGoncalves/PhysiCOOL/actions/workflows/python-package.yml)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)
 
 PhysiCOOL aims to be a generalized framework for **model calibration in PhysiCell**. PhysiCell projects can be used a **black-box** to characterize how the model outputs change in response to variations in the input values. With this in mind, PhysiCOOL introduces a **model-agnostic calibration workflow** that easily integrates with PhysiCell models, and that allows users to **find the best set of parameters for their study**.
 
@@ -40,9 +41,7 @@ PhysiCOOL implements a file parser (`ConfigFileParser`) that lets you read and w
 
 ## Examples
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)
-
-You can run our examples on Binder!
+You can run our examples on [Binder}([![Binder](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)!
 
 - **Interactive parameter estimation example:**
 Guides you through a simple example of logistic growth to showcase how the multilevel sweep works.
