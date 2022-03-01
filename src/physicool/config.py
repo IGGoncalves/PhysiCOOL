@@ -1,7 +1,7 @@
 # This module enables users to programmatically modify their PhysiCell XML config file
 from pathlib import Path
 from xml.etree import ElementTree
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable, List, Optional
 
 
@@ -28,7 +28,7 @@ class VolumeParams:
     def fluid_fraction(self) -> float:
         """
         Returns the fluid fraction value.
-        Raises a ValueError if the passed value is negative.
+        Raises a ValueError if the passed value is not between 0 and 1.
         """
         return self._fluid_fraction
 
@@ -193,7 +193,7 @@ class MechanicsParams:
 @dataclass
 class MotilityParams:
     """A class that represents the cell motility parameters stored in the config file."""
-
+    
     @property
     def speed(self) -> float:
         """Returns the cell speed value."""
@@ -203,7 +203,7 @@ class MotilityParams:
     def speed(self, speed: float) -> None:
         """Sets the cell speed value, with validation."""
         if speed < 0.0:
-            raise ValueError(speed, "cell speed")
+            raise ValueError("Speed should be positive.")
 
         self._speed = speed
 
@@ -216,7 +216,7 @@ class MotilityParams:
     def persistence(self, persistence: float) -> None:
         """Sets the cell persistence time value, with validation."""
         if persistence < 0.0:
-            raise ValueError(persistence, "cell persistence time")
+            raise ValueError("Persistence time should be positive.")
 
         self._persistence = persistence
 
@@ -229,7 +229,7 @@ class MotilityParams:
     def bias(self, bias: float) -> None:
         """Sets the cell motility bias value, with validation."""
         if bias < 0.0 or bias > 1.0:
-            raise ValueError(bias, "cell motility bias")
+            raise ValueError("Motility bias should be between 0 and 1.")
 
         self._bias = bias
 
@@ -283,6 +283,15 @@ class MotilityParams:
         """Sets the chemotaxis direction."""
         self._chemo_direction = chemo_direction
 
+    def print(self):
+        print(f"Speed: {self.speed}")
+        print(f"Persistence time: {self.persistence}")
+        print(f"Motility bias: {self.bias}")
+        print(f"Motility enabled: {self.motility_enabled}")
+        print(f"2D motility: {self.use_2d}")
+        print(f"Chemotaxis enabled: {self.chemo_enabled}")
+        print(f"Chemotaxis substance: {self.chemo_substrate}")
+        print(f"Chemotaxis direction: {self.chemo_direction}")
 
 @dataclass
 class SecretionParams:
@@ -353,20 +362,26 @@ class SecretionParams:
 @dataclass
 class CellParameters:
     """A class to store the cell data for a given cell definition of the config file."""
-    cell_definition_name: str
-    volume: Optional[VolumeParams]
-    mechanics: Optional[MechanicsParams]
-    motility: Optional[MotilityParams]
+    name: str
+    volume: Optional[VolumeParams] = None
+    mechanics: Optional[MechanicsParams] = None
+    motility: Optional[MotilityParams] = None
     # TODO: turn the secretion params into a list of objects for multiple susbtrates
-    secretion: Optional[SecretionParams]
+    secretion: Optional[SecretionParams] = None
+
+    def print(self):
+        print(f"Cell definition name: {self.name}")
+        print("-----------------------------")
+        print("Motility data:")
+        self.motility.print()
 
 
 class ConfigFileParser:
     """A class that acts as an interface between the user and the XML config file"""
 
-    def __init__(self, config_path: Path = Path("config/PhysiCell_settings.xml")) -> None:
-        self.config_file = config_path
-        self.tree = ElementTree.parse(config_path)
+    def __init__(self, path: Path = Path("config/PhysiCell_settings.xml")) -> None:
+        self.config_file = path
+        self.tree = ElementTree.parse(path)
 
     @property
     def cell_definitions_list(self) -> List[str]:
@@ -384,10 +399,10 @@ class ConfigFileParser:
 
         return [substance.attrib['name'] for substance in substances]
 
-    def read_volume_params(self, cell_definition_name: str) -> VolumeParams:
+    def read_volume_params(self, name: str) -> VolumeParams:
         """Reads the motility parameters from the config file into a custom data structure"""
         # Build basic string stem to find motility cell data for cell definition
-        cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
+        cell_string = f"cell_definitions/cell_definition[@name='{name}']"
         stem = cell_string + "/phenotype/volume"
 
         volume = VolumeParams()
@@ -401,22 +416,22 @@ class ConfigFileParser:
         volume.nuclear_bio_rate = float(self.tree.find(stem + "/nuclear_biomass_change_rate").text)
         volume.calcified_fraction = float(self.tree.find(stem + "/calcified_fraction").text)
         volume.calcification_rate = float(self.tree.find(stem + "/calcification_rate").text)
-        volume.rupture_volume = float(self.tree.find(stem + "/rupture_volume").text)
+        volume.rupture_volume = float(self.tree.find(stem + "/relative_rupture_volume").text)
 
         return volume
 
-    def read_mechanics_params(self, cell_definition_name: str) -> MechanicsParams:
+    def read_mechanics_params(self, name: str) -> MechanicsParams:
         """Reads the mechanics parameters from the config file into a custom data structure"""
         # Build basic string stem to find mechanics cell data for cell definition
-        cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
+        cell_string = f"cell_definitions/cell_definition[@name='{name}']"
         stem = cell_string + "/phenotype/mechanics"
 
         mech = MechanicsParams()
 
         # Extract and save the basic mechanics data from the config file
-        mech.adhesion_strength = float(self.tree.find(stem + "/adhesion_strength").text)
-        mech.repulsion_strength = float(self.tree.find(stem + "/repulsion_strength").text)
-        mech.adhesion_distance = float(self.tree.find(stem + "/adhesion_distance").text)
+        mech.adhesion_strength = float(self.tree.find(stem + "/cell_cell_adhesion_strength").text)
+        mech.repulsion_strength = float(self.tree.find(stem + "/cell_cell_repulsion_strength").text)
+        mech.adhesion_distance = float(self.tree.find(stem + "/relative_maximum_adhesion_distance").text)
 
         # TODO: Extract and save the optional mechanics data, if it exists
         # if self.tree.find(stem + "/options/set_relative_equilibrium_distance").attrib["enabled"] == "true":
@@ -429,17 +444,17 @@ class ConfigFileParser:
 
         return mech
 
-    def read_motility_params(self, cell_definition_name: str) -> MotilityParams:
+    def read_motility_params(self, name: str) -> MotilityParams:
         """Reads the motility parameters from the config file into a custom data structure"""
         # Build basic string stem to find motility cell data for cell definition
-        cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
+        cell_string = f"cell_definitions/cell_definition[@name='{name}']"
         stem = cell_string + "/phenotype/motility"
 
         motility = MotilityParams()
 
         # Extract and save the motility data from the config file
         motility.speed = float(self.tree.find(stem + "/speed").text)
-        motility.persistence = float(self.tree.find(stem + "/persistence").text)
+        motility.persistence = float(self.tree.find(stem + "/persistence_time").text)
         motility.bias = float(self.tree.find(stem + "/migration_bias").text)
 
         motility.motility_enabled = self.tree.find(stem + "/options/enabled").text == "true"
@@ -451,11 +466,11 @@ class ConfigFileParser:
 
         return motility
 
-    def read_secretion_params(self, cell_definition_name: str, substrate_name: str) -> SecretionParams:
+    def read_secretion_params(self, name: str, substrate: str) -> SecretionParams:
         """Reads the secretion parameters from the config file into a custom data structure"""
         # Build basic string stem to find secretion cell data for cell definition
-        cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
-        stem = cell_string + f"/phenotype/secretion/substrate[@name='{substrate_name}']"
+        cell_string = f"cell_definitions/cell_definition[@name='{name}']"
+        stem = cell_string + f"/phenotype/secretion/substrate[@name='{substrate}']"
 
         secretion = SecretionParams()
 
@@ -467,16 +482,15 @@ class ConfigFileParser:
 
         return secretion
 
-    def read_cell_data(self, cell_definition_name: str = "default",
-                       substrate_name: str = "substrate") -> CellParameters:
+    def read_cell_data(self, name: str = "default") -> CellParameters:
         """
         Reads all the fields for a given cell definition into a custom cell data type.
         
         Parameters
         ----------
-        cell_definition_name: str, default "default"
+        name: str, default "default"
             The name of the cell definition to be read
-        substrate_name: str, default "substrate"
+        substrate: str, default "substrate"
             The name of the substrate to be read.
 
         Returns
@@ -490,16 +504,18 @@ class ConfigFileParser:
             If the input cell definition is not defined in the config file.
         """
         try:
-            if cell_definition_name not in self.cell_definitions_list:
+            if name not in self.cell_definitions_list:
                 raise ValueError("Invalid cell definition")
 
-            # Read and save the cell data
-            volume = self.read_volume_params(cell_definition_name)
-            mechanics = self.read_mechanics_params(cell_definition_name)
-            motility = self.read_motility_params(cell_definition_name)
-            secretion = self.read_secretion_params(cell_definition_name, substrate_name)
+            substrate = "substrate"
 
-            return CellParameters(cell_definition_name, volume, mechanics, motility, secretion)
+            # Read and save the cell data
+            volume = self.read_volume_params(name)
+            mechanics = self.read_mechanics_params(name)
+            motility = self.read_motility_params(name)
+            secretion = self.read_secretion_params(name, substrate)
+
+            return CellParameters(name, volume, mechanics, motility, secretion)
 
         except ValueError:
             print(ValueError)
@@ -516,24 +532,24 @@ class ConfigFileParser:
 
         return user_params
 
-    def write_motility_params(self, cell_definition_name: str, motility: MotilityParams) -> None:
+    def write_motility_params(self, name: str, motility: MotilityParams) -> None:
         """
         Writes the new motility parameter values to the XML tree object, for a given cell definition.
         Values will not be updated in the XML file.
 
         Parameters
         ----------
-        cell_definition_name: str
+        name: str
             The name of the cell definition to be updated.
         motility: MotilityParams
             The new parameter values to be written to the XML object.
         """
-        cell_string = f"cell_definitions/cell_definition[@name='{cell_definition_name}']"
+        cell_string = f"cell_definitions/cell_definition[@name='{name}']"
         stem = cell_string + "/phenotype/motility"
 
         # Extract and save the motility data from the config file
         self.tree.find(stem + "/speed").text = str(motility.speed)
-        self.tree.find(stem + "/persistence").text = str(motility.persistence)
+        self.tree.find(stem + "/persistence_time").text = str(motility.persistence)
         self.tree.find(stem + "/migration_bias").text = str(motility.bias)
 
         if motility.motility_enabled:
@@ -556,23 +572,23 @@ class ConfigFileParser:
         self.tree.find(chmo_str + "/substrate").text = motility.chemo_substrate
         self.tree.find(chmo_str + "/direction").text = str(motility.chemo_direction)
 
-    def update_params(self, cell_definition_name, new_parameters: CellParameters) -> None:
+    def update_params(self, name, new_parameters: CellParameters) -> None:
         """
         Writes the new parameters to the XML tree object and also updates the XML file.
 
         Parameters
         ----------
-        cell_definition_name: str
+        name: str
             The name of the cell definition to be updated.
         new_parameters: CellParameters
             The new cell parameters to be writeen to the XML file.
         """
-        self.write_motility_params(cell_definition_name, new_parameters.motility)
+        self.write_motility_params(name, new_parameters.motility)
         
         self.tree.write(self.config_file)
 
 
-ParamsUpdater = Callable([List[float], CellParameters], None)
+ParamsUpdater = Callable[[List[float], CellParameters], None]
 
 
 def update_motility_params(self, new_values: List[float], cell_data: CellParameters) -> None:

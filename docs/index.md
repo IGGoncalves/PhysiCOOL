@@ -5,8 +5,10 @@
 :maxdepth: 1
 :hidden:
 
-example.ipynb
-ode-toy-model.ipynb
+xml_update.ipynb
+black_box.md
+multi-level.ipynb
+external_libs.md
 changelog.md
 autoapi/index
 ```

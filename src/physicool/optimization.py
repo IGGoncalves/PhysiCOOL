@@ -1,6 +1,5 @@
 from pathlib import Path
 from sys import platform
-import os
 import subprocess
 from typing import List
 
@@ -17,10 +16,7 @@ class PhysiCellBlackBox:
         updater: ParamsUpdater,
         processor: OutputProcessor,
         project_name: str = "project",
-        project_path: Path = Path.cwd(),
     ) -> None:
-        # Move to the project directory
-        os.chdir(project_path.__str__())
         # Define the paths where the PhysiCell files/folders can be found
         self.storage_path = Path("output/")
         self.config_path = Path("config/PhysiCell_settings.xml")
@@ -35,7 +31,10 @@ class PhysiCellBlackBox:
         self.processor = processor
 
     def run(self, params: List[float]) -> DataFrame:
-        """Runs the black box pipeline: updates the config file, runs the model and retrieves the results."""
+        """
+        Runs the black box pipeline: updates the config file, 
+        runs the model and retrieves the results.
+        """
         xml_parser = ConfigFileParser(self.config_path)
         cell_data = xml_parser.read_cell_data(cell_definition_name="default")
         self.updater.update(new_values=params, cell_data=cell_data)
