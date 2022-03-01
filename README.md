@@ -1,7 +1,8 @@
 # PhysiCOOL: A generalized framework for model Calibration and Optimization Of modeLing projects
 
-![GitHub](https://img.shields.io/github/license/iggoncalves/PhysiCOOL)
+[![GitHub](https://img.shields.io/github/license/iggoncalves/PhysiCOOL)]
 [![Documentation Status](https://readthedocs.org/projects/physicool/badge/?version=latest)](https://physicool.readthedocs.io/en/latest/?badge=latest)
+[![Python package](https://github.com/IGGoncalves/PhysiCOOL/actions/workflows/python-package.yml/badge.svg)](https://github.com/IGGoncalves/PhysiCOOL/actions/workflows/python-package.yml)
 
 PhysiCOOL aims to be a generalized framework for **model calibration in PhysiCell**. PhysiCell projects can be used a **black-box** to characterize how the model outputs change in response to variations in the input values. With this in mind, PhysiCOOL introduces a **model-agnostic calibration workflow** that easily integrates with PhysiCell models, and that allows users to **find the best set of parameters for their study**.
 
