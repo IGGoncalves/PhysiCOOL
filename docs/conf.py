@@ -25,6 +25,10 @@ extensions = [
 ]
 autoapi_dirs = ["../src"]
 autodoc_typehints = "description"
+autodoc_default_options = {
+    'members':          True,
+    'undoc-members':    False,
+}
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
