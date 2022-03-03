@@ -7,7 +7,7 @@
 
 xml_update.ipynb
 black_box.md
-multi_sweep.md
+multi_level.md
 external_libs.md
 changelog.md
 autoapi/index
