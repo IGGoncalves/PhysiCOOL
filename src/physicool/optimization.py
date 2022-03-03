@@ -5,9 +5,13 @@ from typing import List
 
 import numpy as np
 from pandas import DataFrame
+import matplotlib.pyplot as plt
+from matplotlib import colors
+from matplotlib.patches import Rectangle
+import mpl_toolkits.mplot3d.art3d as art3d
 
-from physicool.config import ParamsUpdater, ConfigFileParser
-from physicool.processing import OutputProcessor
+from physicool.config import ParamsUpdater
+from physicool.processing import OutputProcessor, compute_error
 
 
 class PhysiCellBlackBox:
@@ -38,7 +42,7 @@ class PhysiCellBlackBox:
         self.updater(new_values=params)
 
         # Run the PhysiCell simulation
-        subprocess.run(self.project_command, shell=True)
+        subprocess.run(self.project_command, shell=True, stdout=subprocess.DEVNULL)
 
         return self.processor(self.storage_path)
 
@@ -96,6 +100,13 @@ class MultiSweep:
 
         min_limit = self.opt_point[1] - factor * self.opt_point[1]
         max_limit = self.opt_point[1] + factor * self.opt_point[1]
+        if any(self.param_bounds[1]):
+            if self.param_bounds[1][0] is not None:
+                if min_limit < self.param_bounds[1][0]:
+                    min_limit = self.param_bounds[1][0]
+            if self.param_bounds[1][1] is not None:
+                if max_limit > self.param_bounds[1][1]:
+                    max_limit = self.param_bounds[1][1]
         self.y = np.linspace(min_limit, max_limit, self.npdir)
 
     def compute_objective(self):
@@ -105,17 +116,17 @@ class MultiSweep:
                 # Select parameters and run the model
                 self.parameters_in_sweep[self.param_labels[0]] = x_value
                 self.parameters_in_sweep[self.param_labels[1]] = y_value
-                N_model = self.model(self.parameters_in_sweep)
+                N_model = self.model.run([self.parameters_in_sweep["x"], self.parameters_in_sweep["y"]])
 
                 # Compute error
                 self.results[self.level][i][j] = compute_error(N_model, self.data)
 
     def get_new_params(self):
         I = np.argmin(self.results[self.level])
-        x = int(np.floor(I / self.npdir))
-        y = int(I - self.npdir * x)
-
-        return self.x[x], self.y[y]
+        i = int(np.floor(I / self.npdir))
+        j = int(I - self.npdir * i)
+        
+        return self.x[j], self.y[i]
 
     def get_new_ax_lims(self):
         if self.level == 0:
@@ -215,6 +226,7 @@ class MultiSweep:
         # Creating figure
         fig = plt.figure()
         ax = plt.axes(projection="3d")
+        ax.invert_xaxis()
         ax.view_init(elev=5.0, azim=75)
 
         ax.set_xlabel(self.param_labels[0], labelpad=5)

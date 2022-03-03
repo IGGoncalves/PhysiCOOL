@@ -137,9 +137,9 @@
           </mechanics>
 
           <motility>
-            <speed>3.0</speed>
+            <speed>3.3299999999999996</speed>
             <persistence_time>1.0</persistence_time>
-            <migration_bias>0.8</migration_bias>
+            <migration_bias>0.47483333333333333</migration_bias>
             <options>
               <enabled>true</enabled>
               <use_2D>true</use_2D>
@@ -153,12 +153,6 @@
 
           <secretion>
             <substrate name="oxygen">
-              <secretion_rate units="1/min">0</secretion_rate>
-              <secretion_target units="substrate density">1</secretion_target>
-              <uptake_rate units="1/min">0</uptake_rate>
-              <net_export_rate units="total substrate/min">0</net_export_rate>
-            </substrate>
-            <substrate name="glucose">
               <secretion_rate units="1/min">0</secretion_rate>
               <secretion_target units="substrate density">1</secretion_target>
               <uptake_rate units="1/min">0</uptake_rate>

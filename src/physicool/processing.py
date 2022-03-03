@@ -151,9 +151,9 @@ class Cells:
         ]
 
 
-def compute_error(self):
+def compute_error(model_data, reference_data):
     """Returns the mean squared error value between the reference and simulated datasets."""
-    return ((self.model_data - self.reference_data) ** 2).sum()
+    return ((model_data - reference_data) ** 2).sum()
 
 
 OutputProcessor = Callable[[Path], Union[float, np.ndarray]]
