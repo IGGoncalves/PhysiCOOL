@@ -153,17 +153,12 @@ class MultiSweep:
     def add_bounds_to_ax(self, ax):
         width = max(self.x) - min(self.x)
         heigth = max(self.y) - min(self.y)
-
-        p = Rectangle(
-            (min(self.x), min(self.y)),
-            width,
-            heigth,
-            edgecolor="black",
-            facecolor="none",
-            linestyle="--",
-        )
+        
+        p = Rectangle((min(self.x), min(self.y)), width, heigth, 
+                    edgecolor='black', facecolor='none', linestyle='--')
         ax.add_patch(p)
         art3d.pathpatch_2d_to_3d(p, z=self.level, zdir="y")
+
 
     def get_colormap(self):
         color_dimension = self.results[0]
@@ -178,9 +173,6 @@ class MultiSweep:
         self.get_new_ax_lims()
 
         # Draw parameter bounds
-        ax.set_ylim(0, self.n_levels)
-        ax.set_xlim(self.xlim[0], self.xlim[1])
-        ax.set_zlim(self.ylim[0], self.ylim[1])
         self.add_bounds_to_ax(ax)
         fig.canvas.draw()
 
@@ -188,14 +180,6 @@ class MultiSweep:
 
         # Get the parameter space
         x, y = np.meshgrid(self.x, self.y)
-    
-        width = max(self.y) - min(self.y)
-        heigth = max(self.x) - min(self.x)
-        
-        p = Rectangle((min(self.y), min(self.x)), width, heigth, 
-                    edgecolor='black', facecolor='none', linestyle='--')
-        ax.add_patch(p)
-        art3d.pathpatch_2d_to_3d(p, z=n, zdir='y')
         
         # Convert the error data to colormap
         color_dimension = self.results[self.level] # change to desired fourth dimension
@@ -210,9 +194,6 @@ class MultiSweep:
                         facecolors=fcolors,
                         edgecolor='white', linewidth=0.1, rstride=1, cstride=1,
                         vmin=minn, vmax=maxx)
-        ax.set_ylim(0,10)
-        ax.set_xlim(max(self.y[0]), min(self.y[0]))
-        ax.set_zlim(min(self.x[0]), max(self.x[0]))
     
         fig.canvas.draw()
 
@@ -236,8 +217,11 @@ class MultiSweep:
         # Creating figure
         fig = plt.figure()
         ax = plt.axes(projection="3d")
-        ax.invert_xaxis()
         ax.view_init(elev=5.0, azim=75)
+        ax.set_ylim(0, self.n_levels)
+        ax.set_zlim(0, 1)
+        ax.set_xlim(0, 10)
+        ax.invert_xaxis()
 
         ax.set_xlabel(self.param_labels[0], labelpad=5)
         ax.set_ylabel("Optimization level", labelpad=10)

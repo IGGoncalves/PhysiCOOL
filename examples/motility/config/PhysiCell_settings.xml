@@ -137,9 +137,9 @@
           </mechanics>
 
           <motility>
-            <speed>3.0</speed>
+            <speed>4.193333333333333</speed>
             <persistence_time>1.0</persistence_time>
-            <migration_bias>0.8</migration_bias>
+            <migration_bias>0.22199999999999998</migration_bias>
             <options>
               <enabled>true</enabled>
               <use_2D>true</use_2D>
