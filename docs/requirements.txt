@@ -2,4 +2,3 @@ myst-nb
 sphinx-autoapi
 sphinx-rtd-theme
 sphinx-autodoc-typehints
-sphinxcontrib-mermaid

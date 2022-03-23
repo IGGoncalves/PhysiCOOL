@@ -188,23 +188,33 @@ class MultiSweep:
 
         # Get the parameter space
         x, y = np.meshgrid(self.x, self.y)
-
+    
+        width = max(self.y) - min(self.y)
+        heigth = max(self.x) - min(self.x)
+        
+        p = Rectangle((min(self.y), min(self.x)), width, heigth, 
+                    edgecolor='black', facecolor='none', linestyle='--')
+        ax.add_patch(p)
+        art3d.pathpatch_2d_to_3d(p, z=n, zdir='y')
+        
         # Convert the error data to colormap
-        m = self.get_colormap()
-        color_dimension = self.results[self.level]  # change to desired fourth dimension
+        color_dimension = self.results[self.level] # change to desired fourth dimension
+        minn, maxx = color_dimension.min(), color_dimension.max()
+        norm = colors.Normalize(minn, maxx)
+        m = plt.cm.ScalarMappable(norm=norm, cmap='Spectral_r')
         m.set_array([])
         fcolors = m.to_rgba(color_dimension)
-
+        
         # Plot surface using color as a 4th dimension
-        ax.plot_surface(
-            x,
-            np.ones((len(self.x), len(self.y))) * self.level,
-            y,
-            facecolors=fcolors,
-            linewidth=0.1,
-            rstride=1,
-            cstride=1,
-        )
+        ax.plot_surface(x, np.ones((len(self.x), len(self.x)))*self.level, y,
+                        facecolors=fcolors,
+                        edgecolor='white', linewidth=0.1, rstride=1, cstride=1,
+                        vmin=minn, vmax=maxx)
+        ax.set_ylim(0,10)
+        ax.set_xlim(max(self.y[0]), min(self.y[0]))
+        ax.set_zlim(min(self.x[0]), max(self.x[0]))
+    
+        fig.canvas.draw()
 
         if self.level == 0:
             fig.colorbar(m, shrink=0.6)

@@ -1,8 +1,11 @@
 from pathlib import Path
 from typing import Callable, Union
 from xml.etree import ElementTree
+
 import numpy as np
 from scipy import io as sio
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 CELL_OUTPUT_LABELS = [
@@ -117,6 +120,31 @@ class Microenvironment:
         }
 
         return me_data
+
+    def plot_heatmap(self, z_level):
+        fig, axes = plt.subplots(2, 2, figsize=(8, 12))
+        axes = axes.flatten()
+
+        z_index = np.where(self.mesh[2] == z_level)
+
+        for sub_index, ax in enumerate(axes):
+            data = self.data[self.substances[sub_index]][z_index][0]
+            max_value = data.max()
+            sns.heatmap(
+                data,
+                ax=axes[sub_index],
+                xticklabels=False,
+                yticklabels=False,
+                vmin=0,
+                vmax=max_value,
+                square=True,
+                cmap="YlGnBu_r",
+            )
+
+            ax.set_title(f"Substance: {self.substances[sub_index]}")
+
+        return fig, axes
+
 
 
 class Cells:

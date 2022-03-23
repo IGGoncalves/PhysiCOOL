@@ -22,7 +22,6 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.autodoc", 
     "sphinx_autodoc_typehints",
-    'sphinxcontrib.mermaid'
 ]
 autoapi_dirs = ["../src"]
 autodoc_typehints = "description"
