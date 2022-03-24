@@ -126,7 +126,7 @@ class MultiSweep:
         i = int(np.floor(I / self.npdir))
         j = int(I - self.npdir * i)
         
-        return self.x[j], self.y[i]
+        return self.x[i], self.y[j]
 
     def get_new_ax_lims(self):
         if self.level == 0:
@@ -151,10 +151,10 @@ class MultiSweep:
                 self.ylim[1] = max(self.y)
 
     def add_bounds_to_ax(self, ax):
-        width = max(self.x) - min(self.x)
-        heigth = max(self.y) - min(self.y)
+        width = max(self.y) - min(self.y)
+        heigth = max(self.x) - min(self.x)
         
-        p = Rectangle((min(self.x), min(self.y)), width, heigth, 
+        p = Rectangle((min(self.y), min(self.x)), width, heigth, 
                     edgecolor='black', facecolor='none', linestyle='--')
         ax.add_patch(p)
         art3d.pathpatch_2d_to_3d(p, z=self.level, zdir="y")
@@ -179,7 +179,7 @@ class MultiSweep:
         self.compute_objective()
 
         # Get the parameter space
-        x, y = np.meshgrid(self.x, self.y)
+        x, y = np.meshgrid(self.y, self.x)
         
         # Convert the error data to colormap
         color_dimension = self.results[self.level] # change to desired fourth dimension
@@ -219,8 +219,8 @@ class MultiSweep:
         ax = plt.axes(projection="3d")
         ax.view_init(elev=5.0, azim=75)
         ax.set_ylim(0, self.n_levels)
-        ax.set_zlim(0, 1)
-        ax.set_xlim(0, 10)
+        ax.set_zlim(0, 5)
+        ax.set_xlim(0, 1)
         ax.invert_xaxis()
 
         ax.set_xlabel(self.param_labels[0], labelpad=5)
