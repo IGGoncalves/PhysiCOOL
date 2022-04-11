@@ -1,13 +1,5 @@
 # Black-box models
 
-PhysiCOOL implements a PhysiCell-based black-box model that takes in some parameter values and outputs a user-defined metric. This black-box has three main components:
-
-- A function that updates the PhysiCell configuration file to reflect the input parameters;
-- The PhysiCell model;
-- A function that reads the model outputs and computes the desired output metric.
-
-These black-box models are modular in the sense that the users can select what functions to use to update the configuration file and to process the results.
-
 ## Configuration file updater functions
 
 The configuration file updater should receive a list of parameter values and update the PhysiCell configuration accordingly. Thus, the user should define how these values are dealt with. The code below shows an example that takes in the first value from the passed list and assigns it to the cell speed parameter, and that takes in the second value and assigns it to the motility bias. The function should also write these values to the XML file.
