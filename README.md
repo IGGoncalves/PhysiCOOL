@@ -32,13 +32,13 @@ Parameter estimation and model calibration can be achieved by assuming that a mo
 
 These black-box models are modular in the sense that the users can select what functions to use to update the configuration file and to process the results. For instance, users can decide to change the cells' motility parameters and evaluate the effect on the distance traveled by cells over time. Alternatively, the cell cycling rates could be varied to analyze the evolution of the number of cells.
 
-![black_box](docs/img/black_box)
+![black_box](https://github.com/IGGoncalves/PhysiCOOL/blob/main/docs/img/black_box)
 
 ### Multilevel parameter sweep
 
 The `MultiSweep` class exemplifies how PhysiCOOL can be used to calibrate models using some target data. It enables users to run a multilevel sweep using black-box models to find the parameter values that fit the target data by iteratively adapting and fitting the parameter space. To do so, at each level, the parameter space is sampled and value combinations are chosen. Simulations are run for all possible iterations and the results are processed to find the similarity between the models outputs and the target data. Subsequently, the values that produced the best set of results are chosen and the parameter bounds are adapted to converge to the local solution, as shown in the animation below.
 
-![exploration](docs/img/exploration.gif))
+![exploration](https://github.com/IGGoncalves/PhysiCOOL/blob/main/docs/img/exploration.gif)
 
 Users can choose **which parameters to vary** and their initial values, as well as the **number of levels** and the **number of points and ranges to explore at each level**. 
 
