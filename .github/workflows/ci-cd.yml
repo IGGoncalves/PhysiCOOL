@@ -9,10 +9,10 @@ jobs:
 
     # Define job steps
     steps:
-    - name: Set up Python 3.9
+    - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9
+        python-version: 3.8
 
     - name: Check-out repository
       uses: actions/checkout@v2
@@ -22,14 +22,6 @@ jobs:
 
     - name: Install package
       run: poetry install
-
-    - name: Test with pytest
-      run: poetry run pytest tests/ --cov=pycounts --cov-report=xml
-
-    - name: Use Codecov to track coverage
-      uses: codecov/codecov-action@v2
-      with:
-        files: ./coverage.xml   # coverage report
 
     - name: Build documentation
       run: poetry run make html --directory docs/
