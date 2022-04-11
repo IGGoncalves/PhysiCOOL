@@ -4,9 +4,9 @@
 [![Documentation Status](https://readthedocs.org/projects/physicool/badge/?version=latest)](https://physicool.readthedocs.io/en/latest/?badge=latest)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)
 
-PhysiCOOL aims to be a generalized framework for **model calibration in PhysiCell**. PhysiCell projects can be used a **black-box** to characterize how the model outputs change in response to variations in the input values. With this in mind, PhysiCOOL introduces a **model-agnostic calibration workflow** that easily integrates with PhysiCell models, and that allows users to **find the best set of parameters for their study**.
+PhysiCOOL aims to be a generalized framework for **parameter exploration and model calibration in PhysiCell**. Using this library, PhysiCell projects can be used as a **black-box** to characterize how the model outputs change in response to variations in the input values. PhysiCOOL provides new functions to easily update configuration files and change parameter values. It also provides functions to process and visualize simulation outputs (i.g., number of cells through time, total traveled distance,...). 
 
-PhysiCOOL provides new functions that allow users to easily specify the parameters to vary, as well as the metrics to be quantified (i.g., number of cells through time, total traveled distance,...). Check our [documentation](https://physicool.readthedocs.io) for some examples.
+Check our [documentation](https://physicool.readthedocs.io) for some examples.
 
 ## Instalation
 
@@ -20,7 +20,7 @@ pip install physicool
 
 ### PhysiCell as a black-box model
 
-PhysiCOOL lets you connect PhysiCell models to Python-based parameter estimation and calibration scripts. To do this, PhysiCOOL helps you convert PhysiCell models into a black-box function that implements the workflow presented below:
+PhysiCOOL lets you connect PhysiCell models to Python-based parameter estimation and calibration scripts. To do this, PhysiCOOL helps you convert PhysiCell models into a black-box script:
 
 ```mermaid
 graph LR
@@ -30,9 +30,9 @@ graph LR
 
 Both the functions that update the config file and that process the results data can be defined by the user.
 
-### 🏗️ Multilevel parameter sweep
+### Multilevel parameter sweep
 
-The `MultiSweep` class will let you run a **multilevel parameter sweep in which the parameter bounds are iteratively adapted based on the minimum value found at each level**. To create it, you must **select the model you want to run at each level** as well as the **target data** you want to use. Additionally, you can tune the **number of levels**, and the **number of points and ranges to explore at each level**. Additionally, you can define parameter bounds.
+The `MultiSweep` class exemplifies how PhysiCOOL can be used to calibrate models using some target data. It enables users to run a multilevel parameter sweep to find the parameter values that fit the target data. To do so, the parameter bounds are iteratively adapted based on the best parameter values found at each level. Users can choose **which parameters to vary** and their initial values, as well as the **number of levels** and the **number of points and ranges to explore at each level**. Parameter bounds can also be defined.
 
 ### Other utilities
 
@@ -40,19 +40,23 @@ PhysiCOOL implements a file parser (`ConfigFileParser`) that lets you read and w
 
 ## Examples
 
-You can run our examples on [Binder](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)!
+You can run our examples that don't require PhysiCell on [Binder](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)!
 
 - **Interactive parameter estimation example:**
-Guides you through a simple example of logistic growth to showcase how the multilevel sweep works.
+A simple example of logistic growth to showcase how the multilevel sweep works.
+
+- **Data analysis and visualization:**
+Examples of data visualization scripts, including interactive examples with Jupyter Widgets.
+
+### MultiSweep examples
+
+Examples to run with PhysiCell models:
 
 - 🏗️ **Single-cell motility:**
-Studies the effect of the migration bias and migration speed in the presence of a chemotactic gradient.
+Finding the best parameter values for migration bias and migration speed to model motility in the presence of a chemotactic gradient.
 
 - 🏗️ **Cell growth:**
-Studies the effect of the cell cycling rates on population growth. It also introduces gradient-based approaches.
-
-- 🏗️ **Data analysis and visualization:**
-Examples of data visualization scripts, including interactive examples with Jupyter Widgets.
+Finding the best parameter values for cell cycling rates to model population growth. It also introduces gradient-based approaches.
 
 ## Team
 
