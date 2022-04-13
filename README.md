@@ -36,9 +36,9 @@ These black-box models are modular in the sense that the users can select what f
 
 ### Multilevel parameter sweep
 
-The `MultiSweep` class exemplifies how PhysiCOOL can be used to calibrate models using some target data. It enables users to run a multilevel sweep using black-box models to find the parameter values that fit the target data by iteratively adapting and fitting the parameter space. To do so, at each level, the parameter space is sampled and value combinations are chosen. Simulations are run for all possible iterations and the results are processed to find the similarity between the models outputs and the target data. Subsequently, the values that produced the best set of results are chosen and the parameter bounds are adapted to converge to the local solution, as shown in the animation below.
+The `MultiSweep` class exemplifies how PhysiCOOL can be used to calibrate models using some target data. It enables users to run a multilevel sweep using black-box models to find the parameter values that fit the target data by iteratively adapting and fitting the parameter space. To do so, at each level, the parameter space is sampled and value combinations are chosen. Simulations are run for all possible iterations and the results are processed to find the similarity between the models outputs and the target data. Subsequently, the values that produced the best set of results are chosen and the parameter bounds are adapted to converge to the local solution, as sshown in the animation below.
 
-![exploration](https://github.com/IGGoncalves/PhysiCOOL/blob/main/docs/img/exploration.gif)
+![exploration](https://en.wiktionary.org/wiki/cat#/media/File:Cat03.jpg)
 
 Users can choose **which parameters to vary** and their initial values, as well as the **number of levels** and the **number of points and ranges to explore at each level**. 
 
