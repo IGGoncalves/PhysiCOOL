@@ -121,36 +121,13 @@ class Microenvironment:
 
         return me_data
 
-    def plot_heatmap(self, z_level):
-        fig, axes = plt.subplots(2, 2, figsize=(8, 12))
-        axes = axes.flatten()
-
-        z_index = np.where(self.mesh[2] == z_level)
-
-        for sub_index, ax in enumerate(axes):
-            data = self.data[self.substances[sub_index]][z_index][0]
-            max_value = data.max()
-            sns.heatmap(
-                data,
-                ax=axes[sub_index],
-                xticklabels=False,
-                yticklabels=False,
-                vmin=0,
-                vmax=max_value,
-                square=True,
-                cmap="YlGnBu_r",
-            )
-
-            ax.set_title(f"Substance: {self.substances[sub_index]}")
-
-        return fig, axes
-
-
 
 class Cells:
     def __init__(self, time, storage_path):
         self.time = time
         self.storage = storage_path
+
+        self.positions = self.get_cell_positions()
 
     def get_cell_positions(self):
         """Returns a dictionary with the cell output data for the selected variables."""
