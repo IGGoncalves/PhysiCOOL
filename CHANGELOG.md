@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.1 (13/04/2022)
+
+- Minor fixes to the MultiLevel Sweep class
+- Improved examples
+- Zenodo release
+
 <!--next-version-placeholder-->
 ## v0.1.0 (03/03/2022)
 
