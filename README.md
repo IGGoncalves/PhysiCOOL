@@ -2,6 +2,7 @@
 
 ![GitHub](https://img.shields.io/github/license/iggoncalves/PhysiCOOL)
 [![Documentation Status](https://readthedocs.org/projects/physicool/badge/?version=latest)](https://physicool.readthedocs.io/en/latest/?badge=latest)
+[![DOI](https://zenodo.org/badge/396329798.svg)](https://zenodo.org/badge/latestdoi/396329798)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)
 
 ## Overview
