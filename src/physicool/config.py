@@ -3,7 +3,21 @@ from pathlib import Path
 from xml.etree import ElementTree
 from dataclasses import dataclass
 from typing import Callable, List, Union
+from enum import Enum
 
+
+class CycleCode(Enum):
+    LIVE = 0
+    FLOW_CYTOMETRY_SEPARATED = 6
+
+class Cycle:
+    def __init__(self, code: CycleCode, transition_rates: List[float]):
+        self.code = code
+        self.rates = transition_rates
+
+@dataclass
+class Phenotype:
+    cycle: Cycle
 
 class Volume:
     """
@@ -538,6 +552,7 @@ class CellParameters:
     """A class to store the cell data for a given cell definition of the config file."""
 
     name: str
+    phenotype: Phenotype
     volume: Volume
     mechanics: Mechanics
     motility: Motility
@@ -571,6 +586,22 @@ class ConfigFileParser:
         substances = root.find("microenvironment/domain/variables").findall("variable")
 
         return [substance.attrib["name"] for substance in substances]
+
+    def read_cycle_params(self, name: str) -> Cycle:
+        # Build basic string stem to find motility cell data for cell definition
+        cell_string = f"cell_definitions/cell_definition[@name='{name}']"
+        stem = cell_string + "/phenotype/cycle"
+        
+        cycle_node = self.tree.find(stem)
+        code = CycleCode(int(cycle_node.items()[0][1]))
+        rates = [float(duration.text) for duration in cycle_node[0]]
+
+        return Cycle(code=code, transition_rates=rates)
+
+    def read_phenotype_params(self, name: str) -> Phenotype:
+        cycle = self.read_cycle_params(name)
+
+        return Phenotype(cycle=cycle)
 
     def read_volume_params(self, name: str) -> Volume:
         """Reads the motility parameters from the config file into a custom data structure"""
@@ -714,8 +745,6 @@ class ConfigFileParser:
         ----------
         name: str, default "default"
             The name of the cell definition to be read
-        substrate: str, default "substrate"
-            The name of the substrate to be read.
 
         Returns
         -------
@@ -732,12 +761,13 @@ class ConfigFileParser:
                 raise ValueError("Invalid cell definition")
 
             # Read and save the cell data
+            phenotype = self.read_phenotype_params(name)
             volume = self.read_volume_params(name)
             mechanics = self.read_mechanics_params(name)
             motility = self.read_motility_params(name)
             secretion = self.read_secretion_params(name)
 
-            return CellParameters(name, volume, mechanics, motility, secretion)
+            return CellParameters(name, phenotype, volume, mechanics, motility, secretion)
 
         except ValueError as ve:
             print(ve)
@@ -753,6 +783,13 @@ class ConfigFileParser:
             user_params[name] = value
 
         return user_params
+
+    def write_cycle_params(self, name: str, cycle: Cycle) -> None:
+        cell_string = f"cell_definitions/cell_definition[@name='{name}']"
+        stem = cell_string + "/phenotype/cycle"
+
+        for i, rate in enumerate(cycle.rates):
+            self.tree.find(stem + f"/phase_durations/duration[@index='{i}']").text = str(rate)
 
     def write_motility_params(self, name: str, motility: Motility) -> None:
         """
@@ -806,6 +843,7 @@ class ConfigFileParser:
             The new cell parameters to be writeen to the XML file.
         """
         self.write_motility_params(name, new_parameters.motility)
+        self.write_cycle_params(name, new_parameters.phenotype.cycle)
 
         self.tree.write(self.config_file)
 
