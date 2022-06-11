@@ -1,11 +1,11 @@
 from pathlib import Path
-from typing import Callable, Union
+from typing import Callable, Union, List
 from xml.etree import ElementTree
 
 import numpy as np
+import pandas as pd
 from scipy import io as sio
-import matplotlib.pyplot as plt
-import seaborn as sns
+from sklearn.cluster import DBSCAN
 
 
 CELL_OUTPUT_LABELS = [
@@ -122,38 +122,109 @@ class Microenvironment:
         return me_data
 
 
-class Cells:
-    def __init__(self, time, storage_path):
-        self.time = time
-        self.storage = storage_path
-
-        self.positions = self.get_cell_positions()
-
-    def get_cell_positions(self):
-        """Returns a dictionary with the cell output data for the selected variables."""
-
-        variables = ["position_x", "position_y", "position_z"]
-
+def get_cell_data(timestep: int, variables: List[str], output_path: Path=Path("output")) -> pd.DataFrame:
+    """
+    Reads the PhysiCell output data into a Pandas DataFrame.
+    
+    Parameters
+    ----------
+    timestep
+        The time point to be read.
+    variables
+        The variables to be extracted from the file.
+    output_path
+        The path to where the ouput files can be found.
+        
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame with the passed variables for every cell.
+    """
+    try:
+        # Make sure that the variables can be found in the file
+        if any([var not in CELL_OUTPUT_LABELS for var in variables]):
+            raise ValueError("ValueError: The passed variables are not valid names.")
+            
         # Create path name
-        time_str = str(self.time).zfill(8)
+        time_str = str(timestep).zfill(8)
         file_name = "output{}_cells_physicell.mat".format(time_str)
-        path_name = self.storage / file_name
-
+        path_name = output_path / file_name
+        
+        # Make sure that the timestep has been recorded and saved
+        if path_name not in output_path.glob("output*_cells_physicell.mat"):
+            raise ValueError("ValueError: The passed time point does not match any file.")
+        
         # Read output file
         cell_data = sio.loadmat(path_name)["cells"]
 
         # Select and save the variables of interest
         variables_indexes = [CELL_OUTPUT_LABELS.index(var) for var in variables]
-        cells = {
-            var: cell_data[index, :] for var, index in zip(variables, variables_indexes)
-        }
+        cells = pd.DataFrame.from_dict({var: cell_data[index, :] 
+                                        for var, index in zip(variables, variables_indexes)})
+        # Save the time point just in case
+        cells["timestep"] = timestep
 
-        return [
-            (x, y, z)
-            for x, y, z in zip(
-                cells["position_x"], cells["position_y"], cells["position_z"]
-            )
-        ]
+        return cells
+    
+    except ValueError as err:
+        print(err)
+        
+
+def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
+    """
+    Selects the cells inside a z-axis slice and returns them.
+    The slice will be centered at 0 and have the passed size.
+    
+    Parameters
+    ----------
+    data
+        A DataFrame with the cells' coordinates
+        (must contain a column called "position_z").
+    size
+        The size of the z-slice.
+    
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame that only contains the cells inside the slice.
+    """
+    try:
+        if "position_z" not in data.columns:
+            raise ValueError("ValueError: The DataFrame doesn't include the cells' z coordinates.")
+
+        return data[(data["position_z"] >= -size/2) & (data["position_z"] <= size/2)].copy()
+    except ValueError as err:
+        print(err)
+
+
+def classify_clusters(data: pd.DataFrame, radius: float, min_cells: int, use_2D: bool=True) -> None:
+    """
+    Classifies cells into clusters and saves their cluster label.
+    Clusterization is done with DBSCAN (from sklearn)-
+    
+    Parameters
+    ----------
+    data
+        A DataFrame with the cells' coordinates.
+    radius
+        The radius to be considered by the DBSCAN algorithm.
+    min_cells
+        The minimum number of cells to form a cluster, to be
+        considered by the DBSCAN algorithm.
+    use_2D
+        If clusterization should be performed in 2D (x, y).
+    """
+    # Get the right indexes in case the DataFrame has been modified before
+    cell_indexes = data.index.to_list()
+
+    # Classify cells based on spatial information
+    coordinates = ['position_x', 'position_y'] if use_2D else ['position_x', 'position_y', "position_z"]
+    cells_positions = data.loc[cell_indexes][coordinates]
+    dbscan_clusters = DBSCAN(eps=radius, min_samples=min_cells).fit(cells_positions)
+
+    # Update the cells DataFrame with the corresponding cluster labels
+    for i, idx in enumerate(cell_indexes):
+        data.loc[idx, 'cluster'] = dbscan_clusters.labels_[i]
 
 
 def compute_error(model_data, reference_data):
@@ -163,10 +234,3 @@ def compute_error(model_data, reference_data):
 
 OutputProcessor = Callable[[Path], Union[float, np.ndarray]]
 
-
-def process_final_y_distance_data(storage_path: Path) -> np.ndarray:
-    # Read the data saved at each time point
-    coordinates = Cells(0, storage_path).get_cell_positions()
-    y_component = [coordinate[1] for coordinate in coordinates]
-
-    return np.array(y_component)
