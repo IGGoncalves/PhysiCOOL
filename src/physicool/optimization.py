@@ -1,10 +1,11 @@
+from abc import ABC, abstractclassmethod
 from pathlib import Path
 from sys import platform
 import subprocess
-from typing import List
+from typing import List, Optional
+from distutils.dir_util import copy_tree
 
 import numpy as np
-from pandas import DataFrame
 import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib.patches import Rectangle
@@ -14,16 +15,130 @@ from physicool.config import ParamsUpdater
 from physicool.processing import OutputProcessor, compute_error
 
 
-class PhysiCellBlackBox:
+class BlackBox(ABC):
     def __init__(
-        self,
-        updater: ParamsUpdater,
-        processor: OutputProcessor,
-        project_name: str = "project",
+            self,
+            project_name: str = "project",
+            keep_files: bool = True
     ) -> None:
         # Define the paths where the PhysiCell files/folders can be found
-        self.storage_path = Path("output/")
         self.config_path = Path("config/PhysiCell_settings.xml")
+        self.keep_files = keep_files
+
+        # Define the command to be called to run the model based on the current OS
+        if platform == "win32":
+            self.project_command = f"{project_name}.exe"
+        else:
+            self.project_command = f"./{project_name}"
+
+    @abstractclassmethod
+    def run(self, number_of_replicates: int = 1) -> Optional[np.ndarray]:
+        pass
+
+    @staticmethod
+    def _create_temp_folder():
+        storage_folder = "temp"
+        Path(storage_folder).mkdir(parents=True, exist_ok=True)
+
+        return storage_folder
+
+    @staticmethod
+    def _create_replicate_folder(replicate: int):
+        storage_folder = f"temp/replicate{replicate}"
+        Path(storage_folder).mkdir(parents=True, exist_ok=True)
+
+        return storage_folder
+
+    @staticmethod
+    def _copy_files_to_temp_folder(folder_name: str):
+        copy_tree("output", folder_name)
+
+
+class SimpleBlackBox(BlackBox):
+    def run(self, number_of_replicates: int = 1) -> Optional[np.ndarray]:
+        """
+        Runs the black box pipeline: updates the config file,
+        runs the model and retrieves the results.
+        """
+        if self.keep_files:
+            storage_folder = self._create_temp_folder()
+
+        for i in range(number_of_replicates):
+            if self.keep_files & (number_of_replicates > 1):
+                storage_folder = self._create_replicate_folder(replicate=i)
+            # Run the PhysiCell simulation
+            subprocess.run(self.project_command, shell=True)
+
+            if self.keep_files:
+                self._copy_files_to_temp_folder(storage_folder)
+
+        return
+
+
+class BlackBoxWithUpdater(BlackBox):
+    def __init__(self, updater: Optional[ParamsUpdater] = None,
+                 project_name: str = "project", keep_files: bool = True):
+        self.updater = updater
+        self.current_values = None
+        super().__init__(project_name, keep_files)
+
+    def run(self, number_of_replicates: int = 1) -> Optional[np.ndarray]:
+        self.updater.write_params(new_values=self.current_values)
+        self.updater.save_data()
+        if self.keep_files:
+            storage_folder = self._create_temp_folder()
+
+        for i in range(number_of_replicates):
+            if self.keep_files & (number_of_replicates > 1):
+                storage_folder = self._create_replicate_folder(replicate=i)
+            # Run the PhysiCell simulation
+            subprocess.run(self.project_command, shell=True)
+
+            if self.keep_files:
+                self._copy_files_to_temp_folder(storage_folder)
+
+        return
+
+    def set_params(self, new_values: List[float]):
+        self.current_values = new_values
+
+
+class BlackBoxWithProcessor(BlackBox):
+    def __init__(self, processor: Optional[OutputProcessor] = None,
+                 project_name: str = "project", keep_files: bool = True):
+        self.processor = processor
+        super().__init__(project_name, keep_files)
+
+    def run(self, number_of_replicates: int = 1) -> Optional[np.ndarray]:
+        if self.keep_files:
+            storage_folder = self._create_temp_folder()
+
+        output_metrics = np.empty(shape=(number_of_replicates, 0))
+
+        for i in range(number_of_replicates):
+            if self.keep_files & (number_of_replicates > 1):
+                storage_folder = self._create_replicate_folder(replicate=i)
+            # Run the PhysiCell simulation
+            subprocess.run(self.project_command, shell=True)
+            output_metrics[i] = self.processor(Path("output"))
+
+            if self.keep_files:
+                self._copy_files_to_temp_folder(storage_folder)
+
+        return output_metrics
+
+
+class PhysiCellBlackBox:
+    def __init__(
+            self,
+            updater: Optional[ParamsUpdater] = None,
+            processor: Optional[OutputProcessor] = None,
+            project_name: str = "project",
+            keep_files: bool = True
+    ) -> None:
+        # Define the paths where the PhysiCell files/folders can be found
+        self.config_path = Path("config/PhysiCell_settings.xml")
+        self.keep_files = keep_files
 
         # Define the command to be called to run the model based on the current OS
         if platform == "win32":
@@ -34,17 +149,35 @@ class PhysiCellBlackBox:
         self.updater = updater
         self.processor = processor
 
-    def run(self, params: List[float]) -> DataFrame:
+    def run(self, params: Optional[List[float]] = None, number_of_replicates: int = 1):
         """
         Runs the black box pipeline: updates the config file, 
         runs the model and retrieves the results.
         """
-        self.updater(new_values=params)
+        if self.keep_files:
+            storage_folder = "temp"
+            Path(storage_folder).mkdir(parents=True, exist_ok=True)
 
-        # Run the PhysiCell simulation
-        subprocess.run(self.project_command, shell=True, stdout=subprocess.DEVNULL)
+        if self.updater:
+            self.updater.write_params(new_values=params)
+            self.updater.save_data()
 
-        return self.processor(self.storage_path)
+        if self.processor:
+            x = np.empty(shape=(1,))
+
+        for i in range(number_of_replicates):
+            if (number_of_replicates > 1) & self.keep_files:
+                storage_folder = f"temp/replicate{i}"
+                Path(storage_folder).mkdir(parents=True, exist_ok=True)
+
+            # Run the PhysiCell simulation
+            subprocess.run(self.project_command, shell=True)
+
+            if self.processor:
+                return self.processor(Path("output"))
+
+            if self.keep_files:
+                copy_tree("output", storage_folder)
 
 
 class MultiSweep:
@@ -125,7 +258,7 @@ class MultiSweep:
         I = np.argmin(self.results[self.level])
         i = int(np.floor(I / self.npdir))
         j = int(I - self.npdir * i)
-        
+
         return self.x[i], self.y[j]
 
     def get_new_ax_lims(self):
@@ -153,12 +286,11 @@ class MultiSweep:
     def add_bounds_to_ax(self, ax):
         width = max(self.y) - min(self.y)
         heigth = max(self.x) - min(self.x)
-        
-        p = Rectangle((min(self.y), min(self.x)), width, heigth, 
-                    edgecolor='black', facecolor='none', linestyle='--')
+
+        p = Rectangle((min(self.y), min(self.x)), width, heigth,
+                      edgecolor='black', facecolor='none', linestyle='--')
         ax.add_patch(p)
         art3d.pathpatch_2d_to_3d(p, z=self.level, zdir="y")
-
 
     def get_colormap(self):
         color_dimension = self.results[0]
@@ -180,21 +312,21 @@ class MultiSweep:
 
         # Get the parameter space
         x, y = np.meshgrid(self.y, self.x)
-        
+
         # Convert the error data to colormap
-        color_dimension = self.results[self.level] # change to desired fourth dimension
+        color_dimension = self.results[self.level]  # change to desired fourth dimension
         minn, maxx = color_dimension.min(), color_dimension.max()
         norm = colors.Normalize(minn, maxx)
         m = plt.cm.ScalarMappable(norm=norm, cmap='Spectral_r')
         m.set_array([])
         fcolors = m.to_rgba(color_dimension)
-        
+
         # Plot surface using color as a 4th dimension
-        ax.plot_surface(x, np.ones((len(self.x), len(self.x)))*self.level, y,
+        ax.plot_surface(x, np.ones((len(self.x), len(self.x))) * self.level, y,
                         facecolors=fcolors,
                         edgecolor='white', linewidth=0.1, rstride=1, cstride=1,
                         vmin=minn, vmax=maxx)
-    
+
         fig.canvas.draw()
 
         if self.level == 0:

@@ -1,8 +1,9 @@
 # This module enables users to programmatically modify their PhysiCell XML config file
+from abc import ABC, abstractclassmethod
 from pathlib import Path
 from xml.etree import ElementTree
 from dataclasses import dataclass
-from typing import Callable, List, Union
+from typing import List, Union
 from enum import Enum
 
 
@@ -591,7 +592,7 @@ class ConfigFileParser:
         # Build basic string stem to find motility cell data for cell definition
         cell_string = f"cell_definitions/cell_definition[@name='{name}']"
         stem = cell_string + "/phenotype/cycle"
-        
+
         cycle_node = self.tree.find(stem)
         code = CycleCode(int(cycle_node.items()[0][1]))
         rates = [float(duration.text) for duration in cycle_node[0]]
@@ -697,7 +698,7 @@ class ConfigFileParser:
             chemo_direction,
         )
 
-    def read_secretion_params(self, name: str) -> Secretion:
+    def read_secretion_params(self, name: str) -> List[Secretion]:
         """Reads the secretion parameters from the config file into a custom data structure"""
         # Build basic string stem to find secretion cell data for cell definition
         cell_string = f"cell_definitions/cell_definition[@name='{name}']"
@@ -848,34 +849,34 @@ class ConfigFileParser:
         self.tree.write(self.config_file)
 
 
-ParamsUpdater = Callable[[List[float]], None]
+class ParamsUpdater(ABC):
+    """A class to update the XML config file."""
+    def __init__(self, cell_definition_name: str = "default") -> None:
+        self.parser = ConfigFileParser()
+        self.definition_name = cell_definition_name
+        self.data = self.parser.read_cell_data(cell_definition_name)
+
+    @abstractclassmethod
+    def write_params(self, new_values: List[float]) -> None:
+        """Writes the passed values to the CellParameters variables of interest."""
+        pass
+
+    def save_data(self) -> None:
+        """Saves the new parameter values to the XML file."""
+        self.parser.update_params(name=self.definition_name, new_parameters=self.data)
 
 
-def update_motility_params(self, new_values: List[float]) -> None:
-    cell_definition_name = "default"
-
-    # Read the data from the file
-    xml_parser = ConfigFileParser()
-    cell_data = xml_parser.read_cell_data(cell_definition_name)
-
-    # Update the data
-    cell_data.motility.speed = new_values[0]
-    cell_data.motility.persistence = new_values[1]
-    cell_data.motility.bias = new_values[2]
-
-    xml_parser.update_params(cell_data)
+class MotilityUpdater(ParamsUpdater):
+    """A class to update the XML config file with motility data."""
+    def write_params(self, new_values: List[float]) -> None:
+        self.data.motility.speed = new_values[0]
+        self.data.motility.persistence = new_values[1]
+        self.data.motility.bias = new_values[2]
 
 
-def update_mechanics_params(self, new_values: List[float]) -> None:
-    cell_definition_name = "default"
-
-    # Read the data from the file
-    xml_parser = ConfigFileParser()
-    cell_data = xml_parser.read_cell_data(cell_definition_name)
-
-    # Update the data
-    cell_data.mechanics.adhesion_strength = new_values[0]
-    cell_data.mechanics.repulsion_strength = new_values[1]
-    cell_data.mechanics.adhesion_distance = new_values[2]
-
-    xml_parser.update_params(cell_data)
+class MechanicsUpdater(ParamsUpdater):
+    """A class to update the XML config file with motility data."""
+    def write_params(self, new_values: List[float]) -> None:
+        self.data.mechanics.adhesion_strength = new_values[0]
+        self.data.mechanics.repulsion_strength = new_values[1]
+        self.data.mechanics.adhesion_distance = new_values[2]
