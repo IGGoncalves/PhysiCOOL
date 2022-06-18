@@ -5,7 +5,6 @@ from xml.etree import ElementTree
 import numpy as np
 import pandas as pd
 from scipy import io as sio
-from sklearn.cluster import DBSCAN
 
 
 CELL_OUTPUT_LABELS = [
@@ -195,36 +194,6 @@ def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
         return data[(data["position_z"] >= -size/2) & (data["position_z"] <= size/2)].copy()
     except ValueError as err:
         print(err)
-
-
-def classify_clusters(data: pd.DataFrame, radius: float, min_cells: int, use_2D: bool=True) -> None:
-    """
-    Classifies cells into clusters and saves their cluster label.
-    Clusterization is done with DBSCAN (from sklearn)-
-    
-    Parameters
-    ----------
-    data
-        A DataFrame with the cells' coordinates.
-    radius
-        The radius to be considered by the DBSCAN algorithm.
-    min_cells
-        The minimum number of cells to form a cluster, to be
-        considered by the DBSCAN algorithm.
-    use_2D
-        If clusterization should be performed in 2D (x, y).
-    """
-    # Get the right indexes in case the DataFrame has been modified before
-    cell_indexes = data.index.to_list()
-
-    # Classify cells based on spatial information
-    coordinates = ['position_x', 'position_y'] if use_2D else ['position_x', 'position_y', "position_z"]
-    cells_positions = data.loc[cell_indexes][coordinates]
-    dbscan_clusters = DBSCAN(eps=radius, min_samples=min_cells).fit(cells_positions)
-
-    # Update the cells DataFrame with the corresponding cluster labels
-    for i, idx in enumerate(cell_indexes):
-        data.loc[idx, 'cluster'] = dbscan_clusters.labels_[i]
 
 
 def compute_error(model_data, reference_data):
