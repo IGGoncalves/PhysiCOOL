@@ -1,9 +1,9 @@
-from abc import ABC, abstractclassmethod
+from dataclasses import dataclass, field
 from pathlib import Path
 from sys import platform
 import subprocess
 from typing import List, Optional
-from distutils.dir_util import copy_tree
+from distutils.dir_util import copy_tree, remove_tree
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,169 +15,97 @@ from physicool.config import ParamsUpdater
 from physicool.processing import OutputProcessor, compute_error
 
 
-class BlackBox(ABC):
-    def __init__(
-            self,
-            project_name: str = "project",
-            keep_files: bool = True
-    ) -> None:
-        # Define the paths where the PhysiCell files/folders can be found
-        self.config_path = Path("config/PhysiCell_settings.xml")
-        self.keep_files = keep_files
+def _create_project_command(project_name: str) -> str:
+    """
+    Creates a project command based on the current OS.
 
-        # Define the command to be called to run the model based on the current OS
-        if platform == "win32":
-            self.project_command = f"{project_name}.exe"
-        else:
-            self.project_command = f"./{project_name}"
+    Parameters
+    -----------
+    project_name:
+        The base name of the PhysiCell executable file.
 
-    @abstractclassmethod
-    def run(self, number_of_replicates: int = 1) -> Optional[np.ndarray]:
-        pass
+    Returns
+    --------
+    str
+        The full command to be called in order to run the
+        executable in the shell, adapted to the current OS.
+    """
+    if platform == "win32":
+        return f"{project_name}.exe"
 
-    @staticmethod
-    def _create_temp_folder():
-        storage_folder = "temp"
-        Path(storage_folder).mkdir(parents=True, exist_ok=True)
-
-        return storage_folder
-
-    @staticmethod
-    def _create_replicate_folder(replicate: int):
-        storage_folder = f"temp/replicate{replicate}"
-        Path(storage_folder).mkdir(parents=True, exist_ok=True)
-
-        return storage_folder
-
-    @staticmethod
-    def _copy_files_to_temp_folder(folder_name: str):
-        copy_tree("output", folder_name)
+    return f"./{project_name}"
 
 
-class SimpleBlackBox(BlackBox):
-    def run(self, number_of_replicates: int = 1) -> Optional[np.ndarray]:
-        """
-        Runs the black box pipeline: updates the config file,
-        runs the model and retrieves the results.
-        """
-        if self.keep_files:
-            storage_folder = self._create_temp_folder()
-
-        for i in range(number_of_replicates):
-            if self.keep_files & (number_of_replicates > 1):
-                storage_folder = self._create_replicate_folder(replicate=i)
-            # Run the PhysiCell simulation
-            subprocess.run(self.project_command, shell=True)
-
-            if self.keep_files:
-                self._copy_files_to_temp_folder(storage_folder)
-
-        return
+def _clean_outputs() -> None:
+    """Removes the files from the output folder (make data-cleanup)."""
+    remove_tree("output")
+    Path("output").mkdir()
 
 
-class BlackBoxWithUpdater(BlackBox):
-    def __init__(self, updater: Optional[ParamsUpdater] = None,
-                 project_name: str = "project", keep_files: bool = True):
-        self.updater = updater
-        self.current_values = None
-        super().__init__(project_name, keep_files)
-
-    def run(self, number_of_replicates: int = 1) -> Optional[np.ndarray]:
-        self.updater.write_params(new_values=self.current_values)
-        self.updater.save_data()
-        if self.keep_files:
-            storage_folder = self._create_temp_folder()
-
-        for i in range(number_of_replicates):
-            if self.keep_files & (number_of_replicates > 1):
-                storage_folder = self._create_replicate_folder(replicate=i)
-            # Run the PhysiCell simulation
-            subprocess.run(self.project_command, shell=True)
-
-            if self.keep_files:
-                self._copy_files_to_temp_folder(storage_folder)
-
-        return
-
-    def set_params(self, new_values: List[float]):
-        self.current_values = new_values
-
-
-class BlackBoxWithProcessor(BlackBox):
-    def __init__(self, processor: Optional[OutputProcessor] = None,
-                 project_name: str = "project", keep_files: bool = True):
-        self.processor = processor
-        super().__init__(project_name, keep_files)
-
-    def run(self, number_of_replicates: int = 1) -> Optional[np.ndarray]:
-        if self.keep_files:
-            storage_folder = self._create_temp_folder()
-
-        output_metrics = np.empty(shape=(number_of_replicates, 0))
-
-        for i in range(number_of_replicates):
-            if self.keep_files & (number_of_replicates > 1):
-                storage_folder = self._create_replicate_folder(replicate=i)
-            # Run the PhysiCell simulation
-            subprocess.run(self.project_command, shell=True)
-            output_metrics[i] = self.processor(Path("output"))
-
-            if self.keep_files:
-                self._copy_files_to_temp_folder(storage_folder)
-
-        return output_metrics
-
-
+@dataclass
 class PhysiCellBlackBox:
-    def __init__(
-            self,
-            updater: Optional[ParamsUpdater] = None,
-            processor: Optional[OutputProcessor] = None,
-            project_name: str = "project",
-            keep_files: bool = True
-    ) -> None:
-        # Define the paths where the PhysiCell files/folders can be found
-        self.config_path = Path("config/PhysiCell_settings.xml")
-        self.keep_files = keep_files
+    """
+    A class to run PhysiCell models through Python as a black box.
+    Models can be run as they are and it's possible to run replicates.
 
-        # Define the command to be called to run the model based on the current OS
-        if platform == "win32":
-            self.project_command = f"{project_name}.exe"
-        else:
-            self.project_command = f"./{project_name}"
+    Alternatively, users can decide to include a ParamsUpdater object to
+    change values in the XML file before the model is run and/or a
+    OutputProcessor to extract data from the output files and return a given
+    user-defined metric.
 
-        self.updater = updater
-        self.processor = processor
+    Output files can be kept or discarded. If kept, they will be stored
+    inside a new "temp" folder.
+    """
 
-    def run(self, params: Optional[List[float]] = None, number_of_replicates: int = 1):
+    updater: Optional[ParamsUpdater] = None
+    processor: Optional[OutputProcessor] = None
+    project_name: str = "project"
+    keep_files: bool = True
+    project_command: str = field(init=False)
+
+    def __post_init__(self):
+        self.project_command = _create_project_command(self.project_name)
+
+    def run(
+        self, params: Optional[List[float]] = None, number_of_replicates: int = 1
+    ) -> Optional[np.ndarray]:
         """
-        Runs the black box pipeline: updates the config file, 
-        runs the model and retrieves the results.
+        Runs the black box pipeline according to
         """
+        # Create a new directory to store the output files
         if self.keep_files:
             storage_folder = "temp"
-            Path(storage_folder).mkdir(parents=True, exist_ok=True)
+            Path(storage_folder).mkdir()
 
+        # Update the XML configuration file with the passed values
         if self.updater:
-            self.updater.write_params(new_values=params)
-            self.updater.save_data()
+            self.updater.update(new_values=params)
 
+        # Create an array to store the metrics computed by the processor
         if self.processor:
-            x = np.empty(shape=(1,))
+            output_metrics = np.empty(shape=(number_of_replicates,))
 
+        # Run the PhysiCell model for each replicate
+        # Create a new directory, run the model and save the files to this
+        # location and compute and store the model output metrics
         for i in range(number_of_replicates):
             if (number_of_replicates > 1) & self.keep_files:
                 storage_folder = f"temp/replicate{i}"
-                Path(storage_folder).mkdir(parents=True, exist_ok=True)
+                Path(storage_folder).mkdir()
 
-            # Run the PhysiCell simulation
             subprocess.run(self.project_command, shell=True)
 
             if self.processor:
-                return self.processor(Path("output"))
+                output_metrics[i] = self.processor(Path("output"))
 
             if self.keep_files:
                 copy_tree("output", storage_folder)
+
+        # Delete the files from the "output" folder
+        _clean_outputs()
+
+        if self.processor:
+            return output_metrics
 
 
 class MultiSweep:
@@ -249,7 +177,9 @@ class MultiSweep:
                 # Select parameters and run the model
                 self.parameters_in_sweep[self.param_labels[0]] = x_value
                 self.parameters_in_sweep[self.param_labels[1]] = y_value
-                N_model = self.model.run([self.parameters_in_sweep["x"], self.parameters_in_sweep["y"]])
+                N_model = self.model.run(
+                    [self.parameters_in_sweep["x"], self.parameters_in_sweep["y"]]
+                )
 
                 # Compute error
                 self.results[self.level][i][j] = compute_error(N_model, self.data)
@@ -287,8 +217,14 @@ class MultiSweep:
         width = max(self.y) - min(self.y)
         heigth = max(self.x) - min(self.x)
 
-        p = Rectangle((min(self.y), min(self.x)), width, heigth,
-                      edgecolor='black', facecolor='none', linestyle='--')
+        p = Rectangle(
+            (min(self.y), min(self.x)),
+            width,
+            heigth,
+            edgecolor="black",
+            facecolor="none",
+            linestyle="--",
+        )
         ax.add_patch(p)
         art3d.pathpatch_2d_to_3d(p, z=self.level, zdir="y")
 
@@ -317,15 +253,23 @@ class MultiSweep:
         color_dimension = self.results[self.level]  # change to desired fourth dimension
         minn, maxx = color_dimension.min(), color_dimension.max()
         norm = colors.Normalize(minn, maxx)
-        m = plt.cm.ScalarMappable(norm=norm, cmap='Spectral_r')
+        m = plt.cm.ScalarMappable(norm=norm, cmap="Spectral_r")
         m.set_array([])
         fcolors = m.to_rgba(color_dimension)
 
         # Plot surface using color as a 4th dimension
-        ax.plot_surface(x, np.ones((len(self.x), len(self.x))) * self.level, y,
-                        facecolors=fcolors,
-                        edgecolor='white', linewidth=0.1, rstride=1, cstride=1,
-                        vmin=minn, vmax=maxx)
+        ax.plot_surface(
+            x,
+            np.ones((len(self.x), len(self.x))) * self.level,
+            y,
+            facecolors=fcolors,
+            edgecolor="white",
+            linewidth=0.1,
+            rstride=1,
+            cstride=1,
+            vmin=minn,
+            vmax=maxx,
+        )
 
         fig.canvas.draw()
 
