@@ -67,10 +67,6 @@ class Volume:
         self.calcification_rate = calcification_rate
         self.rupture_volume = rupture_volume
 
-    def __str__(self) -> str:
-        """Returns the string representation of the Volume class."""
-        return "Volume parameter values."
-
     def __repr__(self) -> str:
         """Returns the representation of the Volume class."""
         return (
@@ -226,10 +222,6 @@ class Mechanics:
         self.repulsion_strength = repulsion_strength
         self.adhesion_distance = adhesion_distance
 
-    def __str__(self) -> str:
-        """Returns the string representation of the Mechanics class."""
-        return "Mechanics parameter values."
-
     def __repr__(self) -> str:
         """Returns the representation of the Mechanics class."""
         return (
@@ -322,10 +314,6 @@ class Motility:
         self.chemo_enabled = chemo_enabled
         self.chemo_substrate = chemo_substrate
         self.chemo_direction = chemo_direction
-
-    def __str__(self) -> str:
-        """Returns the string representation of the Motility class."""
-        return "Motility parameter values."
 
     def __repr__(self) -> str:
         """Returns the representation of the Motility class."""
@@ -473,10 +461,6 @@ class Secretion:
         self.secretion_target = secretion_target
         self.uptake_rate = uptake_rate
         self.net_export_rate = net_export_rate
-
-    def __str__(self) -> str:
-        """Returns the string representation of the Secretion class."""
-        return f"Secretion parameters for {self.name}."
 
     def __repr__(self) -> str:
         """Returns the representation of the Secretion class."""
