@@ -19,71 +19,69 @@ class PhysiCellConfigTest(unittest.TestCase):
 
     def test_read_volume_params(self):
         """Asserts that the volume parameters extracted from the config file are correct."""
-        expected_values = [2494.0, 0.75, 540.0, 0.05, 0.0045, 0.0055, 0.0, 0.0, 2.0]
+        expected_data = config.Volume(
+            total_volume=2494.0,
+            fluid_fraction=0.75,
+            nuclear=540.0,
+            fluid_change_rate=0.05,
+            cyto_bio_rate=0.0045,
+            nuclear_bio_rate=0.0055,
+            calcified_fraction=0.0,
+            calcification_rate=0.0,
+            rupture_volume=2.0,
+        )
 
         volume_data = self.xml_data.read_volume_params("default")
-        parsed_data = [
-            volume_data.total_volume,
-            volume_data.fluid_fraction,
-            volume_data.nuclear,
-            volume_data.fluid_change_rate,
-            volume_data.cyto_bio_rate,
-            volume_data.nuclear_bio_rate,
-            volume_data.calcified_fraction,
-            volume_data.calcification_rate,
-            volume_data.rupture_volume,
-        ]
 
-        self.assertEqual(expected_values, parsed_data)
+        self.assertEqual(expected_data, volume_data)
 
     def test_read_mechanics_params(self):
         """Asserts that the mechanics parameters extracted from the config file are correct."""
-        expected_values = [0.4, 10.0, 1.25]
+        expected_data = config.Mechanics(
+            adhesion_strength=0.4, repulsion_strength=10.0, adhesion_distance=1.25
+        )
         mechanics_data = self.xml_data.read_mechanics_params("default")
 
-        parsed_data = [
-            mechanics_data.adhesion_strength,
-            mechanics_data.repulsion_strength,
-            mechanics_data.adhesion_distance,
-        ]
-
-        self.assertEqual(expected_values, parsed_data)
+        self.assertEqual(expected_data, mechanics_data)
 
     def test_read_motility_params(self):
         """Asserts that the motility parameters extracted from the config file are correct."""
-        expected_values = [1.0, 1.0, 0.5, False, True, False, "substrate", 1.0]
+        expected_data = config.Motility(
+            speed=1.0,
+            persistence=1.0,
+            bias=0.5,
+            motility_enabled=False,
+            use_2d=True,
+            chemo_enabled=False,
+            chemo_substrate="substrate",
+            chemo_direction=1.0,
+        )
         motility_data = self.xml_data.read_motility_params("default")
 
-        parsed_data = [
-            motility_data.speed,
-            motility_data.persistence,
-            motility_data.bias,
-            motility_data.motility_enabled,
-            motility_data.use_2d,
-            motility_data.chemo_enabled,
-            motility_data.chemo_substrate,
-            motility_data.chemo_direction,
-        ]
-
-        self.assertEqual(expected_values, parsed_data)
+        self.assertEqual(expected_data, motility_data)
 
     def test_read_secretion_params(self):
         """Asserts that the secretion parameters extracted from the config file are correct."""
-        expected_values = {"substrate": [0.0, 1.0, 0.0, 0.0],
-        "oxygen": [0.0, 1.0, 0.0, 0.0]}
+        expected_data = [
+            config.Secretion(
+                name="substrate",
+                secretion_rate=0.0,
+                secretion_target=1.0,
+                uptake_rate=0.0,
+                net_export_rate=0.0,
+            ),
+            config.Secretion(
+                name="oxygen",
+                secretion_rate=0.0,
+                secretion_target=1.0,
+                uptake_rate=0.0,
+                net_export_rate=0.0,
+            ),
+        ]
+
         secretion_data = self.xml_data.read_secretion_params("default")
 
-        parsed_data = {
-            substance.name: [
-                substance.secretion_rate,
-                substance.secretion_target,
-                substance.uptake_rate,
-                substance.net_export_rate,
-            ]
-            for substance in secretion_data
-        }
-
-        self.assertEqual(expected_values, parsed_data)
+        self.assertEqual(expected_data, secretion_data)
 
 
 if __name__ == "__main__":

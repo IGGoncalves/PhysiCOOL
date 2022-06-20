@@ -5,21 +5,9 @@ from dataclasses import dataclass, field
 from typing import Callable, List, Union
 from enum import Enum
 
+from pydantic import BaseModel, confloat
 
-class CycleCode(Enum):
-    LIVE = 0
-    FLOW_CYTOMETRY_SEPARATED = 6
-
-class Cycle:
-    def __init__(self, code: CycleCode, transition_rates: List[float]):
-        self.code = code
-        self.rates = transition_rates
-
-@dataclass
-class Phenotype:
-    cycle: Cycle
-
-class Volume:
+class Volume(BaseModel):
     """
     A class that represents the cell volume parameters stored in the config file.
 
@@ -44,234 +32,32 @@ class Volume:
     rupture_volume
         The cell relative rupture volume value.
     """
+    total_volume: confloat(ge=0.0)
+    fluid_fraction: confloat(ge=0.0, le=1.0)
+    nuclear: confloat(ge=0.0)
+    fluid_change_rate: confloat(ge=0.0)
+    cyto_bio_rate: confloat(ge=0.0)
+    nuclear_bio_rate: confloat(ge=0.0)
+    calcified_fraction: confloat(ge=0.0, le=1.0)
+    calcification_rate: confloat(ge=0.0)
+    rupture_volume: confloat(ge=0.0)
 
-    def __init__(
-        self,
-        total_volume: float,
-        fluid_fraction: float,
-        nuclear: float,
-        fluid_change_rate: float,
-        cyto_bio_rate: float,
-        nuclear_bio_rate: float,
-        calcified_fraction: float,
-        calcification_rate: float,
-        rupture_volume: float,
-    ) -> None:
-        self.total_volume = total_volume
-        self.fluid_fraction = fluid_fraction
-        self.nuclear = nuclear
-        self.fluid_change_rate = fluid_change_rate
-        self.cyto_bio_rate = cyto_bio_rate
-        self.nuclear_bio_rate = nuclear_bio_rate
-        self.calcified_fraction = calcified_fraction
-        self.calcification_rate = calcification_rate
-        self.rupture_volume = rupture_volume
-
-    def __repr__(self) -> str:
-        """Returns the representation of the Volume class."""
-        return (
-            f"Volume(total_volume={self.total_volume}, fluid_fraction={self.fluid_fraction}, nuclear={self.nuclear},"
-            f"fluid_change_rate={self.fluid_change_rate}, cyto_bio_rate{self.cyto_bio_rate},"
-            f"nuclear_bio_rate={self.nuclear_bio_rate}, calcified_fraction={self.calcified_fraction},"
-            f"calcification_rate={self.calcification_rate}, rupture_volume={self.rupture_volume})"
-        )
-
-    @property
-    def total_volume(self) -> float:
-        """
-        Returns the total volume value.
-        Raises a ValueError if the passed value is negative.
-        """
-        return self._total_volume
-
-    @total_volume.setter
-    def total_volume(self, total_volume: float) -> None:
-        if total_volume < 0:
-            raise ValueError("Total volume should be positve.")
-
-        self._total_volume = total_volume
-
-    @property
-    def fluid_fraction(self) -> float:
-        """
-        Returns the fluid fraction value.
-        Raises a ValueError if the passed value is not between 0 and 1.
-        """
-        return self._fluid_fraction
-
-    @fluid_fraction.setter
-    def fluid_fraction(self, fluid_fraction: float) -> None:
-        if fluid_fraction < 0.0 or fluid_fraction > 1.0:
-            raise ValueError("Fluid fraction should be between 0 and 1.")
-
-        self._fluid_fraction = fluid_fraction
-
-    @property
-    def nuclear(self) -> float:
-        """
-        Returns the nuclear voulme value.
-        Raises a ValueError if the passed value is negative.
-        """
-        return self._nuclear
-
-    @nuclear.setter
-    def nuclear(self, nuclear: float) -> None:
-        if nuclear < 0:
-            raise ValueError("Cell nuclear volume should be positive.")
-
-        self._nuclear = nuclear
-
-    @property
-    def fluid_change_rate(self) -> float:
-        """
-        Returns the fluid change rate value.
-        Raises a ValueError if the passed value is negative.
-        """
-        return self._fluid_change_rate
-
-    @fluid_change_rate.setter
-    def fluid_change_rate(self, fluid_change_rate: float) -> None:
-        if fluid_change_rate < 0:
-            raise ValueError("Fluid change rate should be positive.")
-
-        self._fluid_change_rate = fluid_change_rate
-
-    @property
-    def cyto_bio_rate(self) -> float:
-        """
-        Returns the cytoplasmic biomass change rate value.
-        Raises a ValueError if the passed value is negative.
-        """
-        return self._cyto_bio_rate
-
-    @cyto_bio_rate.setter
-    def cyto_bio_rate(self, cyto_bio_rate: float) -> None:
-        if cyto_bio_rate < 0:
-            raise ValueError("Cytoplasmic biomass change rate should be positive.")
-
-        self._cyto_bio_rate = cyto_bio_rate
-
-    @property
-    def nuclear_bio_rate(self) -> float:
-        """
-        Returns the nuclear biomass change rate value.
-        Raises a ValueError if the passed value is negative.
-        """
-        return self._nuclear_bio_rate
-
-    @nuclear_bio_rate.setter
-    def nuclear_bio_rate(self, nuclear_bio_rate: float) -> None:
-        if nuclear_bio_rate < 0:
-            raise ValueError("Nuclear biomass change rate should be positive.")
-
-        self._nuclear_bio_rate = nuclear_bio_rate
-
-    @property
-    def calcified_fraction(self) -> float:
-        """
-        Returns the calcified fraction value.
-        Raises a ValueError if the passed value is negative.
-        """
-        return self._calcified_fraction
-
-    @calcified_fraction.setter
-    def calcified_fraction(self, calcified_fraction: float) -> None:
-        if calcified_fraction < 0.0 or calcified_fraction > 1.0:
-            raise ValueError("Calcified fraction should be betwween 0 and 1.")
-
-        self._calcified_fraction = calcified_fraction
-
-    @property
-    def calcification_rate(self) -> float:
-        """
-        Returns the calcification rate value.
-        Raises a ValueError if the passed value is negative.
-        """
-        return self._calcification_rate
-
-    @calcification_rate.setter
-    def calcification_rate(self, calcification_rate: float) -> None:
-        if calcification_rate < 0:
-            raise ValueError("Calcification rate should be positive.")
-
-        self._calcification_rate = calcification_rate
-
-    @property
-    def rupture_volume(self) -> float:
-        """
-        Returns the relative rupture voulme value.
-        Raises a ValueError if the passed value is negative.
-        """
-        return self._rupture_volume
-
-    @rupture_volume.setter
-    def rupture_volume(self, rupture_volume: float) -> None:
-        if rupture_volume < 0:
-            raise ValueError("Relative rupture volume shoulde be positive.")
-
-        self._rupture_volume = rupture_volume
+    class Config:
+        validate_assignment = True
 
 
-class Mechanics:
+class Mechanics(BaseModel):
     """
     A class that represents the cell mechanics parameters stored in the config file.
     """
+    adhesion_strength: confloat(ge=0.0)
+    repulsion_strength: confloat(ge=0.0)
+    adhesion_distance: confloat(ge=0.0)
 
-    def __init__(self, adhesion_strength: float, repulsion_strength: float, adhesion_distance: float) -> None:
-        self.adhesion_strength = adhesion_strength
-        self.repulsion_strength = repulsion_strength
-        self.adhesion_distance = adhesion_distance
+    class Config:
+        validate_assignment = True
 
-    def __repr__(self) -> str:
-        """Returns the representation of the Mechanics class."""
-        return (
-            f"Mechanics(adhesion_strength={self.adhesion_strength}, repulsion_strength={self.repulsion_strength},"
-            f"adhesion_distance={self.adhesion_distance})"
-        )
-
-    @property
-    def adhesion_strength(self) -> float:
-        """
-        Returns the cell-cell adhesion value.
-        """
-        return self._adhesion_strength
-
-    @adhesion_strength.setter
-    def adhesion_strength(self, adhesion_strength: float) -> None:
-        if adhesion_strength < 0:
-            raise ValueError("Cell-cell adhesion should be positive.")
-
-        self._adhesion_strength = adhesion_strength
-
-    @property
-    def repulsion_strength(self) -> float:
-        """Returns the cell-cell repulsion value"""
-        return self._repulsion_strength
-
-    @repulsion_strength.setter
-    def repulsion_strength(self, repulsion_strength: float) -> None:
-        """Sets the cell-cell repulsion value, with validation"""
-        if repulsion_strength < 0:
-            raise ValueError("Cell-cell repulsion should be positive.")
-
-        self._repulsion_strength = repulsion_strength
-
-    @property
-    def adhesion_distance(self) -> float:
-        """Returns the relative maximum distance value"""
-        return self._adhesion_distance
-
-    @adhesion_distance.setter
-    def adhesion_distance(self, adhesion_distance: float) -> None:
-        """Sets the relative maximum distance value, with validation"""
-        if adhesion_distance < 0:
-            raise ValueError("Adhesion distance should be positive.")
-
-        self._adhesion_distance = adhesion_distance
-
-
-@dataclass
-class Motility:
+class Motility(BaseModel):
     """
     A class that represents the cell motility parameters stored in the config file.
 
@@ -294,142 +80,20 @@ class Motility:
     chemo_direction
         The direction of the chemotaxis motility.
     """
+    speed: confloat(ge=0.0)
+    persistence: confloat(ge=0.0)
+    bias: confloat(ge=0.0, le=1.0)
+    motility_enabled: bool
+    use_2d: bool
+    chemo_enabled: bool
+    chemo_substrate: str
+    chemo_direction: float
 
-    def __init__(
-        self,
-        speed: float,
-        persistence: float,
-        bias: float,
-        motility_enabled: bool,
-        use_2d: bool,
-        chemo_enabled: bool,
-        chemo_substrate: str,
-        chemo_direction: float,
-    ) -> None:
-        self.speed = speed
-        self.persistence = persistence
-        self.bias = bias
-        self.motility_enabled = motility_enabled
-        self.use_2d = use_2d
-        self.chemo_enabled = chemo_enabled
-        self.chemo_substrate = chemo_substrate
-        self.chemo_direction = chemo_direction
-
-    def __repr__(self) -> str:
-        """Returns the representation of the Motility class."""
-        return (
-            f"Motility(speed={self.speed}, persistence={self.persistence}, bias={self.bias},"
-            f"motility_enabled={self.motility_enabled}, use2d={self.use_2d},"
-            f"chemo_enabled={self.chemo_enabled}, chemo_substrate={self.chemo_substrate},"
-            f"chemo_direction={self.chemo_direction})"
-        )
-
-    @property
-    def speed(self) -> float:
-        """
-        Returns the cell speed value.
-        Raises a ValueError if the passed value is not positive.
-        """
-        return self._speed
-
-    @speed.setter
-    def speed(self, speed: float) -> None:
-        if speed < 0.0:
-            raise ValueError("Speed should be positive.")
-
-        self._speed = speed
-
-    @property
-    def persistence(self) -> float:
-        """
-        Returns the cell persistence time value.
-        Raises a ValueError if the passed value is not positive.
-        """
-        return self._persistence
-
-    @persistence.setter
-    def persistence(self, persistence: float) -> None:
-        if persistence < 0.0:
-            raise ValueError("Persistence time should be positive.")
-
-        self._persistence = persistence
-
-    @property
-    def bias(self) -> float:
-        """
-        Returns the cell motility bias.
-        Raises a ValueError if the passed value is not between 0 and 1.
-        """
-        return self._bias
-
-    @bias.setter
-    def bias(self, bias: float) -> None:
-        if bias < 0.0 or bias > 1.0:
-            raise ValueError("Motility bias should be between 0 and 1.")
-
-        self._bias = bias
-
-    @property
-    def motility_enabled(self) -> bool:
-        """
-        Returns the status of the cell motility.
-        """
-        return self._motility_enabled
-
-    @motility_enabled.setter
-    def motility_enabled(self, motility_enabled: bool) -> None:
-        self._motility_enabled = motility_enabled
-
-    @property
-    def use_2d(self) -> bool:
-        """
-        Returns the 2D status of the cell motility.
-        """
-        return self._use_2d
-
-    @use_2d.setter
-    def use_2d(self, use_2d: bool) -> None:
-        self._use_2d = use_2d
-
-    @property
-    def chemo_enabled(self) -> bool:
-        """
-        Returns the status of the chemotaxis component.
-        """
-        return self._chemo_enabled
-
-    @chemo_enabled.setter
-    def chemo_enabled(self, chemo_enabled: bool) -> None:
-        self._chemo_enabled = chemo_enabled
-
-    @property
-    def chemo_substrate(self) -> str:
-        """
-        Returns the name of the substance that guides chemotaxis.
-        """
-        return self._chemo_substrate
-
-    @chemo_substrate.setter
-    def chemo_substrate(self, chemo_substrate: str) -> None:
-        self._chemo_substrate = chemo_substrate
-
-    @property
-    def chemo_direction(self) -> float:
-        """
-        Returns the direction of the chemotaxis component.
-        Raises a ValueError if the passed value is not positive.
-        """
-        return self._chemo_direction
-
-    @chemo_direction.setter
-    def chemo_direction(self, chemo_direction: float) -> None:
-        if chemo_direction < 0.0:
-            raise ValueError("Chemotaxis direction should be positive.")
-
-        self._chemo_direction = chemo_direction
+    class Config:
+        validate_assignment = True
 
 
-class Secretion:
+class Secretion(BaseModel):
     """
     A class that represents the cell secretion parameters stored in the config file
     for a single substance.
@@ -447,88 +111,28 @@ class Secretion:
     net_export_rate
         The net export rate of the substance.
     """
+    name: str
+    secretion_rate: confloat(ge=0.0)
+    secretion_target: confloat(ge=0.0)
+    uptake_rate: confloat(ge=0.0)
+    net_export_rate: confloat(ge=0.0)
 
-    def __init__(
-        self,
-        name: str,
-        secretion_rate: float,
-        secretion_target: float,
-        uptake_rate: float,
-        net_export_rate: float,
-    ) -> None:
-        self.name = name
-        self.secretion_rate = secretion_rate
-        self.secretion_target = secretion_target
-        self.uptake_rate = uptake_rate
-        self.net_export_rate = net_export_rate
+    class Config:
+        validate_assignment = True
 
-    def __repr__(self) -> str:
-        """Returns the representation of the Secretion class."""
-        return (
-            f"Secretion(name={self.name}, secretion_rate={self.secretion_rate},"
-            f"secretion_target={self.secretion_target}, uptake_rate={self.uptake_rate},"
-            f"net_export_rate={self.net_export_rate})"
-        )
 
-    @property
-    def secretion_rate(self) -> float:
-        """
-        Returns the secretion rate value.
-        Raises a ValueError if the passed value is not positive.
-        """
-        return self._secretion_rate
+class CycleCode(Enum):
+    LIVE = 0
+    FLOW_CYTOMETRY_SEPARATED = 6
 
-    @secretion_rate.setter
-    def secretion_rate(self, secretion_rate: float) -> None:
-        if secretion_rate < 0.0:
-            raise ValueError("Secretion rate should be positive.")
+class Cycle:
+    def __init__(self, code: CycleCode, transition_rates: List[float]):
+        self.code = code
+        self.rates = transition_rates
 
-        self._secretion_rate = secretion_rate
-
-    @property
-    def secretion_target(self) -> float:
-        """
-        Returns the secretion target value.
-        Raises a ValueError if the passed value is not positive.
-        """
-        return self._secretion_target
-
-    @secretion_target.setter
-    def secretion_target(self, secretion_target: float) -> None:
-        if secretion_target < 0.0:
-            raise ValueError("Secretion target should be positive.")
-
-        self._secretion_target = secretion_target
-
-    @property
-    def uptake_rate(self) -> float:
-        """
-        Returns the uptake rate value.
-        Raises a ValueError if the passed value is not positive.
-        """
-        return self._uptake_rate
-
-    @uptake_rate.setter
-    def uptake_rate(self, uptake_rate: float) -> None:
-        if uptake_rate < 0.0:
-            raise ValueError("Uptake rate should be positive.")
-
-        self._uptake_rate = uptake_rate
-
-    @property
-    def net_export_rate(self) -> float:
-        """
-        Returns the net export rate value.
-        Raises a ValueError if the passed value is not positive.
-        """
-        return self._net_export_rate
-
-    @net_export_rate.setter
-    def net_export_rate(self, net_export_rate: float) -> None:
-        if net_export_rate < 0.0:
-            raise ValueError("Net export rate should be positive.")
-
-        self._net_export_rate = net_export_rate
+@dataclass
+class Phenotype:
+    cycle: Cycle
 
 
 @dataclass
@@ -609,15 +213,15 @@ class ConfigFileParser:
         rupture_volume = float(self.tree.find(stem + "/relative_rupture_volume").text)
 
         return Volume(
-            total_volume,
-            fluid_fraction,
-            nuclear,
-            fluid_change_rate,
-            cyto_bio_rate,
-            nuclear_bio_rate,
-            calcified_fraction,
-            calcification_rate,
-            rupture_volume,
+            total_volume=total_volume,
+            fluid_fraction=fluid_fraction,
+            nuclear=nuclear,
+            fluid_change_rate=fluid_change_rate,
+            cyto_bio_rate=cyto_bio_rate,
+            nuclear_bio_rate=nuclear_bio_rate,
+            calcified_fraction=calcified_fraction,
+            calcification_rate=calcification_rate,
+            rupture_volume=rupture_volume,
         )
 
     def read_mechanics_params(self, name: str) -> Mechanics:
@@ -646,7 +250,7 @@ class ConfigFileParser:
         #    absolute_distance = self.tree.find(stem + "/options/set_absolute_equilibrium_distance").text
         #    mech.set_absolute_equilibrium_distance = float(absolute_distance)
 
-        return Mechanics(adhesion_strength, repulsion_strength, adhesion_distance)
+        return Mechanics(adhesion_strength=adhesion_strength, repulsion_strength=repulsion_strength, adhesion_distance=adhesion_distance)
 
     def read_motility_params(self, name: str) -> Motility:
         """Reads the motility parameters from the config file into a custom data structure"""
@@ -671,14 +275,14 @@ class ConfigFileParser:
         )
 
         return Motility(
-            speed,
-            persistence,
-            bias,
-            motility_enabled,
-            use_2d,
-            chemo_enabled,
-            chemo_substrate,
-            chemo_direction,
+            speed=speed,
+            persistence=persistence,
+            bias=bias,
+            motility_enabled=motility_enabled,
+            use_2d=use_2d,
+            chemo_enabled=chemo_enabled,
+            chemo_substrate=chemo_substrate,
+            chemo_direction=chemo_direction,
         )
 
     def read_secretion_params(self, name: str) -> List[Secretion]:
@@ -711,11 +315,11 @@ class ConfigFileParser:
 
             secretion_data.append(
                 Secretion(
-                    substrate,
-                    secretion_rate,
-                    secretion_target,
-                    uptake_rate,
-                    net_export_rate,
+                    name=substrate,
+                    secretion_rate=secretion_rate,
+                    secretion_target=secretion_target,
+                    uptake_rate=uptake_rate,
+                    net_export_rate=net_export_rate,
                 )
             )
 
