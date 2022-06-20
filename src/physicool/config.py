@@ -5,7 +5,34 @@ from dataclasses import dataclass, field
 from typing import Callable, List, Union
 from enum import Enum
 
-from pydantic import BaseModel, confloat
+from pydantic import BaseModel, confloat, conint
+
+
+class BoolSettings(BaseModel):
+    enabled: bool
+    value: confloat(ge=0.0)
+
+    class Config:
+        validate_assignment = True
+
+class Domain(BaseModel):
+    x_min: int
+    x_max: int
+    y_min: int
+    y_max: int
+    z_min: int
+    z_max: int
+    dx: conint(ge=0.0)
+    dy: conint(ge=0.0)
+    dz: conint(ge=0.0)
+    use_2d: bool
+
+
+class Overall(BaseModel):
+    max_time: conint(ge=0.0)
+    dt_diffusion: conint(ge=0.0)
+    dt_mechanics: conint(ge=0.0)
+    dt_phenotype: conint(ge=0.0)
 
 class Volume(BaseModel):
     """
@@ -53,6 +80,8 @@ class Mechanics(BaseModel):
     adhesion_strength: confloat(ge=0.0)
     repulsion_strength: confloat(ge=0.0)
     adhesion_distance: confloat(ge=0.0)
+    relative_eq_distance: BoolSettings
+    absolute_eq_distance: BoolSettings
 
     class Config:
         validate_assignment = True
@@ -241,16 +270,14 @@ class ConfigFileParser:
             self.tree.find(stem + "/relative_maximum_adhesion_distance").text
         )
 
-        # TODO: Extract and save the optional mechanics data, if it exists
-        # if self.tree.find(stem + "/options/set_relative_equilibrium_distance").attrib["enabled"] == "true":
-        #    equilibrium_distance = self.tree.find(stem + "/options/set_relative_equilibrium_distance").text
-        #    mech.set_relative_equilibrium_distance = float(equilibrium_distance)
+        relative_eq_dist_enabled = self.tree.find(stem + "/options/set_relative_equilibrium_distance").attrib["enabled"]
+        relative_eq_dist_value = self.tree.find(stem + "/options/set_relative_equilibrium_distance").text
 
-        # if self.tree.find(stem + "/options/set_absolute_equilibrium_distance").attrib["enabled"] == "true":
-        #    absolute_distance = self.tree.find(stem + "/options/set_absolute_equilibrium_distance").text
-        #    mech.set_absolute_equilibrium_distance = float(absolute_distance)
+        absolute_eq_dist_enabled = self.tree.find(stem + "/options/set_absolute_equilibrium_distance").attrib["enabled"]
+        absolute_eq_dist_value = self.tree.find(stem + "/options/set_absolute_equilibrium_distance").text
 
-        return Mechanics(adhesion_strength=adhesion_strength, repulsion_strength=repulsion_strength, adhesion_distance=adhesion_distance)
+        return Mechanics(adhesion_strength=adhesion_strength, repulsion_strength=repulsion_strength, adhesion_distance=adhesion_distance,
+        relative_eq_distance=BoolSettings(enabled=relative_eq_dist_enabled, value=relative_eq_dist_value),absolute_eq_distance=BoolSettings(enabled=absolute_eq_dist_enabled, value=absolute_eq_dist_value))
 
     def read_motility_params(self, name: str) -> Motility:
         """Reads the motility parameters from the config file into a custom data structure"""
@@ -419,19 +446,17 @@ class ConfigFileParser:
         self.tree.find(chmo_str + "/substrate").text = motility.chemo_substrate
         self.tree.find(chmo_str + "/direction").text = str(motility.chemo_direction)
 
-    def update_params(self, name, new_parameters: CellParameters) -> None:
+    def update_params(self, cell_data: CellParameters) -> None:
         """
         Writes the new parameters to the XML tree object and also updates the XML file.
 
         Parameters
         ----------
-        name: str
-            The name of the cell definition to be updated.
         new_parameters: CellParameters
             The new cell parameters to be writeen to the XML file.
         """
-        self.write_motility_params(name, new_parameters.motility)
-        self.write_cycle_params(name, new_parameters.phenotype.cycle)
+        self.write_motility_params(cell_data.name, cell_data.motility)
+        self.write_cycle_params(cell_data.name, cell_data.phenotype.cycle)
 
         self.tree.write(self.config_file)
 

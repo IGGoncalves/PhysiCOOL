@@ -1,6 +1,7 @@
 """Script to test the config module of the PhysiCOOL package."""
 import unittest
 from pathlib import Path
+from xmlrpc.client import Boolean
 
 from physicool import config
 
@@ -38,7 +39,9 @@ class PhysiCellConfigTest(unittest.TestCase):
     def test_read_mechanics_params(self):
         """Asserts that the mechanics parameters extracted from the config file are correct."""
         expected_data = config.Mechanics(
-            adhesion_strength=0.4, repulsion_strength=10.0, adhesion_distance=1.25
+            adhesion_strength=0.4, repulsion_strength=10.0, adhesion_distance=1.25,
+            relative_eq_distance=config.BoolSettings(enabled=False, value=1.8),
+            absolute_eq_distance=config.BoolSettings(enabled=False, value=15.12)
         )
         mechanics_data = self.xml_data.read_mechanics_params("default")
 
