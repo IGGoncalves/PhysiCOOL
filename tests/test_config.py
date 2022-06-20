@@ -1,7 +1,6 @@
 """Script to test the config module of the PhysiCOOL package."""
 import unittest
 from pathlib import Path
-from xmlrpc.client import Boolean
 
 from physicool import config
 
