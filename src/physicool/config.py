@@ -2,18 +2,10 @@
 from pathlib import Path
 from xml.etree import ElementTree
 from dataclasses import dataclass, field
-from typing import Callable, List, Union, Dict
+from typing import Callable, List, Union, Dict, Optional
 from enum import Enum
 
 from pydantic import BaseModel, confloat, conint
-
-
-class BoolSettings(BaseModel):
-    enabled: bool
-    value: confloat(ge=0.0)
-
-    class Config:
-        validate_assignment = True
 
 
 class Domain(BaseModel):
@@ -36,32 +28,15 @@ class Overall(BaseModel):
     dt_phenotype: conint(ge=0.0)
 
 
+class Substance(BaseModel):
+    name: str
+    diffusion_coefficient: confloat(ge=0.0)
+    decay_rate: confloat(ge=0.0)
+    initial_conditions: confloat(ge=0.0)
+    Dirichlet_boundary_condition: confloat(ge=0.0)
+
+
 class Volume(BaseModel):
-    """
-    A class that represents the cell volume parameters stored in the config file.
-
-    Parameters
-    ----------
-    total
-        The total cell volume value.
-    fluid_fraction
-        The cell fluid fraction value.
-    nuclear
-        The cell nuclear volume value.
-    fluid_change_rate
-        The cell fluid change rate value.
-    cytoplasmic_biomass_change_rate
-        The cytoplasmic biomass change rate value.
-    nuclear_biomass_change_rate
-        The nuclear biomass change rate value.
-    calcified_fraction
-        The cell calcified fraction value.
-    calcification_rate
-        The cell calcification rate value.
-    relative_rupture_volume
-        The cell relative rupture volume value.
-    """
-
     total: confloat(ge=0.0)
     fluid_fraction: confloat(ge=0.0, le=1.0)
     nuclear: confloat(ge=0.0)
@@ -77,44 +52,17 @@ class Volume(BaseModel):
 
 
 class Mechanics(BaseModel):
-    """
-    A class that represents the cell mechanics parameters stored in the config file.
-    """
-
     cell_cell_adhesion_strength: confloat(ge=0.0)
     cell_cell_repulsion_strength: confloat(ge=0.0)
     relative_maximum_adhesion_distance: confloat(ge=0.0)
-    set_relative_equilibrium_distance: BoolSettings
-    set_absolute_equilibrium_distance: BoolSettings
+    set_relative_equilibrium_distance: confloat(ge=0.0)
+    set_absolute_equilibrium_distance: confloat(ge=0.0)
 
     class Config:
         validate_assignment = True
 
 
 class Motility(BaseModel):
-    """
-    A class that represents the cell motility parameters stored in the config file.
-
-    Parameters
-    ----------
-    speed
-        The cell speed value.
-    persistence
-        The cell persistence time.
-    bias
-        The cell motility bias.
-    motility_enabled
-        If cells are able to move.
-    use_2d
-        If cells move in 2D.
-    chemotaxis_enabled
-        If chemotaxis is considered.
-    chemotaxis_substrate
-        The substance that induces chemotaxis.
-    chemotaxis_direction
-        The direction of the chemotaxis motility.
-    """
-
     speed: confloat(ge=0.0)
     persistence: confloat(ge=0.0)
     bias: confloat(ge=0.0, le=1.0)
@@ -129,24 +77,6 @@ class Motility(BaseModel):
 
 
 class Secretion(BaseModel):
-    """
-    A class that represents the cell secretion parameters stored in the config file
-    for a single substance.
-
-    Parameters
-    ----------
-    name
-        The name of the secreted substance.
-    secretion_rate
-        The secretion rate of the substance.
-    secretion_target
-        The secretion target for the substance.
-    uptake_rate
-        The uptake rate of the substance.
-    net_export_rate
-        The net export rate of the substance.
-    """
-
     name: str
     secretion_rate: confloat(ge=0.0)
     secretion_target: confloat(ge=0.0)
@@ -162,15 +92,44 @@ class CycleCode(Enum):
     FLOW_CYTOMETRY_SEPARATED = 6
 
 
-class Cycle:
-    def __init__(self, code: CycleCode, transition_rates: List[float]):
-        self.code = code
-        self.rates = transition_rates
+class Cycle(BaseModel):
+    code: CycleCode
+    phase_durations: Optional[List[confloat(ge=0.0)]]
+    phase_transition_rates: Optional[List[confloat(ge=0.0)]]
+
+    class Config:
+        validate_assignment = True
+
+
+class DeathCode(Enum):
+    APOPTOSIS = 100
+    NECROSIS = 101
+
+
+class Death(BaseModel):
+    code: DeathCode
+    phase_durations: Optional[List[confloat(ge=0.0)]]
+    phase_transition_rates: Optional[List[confloat(ge=0.0)]]
+    unlysed_fluid_change_rate: confloat(ge=0.0)
+    lysed_fluid_change_rate: confloat(ge=0.0)
+    cytoplasmic_biomass_change_rate: confloat(ge=0.0)
+    nuclear_biomass_change_rate: confloat(ge=0.0)
+    calcification_rate: confloat(ge=0.0)
+    relative_rupture_volume: confloat(ge=0.0)
+
+    class Config:
+        validate_assignment = True
+
+
+class CustomData(BaseModel):
+    name: str
+    value: float
 
 
 @dataclass
 class Phenotype:
     cycle: Cycle
+    death: List[Death]
 
 
 @dataclass
@@ -183,6 +142,77 @@ class CellParameters:
     mechanics: Mechanics
     motility: Motility
     secretion: List[Secretion]
+
+
+def parse_cycle(tree: ElementTree, path: str) -> Dict[str, Union[float, List[float]]]:
+    cycle_node = tree.find(path)
+    code = float(cycle_node.attrib["code"])
+    data_type = list(cycle_node)[0].tag
+    durations = None
+    rates = None
+
+    if data_type == "phase_durations":
+        durations = [float(duration.text) for duration in cycle_node[0]]
+    elif data_type == "phase_transition_rates":
+        rates = [float(duration.text) for duration in cycle_node[0]]
+
+    return {"code": code, "phase_durations": durations, "phase_transition_rates": rates}
+
+
+def parse_death_model(
+    tree: ElementTree, path: str, name: str
+) -> Dict[str, Union[float, List[float]]]:
+    model_stem = path + f"/model[@name='{name}']"
+
+    death_node = tree.find(model_stem)
+    code = float(death_node.attrib["code"])
+    data_type = list(death_node)[1].tag
+    durations = None
+    rates = None
+
+    if data_type == "phase_durations":
+        durations = [float(duration.text) for duration in death_node[1]]
+    elif data_type == "phase_transition_rates":
+        rates = [float(duration.text) for duration in death_node[1]]
+
+    model_stem += "/parameters"
+    unlysed_fluid_change_rate = float(
+        tree.find(model_stem + "/unlysed_fluid_change_rate").text
+    )
+    lysed_fluid_change_rate = float(tree.find(model_stem + "/lysed_fluid_change_rate").text)
+    cytoplasmic_biomass_change_rate = float(
+        tree.find(model_stem + "/cytoplasmic_biomass_change_rate").text
+    )
+    nuclear_biomass_change_rate = float(
+        tree.find(model_stem + "/nuclear_biomass_change_rate").text
+    )
+    calcification_rate = float(tree.find(model_stem + "/calcification_rate").text)
+    relative_rupture_volume = float(tree.find(model_stem + "/relative_rupture_volume").text)
+
+    return {
+        "code": code,
+        "phase_durations": durations,
+        "phase_transition_rates": rates,
+        "unlysed_fluid_change_rate": unlysed_fluid_change_rate,
+        "lysed_fluid_change_rate": lysed_fluid_change_rate,
+        "cytoplasmic_biomass_change_rate": cytoplasmic_biomass_change_rate,
+        "nuclear_biomass_change_rate": nuclear_biomass_change_rate,
+        "calcification_rate": calcification_rate,
+        "relative_rupture_volume": relative_rupture_volume,
+    }
+
+
+def parse_death(
+    tree: ElementTree, path: str
+) -> List[Dict[str, Union[float, List[float]]]]:
+    models = [model.attrib["name"] for model in tree.find(path).findall("model")]
+    death_data = []
+
+    for model in models:
+        data = parse_death_model(tree=tree, path=path, name=model)
+        death_data.append(data)
+
+    return death_data
 
 
 def parse_motility(tree: ElementTree, path: str) -> Dict[str, Union[float, str, bool]]:
@@ -211,37 +241,29 @@ def parse_motility(tree: ElementTree, path: str) -> Dict[str, Union[float, str, 
 def parse_mechanics(tree: ElementTree, path: str) -> Dict[str, float]:
     # Extract and save the basic mechanics data from the config file
     cell_cell_adhesion_strength = float(
-        tree.find(path + "/cell_cell_cell_cell_adhesion_strength").text
+        tree.find(path + "/cell_cell_adhesion_strength").text
     )
     cell_cell_repulsion_strength = float(
-        tree.find(path + "/cell_cell_cell_cell_repulsion_strength").text
+        tree.find(path + "/cell_cell_repulsion_strength").text
     )
     relative_maximum_adhesion_distance = float(
-        tree.find(path + "/relative_maximum_relative_maximum_adhesion_distance").text
+        tree.find(path + "/relative_maximum_adhesion_distance").text
     )
 
-    relative_eq_dist_enabled = tree.find(
-        path + "/options/set_relative_equilibrium_distance"
-    ).attrib["enabled"]
-    relative_eq_dist_value = tree.find(
-        path + "/options/set_relative_equilibrium_distance"
-    ).text
+    relative_equilibrium_distance = float(
+        tree.find(path + "/options/set_relative_equilibrium_distance").text
+    )
 
-    absolute_eq_dist_enabled = tree.find(
-        path + "/options/set_absolute_equilibrium_distance"
-    ).attrib["enabled"]
-    absolute_eq_dist_value = tree.find(
-        path + "/options/set_absolute_equilibrium_distance"
-    ).text
+    absolute_equilibrium_distance = float(
+        tree.find(path + "/options/set_absolute_equilibrium_distance").text
+    )
 
     return {
         "cell_cell_adhesion_strength": cell_cell_adhesion_strength,
         "cell_cell_repulsion_strength": cell_cell_repulsion_strength,
         "relative_maximum_adhesion_distance": relative_maximum_adhesion_distance,
-        "set_relative_equilibrium_enabled": relative_eq_dist_enabled,
-        "set_relative_equilibrium_value": relative_eq_dist_value,
-        "set_absolute_equilibrium_enabled": absolute_eq_dist_enabled,
-        "set_absolute_equilibrium_value": absolute_eq_dist_value,
+        "set_relative_equilibrium_distance": relative_equilibrium_distance,
+        "set_absolute_equilibrium_distance": absolute_equilibrium_distance,
     }
 
 
@@ -258,9 +280,7 @@ def parse_volume(tree: ElementTree, path: str) -> Dict[str, float]:
     )
     calcified_fraction = float(tree.find(path + "/calcified_fraction").text)
     calcification_rate = float(tree.find(path + "/calcification_rate").text)
-    relative_rupture_volume = float(
-        tree.find(path + "/relative_relative_rupture_volume").text
-    )
+    relative_rupture_volume = float(tree.find(path + "/relative_rupture_volume").text)
 
     return {
         "total": total,
@@ -273,6 +293,44 @@ def parse_volume(tree: ElementTree, path: str) -> Dict[str, float]:
         "calcification_rate": calcification_rate,
         "relative_rupture_volume": relative_rupture_volume,
     }
+
+
+def parse_secretion_substance(
+    tree: ElementTree, path: str, substrate: str
+) -> Dict[str, float]:
+    # Extract and save the motility data from the config file
+    substrate_stem = path + f"/substrate[@name='{substrate}']"
+
+    secretion_rate = float(tree.find(substrate_stem + "/secretion_rate").text)
+    secretion_target = float(tree.find(substrate_stem + "/secretion_target").text)
+    uptake_rate = float(tree.find(substrate_stem + "/uptake_rate").text)
+    net_export_rate = float(tree.find(substrate_stem + "/net_export_rate").text)
+
+    return {
+        "name": substrate,
+        "secretion_rate": secretion_rate,
+        "secretion_target": secretion_target,
+        "uptake_rate": uptake_rate,
+        "net_export_rate": net_export_rate,
+    }
+
+
+def parse_secretion(tree: ElementTree, path: str) -> List[Dict[str, float]]:
+    substrates = [
+        substrate.attrib["name"] for substrate in tree.find(path).findall("substrate")
+    ]
+    secretion_data = []
+
+    for substrate in substrates:
+        data = parse_secretion_substance(tree=tree, path=path, substrate=substrate)
+        secretion_data.append(data)
+
+    return secretion_data
+
+
+def parse_custom(tree: ElementTree, path: str) -> List[Dict[str, Union[float, str]]]:
+    return [{"name": variable.tag, "value": float(variable.text)}
+            for variable in list(tree.find(path)) if variable.text]
 
 
 class ConfigFileParser:
@@ -305,93 +363,45 @@ class ConfigFileParser:
 
     def read_cycle_params(self, name: str) -> Cycle:
         # Build basic string stem to find motility cell data for cell definition
-        cell_string = f"cell_definitions/cell_definition[@name='{name}']"
-        stem = cell_string + "/phenotype/cycle"
+        stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/cycle"
+        return Cycle(**parse_cycle(self.tree, path=stem))
 
-        cycle_node = self.tree.find(stem)
-        code = CycleCode(int(cycle_node.items()[0][1]))
-        rates = [float(duration.text) for duration in cycle_node[0]]
-
-        return Cycle(code=code, transition_rates=rates)
+    def read_death_params(self, name: str) -> List[Death]:
+        stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/death"
+        return [Death(**model) for model in parse_death(self.tree, path=stem)]
 
     def read_phenotype_params(self, name: str) -> Phenotype:
         cycle = self.read_cycle_params(name)
-
         return Phenotype(cycle=cycle)
 
     def read_volume_params(self, name: str) -> Volume:
         """Reads the motility parameters from the config file into a custom data structure"""
         stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/volume"
-
         return Volume(**parse_volume(tree=self.tree, path=stem))
 
     def read_mechanics_params(self, name: str) -> Mechanics:
         """Reads the mechanics parameters from the config file into a custom data structure"""
         # Build basic string stem to find mechanics cell data for cell definition
         stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/mechanics"
-        mechanics_data = parse_mechanics(tree=self.tree, path=stem)
-
-        return Mechanics(
-            cell_cell_adhesion_strength=mechanics_data["cell_cell_adhesion_strength"],
-            cell_cell_repulsion_strength=mechanics_data["cell_cell_repulsion_strength"],
-            relative_maximum_adhesion_distance=mechanics_data[
-                "relative_maximum_adhesion_distance"
-            ],
-            set_relative_equilibrium_distance=BoolSettings(
-                enabled=mechanics_data["set_relative_equilibrium_enabled"],
-                value=mechanics_data["set_relative_equilibrium_value"],
-            ),
-            set_absolute_equilibrium_distance=BoolSettings(
-                enabled=mechanics_data["set_absolute_equilibrium_enabled"],
-                value=mechanics_data["set_absolute_equilibrium_value"],
-            ),
-        )
+        return Mechanics(**parse_mechanics(tree=self.tree, path=stem))
 
     def read_motility_params(self, name: str) -> Motility:
         """Reads the motility parameters from the config file into a custom data structure"""
         stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/motility"
-
         return Motility(**parse_motility(tree=self.tree, path=stem))
 
     def read_secretion_params(self, name: str) -> List[Secretion]:
         """Reads the secretion parameters from the config file into a custom data structure"""
         # Build basic string stem to find secretion cell data for cell definition
-        cell_string = f"cell_definitions/cell_definition[@name='{name}']"
-        stem = cell_string + f"/phenotype/secretion"
-
-        substrates = [
-            substrate.attrib["name"]
-            for substrate in self.tree.find(stem).findall("substrate")
+        stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/secretion"
+        return [
+            Secretion(**substance)
+            for substance in parse_secretion(tree=self.tree, path=stem)
         ]
 
-        secretion_data = []
-
-        for substrate in substrates:
-            substrate_stem = stem + f"/substrate[@name='{substrate}']"
-
-            # Extract and save the motility data from the config file
-            secretion_rate = float(
-                self.tree.find(substrate_stem + "/secretion_rate").text
-            )
-            secretion_target = float(
-                self.tree.find(substrate_stem + "/secretion_target").text
-            )
-            uptake_rate = float(self.tree.find(substrate_stem + "/uptake_rate").text)
-            net_export_rate = float(
-                self.tree.find(substrate_stem + "/net_export_rate").text
-            )
-
-            secretion_data.append(
-                Secretion(
-                    name=substrate,
-                    secretion_rate=secretion_rate,
-                    secretion_target=secretion_target,
-                    uptake_rate=uptake_rate,
-                    net_export_rate=net_export_rate,
-                )
-            )
-
-        return secretion_data
+    def read_custom_data(self, name: str) -> List[CustomData]:
+        stem = f"cell_definitions/cell_definition[@name='{name}']/custom_data"
+        return [CustomData(**custom) for custom in parse_custom(self.tree, stem)]
 
     def read_cell_data(self, name: str = "default") -> CellParameters:
         """
@@ -430,17 +440,8 @@ class ConfigFileParser:
         except ValueError as ve:
             print(ve)
 
-    def read_user_params_data(self):
-        params = self.tree.find("user_parameters").getchildren()
-        user_params = {}
-
-        for parameter in params:
-            value = parameter.text
-            name = parameter.tag
-
-            user_params[name] = value
-
-        return user_params
+    def read_user_parameters(self):
+        return [CustomData(**custom) for custom in parse_custom(self.tree, "user_parameters")]
 
     def write_cycle_params(self, name: str, cycle: Cycle) -> None:
         cell_string = f"cell_definitions/cell_definition[@name='{name}']"
