@@ -23,9 +23,9 @@ class Domain(BaseModel):
 
 class Overall(BaseModel):
     max_time: conint(ge=0)
-    dt_diffusion: conint(ge=0)
-    dt_mechanics: conint(ge=0)
-    dt_phenotype: conint(ge=0)
+    dt_diffusion: confloat(ge=0)
+    dt_mechanics: confloat(ge=0)
+    dt_phenotype: confloat(ge=0)
 
 
 class Substance(BaseModel):
@@ -108,6 +108,7 @@ class DeathCode(Enum):
 
 class Death(BaseModel):
     code: float
+    death_rate: confloat(ge=0.0)
     phase_durations: Optional[List[confloat(ge=0.0)]]
     phase_transition_rates: Optional[List[confloat(ge=0.0)]]
     unlysed_fluid_change_rate: confloat(ge=0.0)
@@ -162,7 +163,7 @@ def parse_domain(tree: ElementTree, path: str) -> Dict[str, Union[bool, float]]:
         "dx": dx,
         "dy": dy,
         "dz": dz,
-        "use_2d": use_2d
+        "use_2d": use_2d,
     }
 
 
@@ -245,6 +246,10 @@ def parse_death_model(
     durations = None
     rates = None
 
+    death_rate = float(
+        tree.find(model_stem + "/death_rate").text
+    )
+
     if data_type == "phase_durations":
         durations = [float(duration.text) for duration in death_node[1]]
     elif data_type == "phase_transition_rates":
@@ -270,6 +275,7 @@ def parse_death_model(
 
     return {
         "code": code,
+        "death_rate": death_rate,
         "phase_durations": durations,
         "phase_transition_rates": rates,
         "unlysed_fluid_change_rate": unlysed_fluid_change_rate,
@@ -415,7 +421,9 @@ def parse_custom(tree: ElementTree, path: str) -> List[Dict[str, Union[float, st
     ]
 
 
-def write_domain(new_values: Dict[str, Union[float, bool]], tree: ElementTree, path: str) -> None:
+def write_domain(
+    new_values: Dict[str, Union[float, bool]], tree: ElementTree, path: str
+) -> None:
     tree.find(path + "/x_min").text = str(new_values["x_min"])
     tree.find(path + "/x_max").text = str(new_values["x_max"])
     tree.find(path + "/y_min").text = str(new_values["y_min"])
@@ -438,6 +446,22 @@ def write_overall(new_values: Dict[str, float], tree: ElementTree, path: str) ->
     tree.find(path + "/dt_phenotype").text = str(new_values["dt_phenotype"])
 
 
+def write_substance(new_values, tree: ElementTree, path: str, name: str) -> None:
+    substance_stem = path + f"/variable[@name='{name}']"
+    tree.find(
+        substance_stem + "/physical_parameter_set/diffusion_coefficient"
+    ).text = str(new_values["diffusion_coefficient"])
+    tree.find(substance_stem + "/physical_parameter_set/decay_rate").text = str(
+        new_values["decay_rate"]
+    )
+    tree.find(substance_stem + "/initial_condition").text = str(
+        new_values["initial_condition"]
+    )
+    tree.find(substance_stem + "/Dirichlet_boundary_condition").text = str(
+        new_values["dirichlet_boundary_condition"]
+    )
+
+
 def write_cycle(
     new_values: Dict[str, Union[float, List[float]]], tree: ElementTree, path: str
 ) -> None:
@@ -452,6 +476,46 @@ def write_cycle(
             tree.find(path + "/phase_transition_rates"),
         ):
             element.text = str(new_value)
+
+
+def write_death_model(
+    new_values: Dict[str, Union[float, List[float]]],
+    tree: ElementTree,
+    path: str,
+    name: str,
+) -> None:
+    model_stem = path + f"/model[@name='{name}']"
+    tree.find(model_stem + "/death_rate").text = str(new_values["death_rate"])
+    if tree.find(model_stem + "/phase_durations"):
+        for new_value, element in zip(
+            new_values["phase_durations"], tree.find(model_stem + "/phase_durations")
+        ):
+            element.text = str(new_value)
+    else:
+        for new_value, element in zip(
+            new_values["phase_transition_rates"],
+            tree.find(model_stem + "/phase_transition_rates"),
+        ):
+            element.text = str(new_value)
+
+    tree.find(model_stem + "/parameters/unlysed_fluid_change_rate").text = str(
+        new_values["unlysed_fluid_change_rate"]
+    )
+    tree.find(model_stem + "/parameters/lysed_fluid_change_rate").text = str(
+        new_values["lysed_fluid_change_rate"]
+    )
+    tree.find(model_stem + "/parameters/cytoplasmic_biomass_change_rate").text = str(
+        new_values["cytoplasmic_biomass_change_rate"]
+    )
+    tree.find(model_stem + "/parameters/nuclear_biomass_change_rate").text = str(
+        new_values["nuclear_biomass_change_rate"]
+    )
+    tree.find(model_stem + "/parameters/calcification_rate").text = str(
+        new_values["calcification_rate"]
+    )
+    tree.find(model_stem + "/parameters/relative_rupture_volume").text = str(
+        new_values["relative_rupture_volume"]
+    )
 
 
 def write_volume(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
@@ -533,15 +597,20 @@ def write_motility(
     else:
         tree.find(path + "/options/use_2D").text = "false"
 
-    chmo_str = path + "/options/chemotaxis"
+    chemo_str = path + "/options/chemotaxis"
 
     if new_values["chemotaxis_enabled"]:
-        tree.find(chmo_str + "/enabled").text = "true"
+        tree.find(chemo_str + "/enabled").text = "true"
     else:
-        tree.find(chmo_str + "/enabled").text = "false"
+        tree.find(chemo_str + "/enabled").text = "false"
 
-    tree.find(chmo_str + "/substrate").text = new_values["chemotaxis_substrate"]
-    tree.find(chmo_str + "/direction").text = str(new_values["chemotaxis_direction"])
+    tree.find(chemo_str + "/substrate").text = new_values["chemotaxis_substrate"]
+    tree.find(chemo_str + "/direction").text = str(new_values["chemotaxis_direction"])
+
+
+def write_custom_data(new_values: List[Dict[str, float]], tree: ElementTree, path: str) -> None:
+    for variable in new_values:
+        tree.find(path + f"/{variable['name']}").text = str(variable["value"])
 
 
 class ConfigFileParser:
@@ -575,10 +644,10 @@ class ConfigFileParser:
     def read_domain_params(self) -> Domain:
         return Domain(**parse_domain(tree=self.tree, path="domain"))
 
-    def read_overall_data(self) -> Overall:
+    def read_overall_params(self) -> Overall:
         return Overall(**parse_overall(tree=self.tree, path="overall"))
 
-    def read_me_data(self) -> List[Substance]:
+    def read_me_params(self) -> List[Substance]:
         return [
             Substance(**substance)
             for substance in parse_microenvironment(
@@ -661,7 +730,7 @@ class ConfigFileParser:
         except ValueError as ve:
             print(ve)
 
-    def read_user_parameters(self):
+    def read_user_params(self):
         return [
             CustomData(**custom)
             for custom in parse_custom(self.tree, "user_parameters")
@@ -672,29 +741,69 @@ class ConfigFileParser:
         if update_file:
             self.tree.write(self.config_file)
 
-    def write_cycle_params(self, name: str, cycle: Cycle) -> None:
-        cell_string = f"cell_definitions/cell_definition[@name='{name}']"
-        stem = cell_string + "/phenotype/cycle"
+    def write_overall_params(self, overall: Overall, update_file: bool = True) -> None:
+        write_overall(new_values=overall.dict(), tree=self.tree, path="overall")
+        if update_file:
+            self.tree.write(self.config_file)
 
-        for i, rate in enumerate(cycle.rates):
-            self.tree.find(
-                stem + f"/phase_durations/duration[@index='{i}']"
-            ).text = str(rate)
+    def write_substance_params(
+        self, substance: Substance, update_file: bool = True
+    ) -> None:
+        write_substance(
+            new_values=substance.dict(),
+            tree=self.tree,
+            path="microenvironment_setup",
+            name=substance.name,
+        )
+        if update_file:
+            self.tree.write(self.config_file)
 
-    def write_motility_params(self, name: str, motility: Motility) -> None:
+    def write_cycle_params(
+        self, name: str, cycle: Cycle, update_file: bool = True
+    ) -> None:
+        stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/cycle"
+        write_cycle(new_values=cycle.dict(), tree=self.tree, path=stem)
+        if update_file:
+            self.tree.write(self.config_file)
+
+    def write_death_model_params(self, name: str, death: Death, model_name: str, update_file: bool = True) -> None:
+        stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/death"
+        write_death_model(new_values=death.dict(), tree=self.tree, path=stem, name=model_name)
+        if update_file:
+            self.tree.write(self.config_file)
+
+    def write_motility_params(self, name: str, motility: Motility, update_file: bool = True) -> None:
         stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/motility"
         write_motility(new_values=motility.dict(), tree=self.tree, path=stem)
-        self.tree.write(self.config_file)
+        if update_file:
+            self.tree.write(self.config_file)
 
-    def write_mechanics_params(self, name: str, mechanics: Mechanics) -> None:
+    def write_mechanics_params(self, name: str, mechanics: Mechanics, update_file: bool = True) -> None:
         stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/mechanics"
         write_mechanics(new_values=mechanics.dict(), tree=self.tree, path=stem)
         self.tree.write(self.config_file)
+        if update_file:
+            self.tree.write(self.config_file)
 
-    def write_volume_params(self, name: str, volume: Volume) -> None:
+    def write_volume_params(self, name: str, volume: Volume, update_file: bool = True) -> None:
         stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/volume"
         write_volume(new_values=volume.dict(), tree=self.tree, path=stem)
         self.tree.write(self.config_file)
+        if update_file:
+            self.tree.write(self.config_file)
+
+    def write_custom_params(self, name: str, custom_data: List[CustomData], update_file: bool = True):
+        stem =  f"cell_definitions/cell_definition[@name='{name}']/custom_data"
+        data = [variable.dict() for variable in custom_data]
+        write_custom_data(new_values=data, tree=self.tree, path=stem)
+        if update_file:
+            self.tree.write(self.config_file)
+
+    def write_user_params(self, custom_data: List[CustomData], update_file: bool = True):
+        data = [variable.dict() for variable in custom_data]
+        write_custom_data(new_values=data, tree=self.tree, path="user_parameters")
+        if update_file:
+            self.tree.write(self.config_file)
 
     def update_params(self, cell_data: CellParameters) -> None:
         """
