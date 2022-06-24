@@ -32,8 +32,8 @@ class Substance(BaseModel):
     name: str
     diffusion_coefficient: confloat(ge=0.0)
     decay_rate: confloat(ge=0.0)
-    initial_conditions: confloat(ge=0.0)
-    Dirichlet_boundary_condition: confloat(ge=0.0)
+    initial_condition: confloat(ge=0.0)
+    dirichlet_boundary_condition: confloat(ge=0.0)
 
 
 class Volume(BaseModel):
@@ -93,7 +93,7 @@ class CycleCode(Enum):
 
 
 class Cycle(BaseModel):
-    code: CycleCode
+    code: float
     phase_durations: Optional[List[confloat(ge=0.0)]]
     phase_transition_rates: Optional[List[confloat(ge=0.0)]]
 
@@ -107,7 +107,7 @@ class DeathCode(Enum):
 
 
 class Death(BaseModel):
-    code: DeathCode
+    code: float
     phase_durations: Optional[List[confloat(ge=0.0)]]
     phase_transition_rates: Optional[List[confloat(ge=0.0)]]
     unlysed_fluid_change_rate: confloat(ge=0.0)
@@ -135,13 +135,66 @@ class Phenotype:
 @dataclass
 class CellParameters:
     """A class to store the cell data for a given cell definition of the config file."""
-
     name: str
     phenotype: Phenotype
     volume: Volume
     mechanics: Mechanics
     motility: Motility
     secretion: List[Secretion]
+    custom: List[CustomData]
+
+
+def parse_overall(tree: ElementTree, path: str) -> Dict[str, float]:
+    max_time = float(tree.find(path + "/max_time").text)
+    dt_diffusion = float(tree.find(path + "/dt_diffusion").text)
+    dt_mechanics = float(tree.find(path + "/dt_mechanics").text)
+    dt_phenotype = float(tree.find(path + "/dt_phenotype").text)
+
+    return {
+        "max_time": max_time,
+        "dt_diffusion": dt_diffusion,
+        "dt_mechanics": dt_mechanics,
+        "dt_phenotype": dt_phenotype,
+    }
+
+
+def parse_substance(
+    tree: ElementTree, path: str, name: str
+) -> Dict[str, Union[str, float]]:
+    substance_stem = path + f"/variable[@name='{name}']"
+    diffusion_coefficient = float(
+        tree.find(substance_stem + "/physical_parameter_set/diffusion_coefficient").text
+    )
+    decay_rate = float(
+        tree.find(substance_stem + "/physical_parameter_set/decay_rate").text
+    )
+    initial_condition = float(tree.find(substance_stem + "/initial_condition").text)
+    dirichlet_boundary_condition = float(
+        tree.find(substance_stem + "/Dirichlet_boundary_condition").text
+    )
+
+    return {
+        "name": name,
+        "diffusion_coefficient": diffusion_coefficient,
+        "decay_rate": decay_rate,
+        "initial_condition": initial_condition,
+        "dirichlet_boundary_condition": dirichlet_boundary_condition,
+    }
+
+
+def parse_microenvironment(
+    tree: ElementTree, path: str
+) -> List[Dict[str, Union[float, str]]]:
+    substances = [
+        substance.attrib["name"] for substance in tree.find(path).findall("variable")
+    ]
+    substance_data = []
+
+    for substance in substances:
+        data = parse_substance(tree=tree, path=path, name=substance)
+        substance_data.append(data)
+
+    return substance_data
 
 
 def parse_cycle(tree: ElementTree, path: str) -> Dict[str, Union[float, List[float]]]:
@@ -179,7 +232,9 @@ def parse_death_model(
     unlysed_fluid_change_rate = float(
         tree.find(model_stem + "/unlysed_fluid_change_rate").text
     )
-    lysed_fluid_change_rate = float(tree.find(model_stem + "/lysed_fluid_change_rate").text)
+    lysed_fluid_change_rate = float(
+        tree.find(model_stem + "/lysed_fluid_change_rate").text
+    )
     cytoplasmic_biomass_change_rate = float(
         tree.find(model_stem + "/cytoplasmic_biomass_change_rate").text
     )
@@ -187,7 +242,9 @@ def parse_death_model(
         tree.find(model_stem + "/nuclear_biomass_change_rate").text
     )
     calcification_rate = float(tree.find(model_stem + "/calcification_rate").text)
-    relative_rupture_volume = float(tree.find(model_stem + "/relative_rupture_volume").text)
+    relative_rupture_volume = float(
+        tree.find(model_stem + "/relative_rupture_volume").text
+    )
 
     return {
         "code": code,
@@ -329,8 +386,52 @@ def parse_secretion(tree: ElementTree, path: str) -> List[Dict[str, float]]:
 
 
 def parse_custom(tree: ElementTree, path: str) -> List[Dict[str, Union[float, str]]]:
-    return [{"name": variable.tag, "value": float(variable.text)}
-            for variable in list(tree.find(path)) if variable.text]
+    return [
+        {"name": variable.tag, "value": float(variable.text)}
+        for variable in list(tree.find(path))
+        if variable.text
+    ]
+
+
+def write_volume(new_values: Dict[str, Union[float, bool, str]], tree: ElementTree, path: str) -> None:
+    """
+    Writes the new motility parameter values to the XML tree object, for a given cell definition.
+    Values will not be updated in the XML file.
+
+    Parameters
+    ----------
+    name: str
+        The name of the cell definition to be updated.
+    motility: MotilityParams
+        The new parameter values to be written to the XML object.
+    """
+
+    # Extract and save the motility data from the config file
+    tree.find(path + "/speed").text = str(new_values["speed"])
+    tree.find(path + "/persistence_time").text = str(new_values["persistence"])
+    tree.find(path + "/migration_bias").text = str(new_values["migration_bias"])
+
+    if new_values["motility_enabled"]:
+        tree.find(path + "/options/enabled").text = "true"
+    else:
+        tree.find(path + "/options/enabled").text = "false"
+
+    if new_values["use_2d"]:
+        tree.find(path + "/options/use_2D").text = "true"
+    else:
+        tree.find(path + "/options/use_2D").text = "false"
+
+    chmo_str = path + "/options/chemotaxis"
+
+    if new_values["chemotaxis_enabled"]:
+        tree.find(chmo_str + "/enabled").text = "true"
+    else:
+        tree.find(chmo_str + "/enabled").text = "false"
+
+    tree.find(chmo_str + "/substrate").text = new_values["chemotaxis_substrate"]
+    tree.find(chmo_str + "/direction").text = str(
+        new_values["chemotaxis_direction"]
+    )
 
 
 class ConfigFileParser:
@@ -361,6 +462,17 @@ class ConfigFileParser:
 
         return [substance.attrib["name"] for substance in substances]
 
+    def read_overall_data(self) -> Overall:
+        return Overall(**parse_overall(tree=self.tree, path="overall"))
+
+    def read_me_data(self) -> List[Substance]:
+        return [
+            Substance(**substance)
+            for substance in parse_microenvironment(
+                tree=self.tree, path="microenvironment_setup"
+            )
+        ]
+
     def read_cycle_params(self, name: str) -> Cycle:
         # Build basic string stem to find motility cell data for cell definition
         stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/cycle"
@@ -372,7 +484,8 @@ class ConfigFileParser:
 
     def read_phenotype_params(self, name: str) -> Phenotype:
         cycle = self.read_cycle_params(name)
-        return Phenotype(cycle=cycle)
+        death = self.read_cycle_params(name)
+        return Phenotype(cycle=cycle, death=death)
 
     def read_volume_params(self, name: str) -> Volume:
         """Reads the motility parameters from the config file into a custom data structure"""
@@ -441,7 +554,10 @@ class ConfigFileParser:
             print(ve)
 
     def read_user_parameters(self):
-        return [CustomData(**custom) for custom in parse_custom(self.tree, "user_parameters")]
+        return [
+            CustomData(**custom)
+            for custom in parse_custom(self.tree, "user_parameters")
+        ]
 
     def write_cycle_params(self, name: str, cycle: Cycle) -> None:
         cell_string = f"cell_definitions/cell_definition[@name='{name}']"
@@ -453,46 +569,8 @@ class ConfigFileParser:
             ).text = str(rate)
 
     def write_motility_params(self, name: str, motility: Motility) -> None:
-        """
-        Writes the new motility parameter values to the XML tree object, for a given cell definition.
-        Values will not be updated in the XML file.
-
-        Parameters
-        ----------
-        name: str
-            The name of the cell definition to be updated.
-        motility: MotilityParams
-            The new parameter values to be written to the XML object.
-        """
         cell_string = f"cell_definitions/cell_definition[@name='{name}']"
         stem = cell_string + "/phenotype/motility"
-
-        # Extract and save the motility data from the config file
-        self.tree.find(stem + "/speed").text = str(motility.speed)
-        self.tree.find(stem + "/persistence_time").text = str(motility.persistence)
-        self.tree.find(stem + "/migration_bias").text = str(motility.bias)
-
-        if motility.motility_enabled:
-            self.tree.find(stem + "/options/enabled").text = "true"
-        else:
-            self.tree.find(stem + "/options/enabled").text = "false"
-
-        if motility.use_2d:
-            self.tree.find(stem + "/options/use_2D").text = "true"
-        else:
-            self.tree.find(stem + "/options/use_2D").text = "false"
-
-        chmo_str = stem + "/options/chemotaxis"
-
-        if motility.chemotaxis_enabled:
-            self.tree.find(chmo_str + "/enabled").text = "true"
-        else:
-            self.tree.find(chmo_str + "/enabled").text = "false"
-
-        self.tree.find(chmo_str + "/substrate").text = motility.chemotaxis_substrate
-        self.tree.find(chmo_str + "/direction").text = str(
-            motility.chemotaxis_direction
-        )
 
     def update_params(self, cell_data: CellParameters) -> None:
         """
