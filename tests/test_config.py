@@ -1,11 +1,13 @@
 """Script to test the config module of the PhysiCOOL package."""
 import unittest
 from pathlib import Path
+from shutil import copyfile
 from xml.etree import ElementTree
 
 from physicool import config
 
 CONFIG_PATH = Path("PhysiCell/config/settings_read_only.xml")
+WRITE_PATH = Path("test.xml")
 
 EXPECTED_OVERALL_READ = {
     "max_time": 620.0,
@@ -23,14 +25,27 @@ EXPECTED_SUBSTANCE_READ = {
 }
 
 EXPECTED_CYCLE_DURATIONS_READ = {
-    "code": 6,
+    "code": 6.0,
     "phase_durations": [300.0, 480.0, 240.0, 60.0],
     "phase_transition_rates": None,
 }
+
+EXPECTED_CYCLE_DURATIONS_WRITE = {
+    "code": 6.0,
+    "phase_durations": [100.0, 10.0, 240.0, 60.0],
+    "phase_transition_rates": None,
+}
+
 EXPECTED_CYCLE_RATES_READ = {
-    "code": 6,
+    "code": 6.0,
     "phase_durations": None,
     "phase_transition_rates": [0.00334672, 0.00208333, 0.00416667, 0.0166667],
+}
+
+EXPECTED_CYCLE_RATES_WRITE = {
+    "code": 6.0,
+    "phase_durations": None,
+    "phase_transition_rates": [0.001, 0.001, 0.00416667, 0.0166667],
 }
 
 EXPECTED_DEATH_APOPTOSIS_READ = {
@@ -69,11 +84,34 @@ EXPECTED_VOLUME_READ = {
     "relative_rupture_volume": 2.0,
 }
 
+EXPECTED_VOLUME_WRITE = {
+    "total": 2494.0,
+    "fluid_fraction": 0.75,
+    "nuclear": 100.0,
+    "fluid_change_rate": 0.05,
+    "cytoplasmic_biomass_change_rate": 0.0045,
+    "nuclear_biomass_change_rate": 0.0055,
+    "calcified_fraction": 0.5,
+    "calcification_rate": 1.0,
+    "relative_rupture_volume": 3.0,
+}
+
 EXPECTED_MOTILITY_READ = {
     "speed": 1.0,
-    "persistence": 1.0,
-    "bias": 0.5,
+    "persistence_time": 1.0,
+    "migration_bias": 0.5,
     "motility_enabled": False,
+    "use_2d": True,
+    "chemotaxis_enabled": False,
+    "chemotaxis_substrate": "substrate",
+    "chemotaxis_direction": 1.0,
+}
+
+EXPECTED_MOTILITY_WRITE = {
+    "speed": 12.0,
+    "persistence_time": 60.0,
+    "migration_bias": 0.5,
+    "motility_enabled": True,
     "use_2d": True,
     "chemotaxis_enabled": False,
     "chemotaxis_substrate": "substrate",
@@ -83,6 +121,14 @@ EXPECTED_MOTILITY_READ = {
 EXPECTED_MECHANICS_READ = {
     "cell_cell_adhesion_strength": 0.4,
     "cell_cell_repulsion_strength": 10.0,
+    "relative_maximum_adhesion_distance": 1.25,
+    "set_relative_equilibrium_distance": 1.8,
+    "set_absolute_equilibrium_distance": 15.12,
+}
+
+EXPECTED_MECHANICS_WRITE = {
+    "cell_cell_adhesion_strength": 4.0,
+    "cell_cell_repulsion_strength": 100.0,
     "relative_maximum_adhesion_distance": 1.25,
     "set_relative_equilibrium_distance": 1.8,
     "set_absolute_equilibrium_distance": 15.12,
@@ -126,18 +172,143 @@ class ReadDataTest(unittest.TestCase):
         self.assertEqual(EXPECTED_OVERALL_READ, data)
 
     def test_parse_substance(self):
-        data = config.parse_substance(tree=self.tree, path="microenvironment_setup", name="substrate")
+        data = config.parse_substance(
+            tree=self.tree, path="microenvironment_setup", name="substrate"
+        )
         self.assertEqual(EXPECTED_SUBSTANCE_READ, data)
 
     def test_parse_me(self):
-        data = config.parse_microenvironment(tree=self.tree, path="microenvironment_setup")
+        data = config.parse_microenvironment(
+            tree=self.tree, path="microenvironment_setup"
+        )
         self.assertEqual([EXPECTED_SUBSTANCE_READ], data)
+
+    def test_parse_cycle_durations(self):
+        data = config.parse_cycle(
+            tree=self.tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/cycle",
+        )
+        self.assertEqual(EXPECTED_CYCLE_DURATIONS_READ, data)
+
+    def test_parse_cycle_rates(self):
+        data = config.parse_cycle(
+            tree=self.tree,
+            path=f"cell_definitions/cell_definition[@name='cancer']/phenotype/cycle",
+        )
+        self.assertEqual(EXPECTED_CYCLE_RATES_READ, data)
+
+    def test_parse_motility(self):
+        data = config.parse_motility(
+            tree=self.tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/motility",
+        )
+        self.assertEqual(EXPECTED_MOTILITY_READ, data)
+
+    def test_parse_mechanics(self):
+        data = config.parse_mechanics(
+            tree=self.tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/mechanics",
+        )
+        self.assertEqual(EXPECTED_MECHANICS_READ, data)
+
+    def test_parse_volume(self):
+        data = config.parse_volume(
+            tree=self.tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/volume",
+        )
+        self.assertEqual(EXPECTED_VOLUME_READ, data)
+
+
+class WriteDataTest(unittest.TestCase):
+    def setUp(self) -> None:
+        copyfile(CONFIG_PATH, WRITE_PATH)
+        self.tree = ElementTree.parse(WRITE_PATH)
+
+    def test_write_cycle_durations(self):
+        config.write_cycle(
+            new_values=EXPECTED_CYCLE_DURATIONS_WRITE,
+            tree=self.tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/cycle",
+        )
+        self.tree.write(WRITE_PATH)
+
+        new_tree = ElementTree.parse(WRITE_PATH)
+        cycle_data = config.parse_cycle(
+            tree=new_tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/cycle",
+        )
+        self.assertEqual(EXPECTED_CYCLE_DURATIONS_WRITE, cycle_data)
+
+    def test_write_cycle_rates(self):
+        config.write_cycle(
+            new_values=EXPECTED_CYCLE_RATES_WRITE,
+            tree=self.tree,
+            path=f"cell_definitions/cell_definition[@name='cancer']/phenotype/cycle",
+        )
+        self.tree.write(WRITE_PATH)
+
+        new_tree = ElementTree.parse(WRITE_PATH)
+        cycle_data = config.parse_cycle(
+            tree=new_tree,
+            path=f"cell_definitions/cell_definition[@name='cancer']/phenotype/cycle",
+        )
+        self.assertEqual(EXPECTED_CYCLE_RATES_WRITE, cycle_data)
+
+    def test_write_motility(self):
+        config.write_motility(
+            new_values=EXPECTED_MOTILITY_WRITE,
+            tree=self.tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/motility",
+        )
+        self.tree.write(WRITE_PATH)
+
+        new_tree = ElementTree.parse(WRITE_PATH)
+        motility_data = config.parse_motility(
+            tree=new_tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/motility",
+        )
+        self.assertEqual(EXPECTED_MOTILITY_WRITE, motility_data)
+
+    def test_write_mechanics(self):
+        config.write_mechanics(
+            new_values=EXPECTED_MECHANICS_WRITE,
+            tree=self.tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/mechanics",
+        )
+        self.tree.write(WRITE_PATH)
+
+        new_tree = ElementTree.parse(WRITE_PATH)
+        mechanics_data = config.parse_mechanics(
+            tree=new_tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/mechanics",
+        )
+        self.assertEqual(EXPECTED_MECHANICS_WRITE, mechanics_data)
+
+    def test_write_volume(self):
+        config.write_volume(
+            new_values=EXPECTED_VOLUME_WRITE,
+            tree=self.tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/volume",
+        )
+        self.tree.write(WRITE_PATH)
+
+        new_tree = ElementTree.parse(WRITE_PATH)
+        volume_data = config.parse_volume(
+            tree=new_tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/volume",
+        )
+        self.assertEqual(EXPECTED_VOLUME_WRITE, volume_data)
+
+    def tearDown(self) -> None:
+        Path(WRITE_PATH).unlink()
 
 
 class PhysiCellConfigTest(unittest.TestCase):
     def setUp(self):
         """Creates and stores a parser object to read data from the config file."""
+        copyfile(CONFIG_PATH, WRITE_PATH)
         self.xml_data = config.ConfigFileParser(CONFIG_PATH)
+        self.xml_write = config.ConfigFileParser(WRITE_PATH)
 
     def test_get_cell_definition_list(self):
         """Asserts that the cell definitions extracted from the config file are correct."""
@@ -212,6 +383,51 @@ class PhysiCellConfigTest(unittest.TestCase):
         ]
         user_data = self.xml_data.read_user_parameters()
         self.assertEqual(expected_data, user_data)
+
+    def test_write_mechanics_parameters(self):
+        mechanics_data = self.xml_write.read_mechanics_params("default")
+        mechanics_data.cell_cell_adhesion_strength = 4.0
+        mechanics_data.cell_cell_repulsion_strength = 100.0
+        self.xml_write.write_mechanics_params(name="default", mechanics=mechanics_data)
+
+        new_tree = ElementTree.parse(WRITE_PATH)
+        mechanics_data = config.parse_mechanics(
+            tree=new_tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/mechanics",
+        )
+        self.assertEqual(EXPECTED_MECHANICS_WRITE, mechanics_data)
+
+    def test_write_motility_parameters(self):
+        motility_data = self.xml_write.read_motility_params("default")
+        motility_data.speed = 12.0
+        motility_data.persistence_time = 60.0
+        motility_data.motility_enabled = True
+        self.xml_write.write_motility_params(name="default", motility=motility_data)
+
+        new_tree = ElementTree.parse(WRITE_PATH)
+        motility_data = config.parse_motility(
+            tree=new_tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/motility",
+        )
+        self.assertEqual(EXPECTED_MOTILITY_WRITE, motility_data)
+
+    def test_write_volume_parameters(self):
+        volume_data = self.xml_write.read_volume_params("default")
+        volume_data.nuclear = 100.0
+        volume_data.calcified_fraction = 0.5
+        volume_data.calcification_rate = 1.0
+        volume_data.relative_rupture_volume = 3.0
+        self.xml_write.write_volume_params(name="default", volume=volume_data)
+
+        new_tree = ElementTree.parse(WRITE_PATH)
+        volume_data = config.parse_volume(
+            tree=new_tree,
+            path=f"cell_definitions/cell_definition[@name='default']/phenotype/volume",
+        )
+        self.assertEqual(EXPECTED_VOLUME_WRITE, volume_data)
+
+    def tearDown(self) -> None:
+        Path(WRITE_PATH).unlink()
 
 
 if __name__ == "__main__":

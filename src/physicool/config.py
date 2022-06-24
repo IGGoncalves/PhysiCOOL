@@ -64,8 +64,8 @@ class Mechanics(BaseModel):
 
 class Motility(BaseModel):
     speed: confloat(ge=0.0)
-    persistence: confloat(ge=0.0)
-    bias: confloat(ge=0.0, le=1.0)
+    persistence_time: confloat(ge=0.0)
+    migration_bias: confloat(ge=0.0, le=1.0)
     motility_enabled: bool
     use_2d: bool
     chemotaxis_enabled: bool
@@ -127,16 +127,12 @@ class CustomData(BaseModel):
 
 
 @dataclass
-class Phenotype:
-    cycle: Cycle
-    death: List[Death]
-
-
-@dataclass
 class CellParameters:
     """A class to store the cell data for a given cell definition of the config file."""
+
     name: str
-    phenotype: Phenotype
+    cycle: Cycle
+    death: List[Death]
     volume: Volume
     mechanics: Mechanics
     motility: Motility
@@ -275,8 +271,8 @@ def parse_death(
 def parse_motility(tree: ElementTree, path: str) -> Dict[str, Union[float, str, bool]]:
     # Extract and save the motility data from the config file
     speed = float(tree.find(path + "/speed").text)
-    persistence = float(tree.find(path + "/persistence_time").text)
-    bias = float(tree.find(path + "/migration_bias").text)
+    persistence_time = float(tree.find(path + "/persistence_time").text)
+    migration_bias = float(tree.find(path + "/migration_bias").text)
     motility_enabled = tree.find(path + "/options/enabled").text == "true"
     use_2d = tree.find(path + "/options/use_2D").text == "true"
     chemotaxis_enabled = tree.find(path + "/options/chemotaxis/enabled").text == "true"
@@ -285,8 +281,8 @@ def parse_motility(tree: ElementTree, path: str) -> Dict[str, Union[float, str, 
 
     return {
         "speed": speed,
-        "persistence": persistence,
-        "bias": bias,
+        "persistence_time": persistence_time,
+        "migration_bias": migration_bias,
         "motility_enabled": motility_enabled,
         "use_2d": use_2d,
         "chemotaxis_enabled": chemotaxis_enabled,
@@ -393,7 +389,54 @@ def parse_custom(tree: ElementTree, path: str) -> List[Dict[str, Union[float, st
     ]
 
 
-def write_volume(new_values: Dict[str, Union[float, bool, str]], tree: ElementTree, path: str) -> None:
+def write_cycle(new_values: Dict[str, Union[float, List[float]]], tree: ElementTree, path: str
+) -> None:
+    if tree.find(path + "/phase_durations"):
+        for new_value, element in zip(new_values["phase_durations"], tree.find(path + "/phase_durations")):
+            element.text = str(new_value)
+    else: 
+        for new_value, element in zip(new_values["phase_transition_rates"], tree.find(path + "/phase_transition_rates")):
+            element.text = str(new_value)
+
+def write_volume(new_values: Dict[str, float], tree: ElementTree, path: str
+) -> None:
+    tree.find(path + "/total").text = str(new_values["total"])
+    tree.find(path + "/fluid_fraction").text = str(new_values["fluid_fraction"])
+    tree.find(path + "/nuclear").text = str(new_values["nuclear"])
+    tree.find(path + "/fluid_change_rate").text = str(new_values["fluid_change_rate"])
+    tree.find(path + "/cytoplasmic_biomass_change_rate").text = str(new_values["cytoplasmic_biomass_change_rate"])
+    tree.find(path + "/nuclear_biomass_change_rate").text = str(new_values["nuclear_biomass_change_rate"])
+    tree.find(path + "/calcified_fraction").text = str(new_values["calcified_fraction"])
+    tree.find(path + "/calcification_rate").text = str(new_values["calcification_rate"])
+    tree.find(path + "/relative_rupture_volume").text = str(new_values["relative_rupture_volume"])
+
+
+def write_mechanics(
+    new_values: Dict[str, float], tree: ElementTree, path: str
+) -> None:
+    """
+    Writes the new motility parameter values to the XML tree object, for a given cell definition.
+    Values will not be updated in the XML file.
+
+    Parameters
+    ----------
+    name: str
+        The name of the cell definition to be updated.
+    motility: MotilityParams
+        The new parameter values to be written to the XML object.
+    """
+
+    # Extract and save the motility data from the config file
+    tree.find(path + "/cell_cell_adhesion_strength").text = str(new_values["cell_cell_adhesion_strength"])
+    tree.find(path + "/cell_cell_repulsion_strength").text = str(new_values["cell_cell_repulsion_strength"])
+    tree.find(path + "/relative_maximum_adhesion_distance").text = str(new_values["relative_maximum_adhesion_distance"])
+    tree.find(path + "/options/set_relative_equilibrium_distance").text = str(new_values["set_relative_equilibrium_distance"])
+    tree.find(path + "/options/set_absolute_equilibrium_distance").text = str(new_values["set_absolute_equilibrium_distance"])
+
+
+def write_motility(
+    new_values: Dict[str, Union[float, bool, str]], tree: ElementTree, path: str
+) -> None:
     """
     Writes the new motility parameter values to the XML tree object, for a given cell definition.
     Values will not be updated in the XML file.
@@ -408,7 +451,7 @@ def write_volume(new_values: Dict[str, Union[float, bool, str]], tree: ElementTr
 
     # Extract and save the motility data from the config file
     tree.find(path + "/speed").text = str(new_values["speed"])
-    tree.find(path + "/persistence_time").text = str(new_values["persistence"])
+    tree.find(path + "/persistence_time").text = str(new_values["persistence_time"])
     tree.find(path + "/migration_bias").text = str(new_values["migration_bias"])
 
     if new_values["motility_enabled"]:
@@ -429,9 +472,7 @@ def write_volume(new_values: Dict[str, Union[float, bool, str]], tree: ElementTr
         tree.find(chmo_str + "/enabled").text = "false"
 
     tree.find(chmo_str + "/substrate").text = new_values["chemotaxis_substrate"]
-    tree.find(chmo_str + "/direction").text = str(
-        new_values["chemotaxis_direction"]
-    )
+    tree.find(chmo_str + "/direction").text = str(new_values["chemotaxis_direction"])
 
 
 class ConfigFileParser:
@@ -481,11 +522,6 @@ class ConfigFileParser:
     def read_death_params(self, name: str) -> List[Death]:
         stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/death"
         return [Death(**model) for model in parse_death(self.tree, path=stem)]
-
-    def read_phenotype_params(self, name: str) -> Phenotype:
-        cycle = self.read_cycle_params(name)
-        death = self.read_cycle_params(name)
-        return Phenotype(cycle=cycle, death=death)
 
     def read_volume_params(self, name: str) -> Volume:
         """Reads the motility parameters from the config file into a custom data structure"""
@@ -569,8 +605,19 @@ class ConfigFileParser:
             ).text = str(rate)
 
     def write_motility_params(self, name: str, motility: Motility) -> None:
-        cell_string = f"cell_definitions/cell_definition[@name='{name}']"
-        stem = cell_string + "/phenotype/motility"
+        stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/motility"
+        write_motility(new_values=motility.dict(), tree=self.tree, path=stem)
+        self.tree.write(self.config_file)
+
+    def write_mechanics_params(self, name: str, mechanics: Mechanics) -> None:
+        stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/mechanics"
+        write_mechanics(new_values=mechanics.dict(), tree=self.tree, path=stem)
+        self.tree.write(self.config_file)
+
+    def write_volume_params(self, name: str, volume: Volume) -> None:
+        stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/volume"
+        write_volume(new_values=volume.dict(), tree=self.tree, path=stem)
+        self.tree.write(self.config_file)
 
     def update_params(self, cell_data: CellParameters) -> None:
         """
@@ -584,16 +631,14 @@ class ConfigFileParser:
         self.write_motility_params(cell_data.name, cell_data.motility)
         self.write_cycle_params(cell_data.name, cell_data.phenotype.cycle)
 
-        self.tree.write(self.config_file)
-
 
 UpdaterFunction = Callable[[CellParameters, List[float]], None]
 
 
 def update_motility_values(cell_data: CellParameters, new_values=List[float]):
     cell_data.motility.speed = new_values[0]
-    cell_data.motility.persistence = new_values[1]
-    cell_data.motility.bias = new_values[2]
+    cell_data.motility.persistence_time = new_values[1]
+    cell_data.motility.migration_bias = new_values[2]
 
 
 def update_mechanics_values(cell_data: CellParameters, new_values=List[float]):
