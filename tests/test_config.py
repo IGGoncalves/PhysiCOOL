@@ -9,6 +9,32 @@ from physicool import config
 CONFIG_PATH = Path("PhysiCell/config/settings_read_only.xml")
 WRITE_PATH = Path("test.xml")
 
+EXPECTED_DOMAIN_READ = {
+    "x_min": -500.0,
+    "x_max": 500.0,
+    "y_min": -500.0,
+    "y_max": 500.0,
+    "z_min": -10.0,
+    "z_max": 10.0,
+    "dx": 20.0,
+    "dy": 20.0,
+    "dz": 20.0,
+    "use_2d": True
+}
+
+EXPECTED_DOMAIN_WRITE = {
+    "x_min": -200.0,
+    "x_max": 200.0,
+    "y_min": -500.0,
+    "y_max": 500.0,
+    "z_min": -10.0,
+    "z_max": 10.0,
+    "dx": 20.0,
+    "dy": 20.0,
+    "dz": 20.0,
+    "use_2d": False
+}
+
 EXPECTED_OVERALL_READ = {
     "max_time": 620.0,
     "dt_diffusion": 0.01,
@@ -167,6 +193,10 @@ class ReadDataTest(unittest.TestCase):
     def setUp(self):
         self.tree = ElementTree.parse(CONFIG_PATH)
 
+    def test_parse_domain(self):
+        data = config.parse_domain(tree=self.tree, path="domain")
+        self.assertEqual(EXPECTED_DOMAIN_READ, data)
+
     def test_parse_overall(self):
         data = config.parse_overall(tree=self.tree, path="overall")
         self.assertEqual(EXPECTED_OVERALL_READ, data)
@@ -223,6 +253,21 @@ class WriteDataTest(unittest.TestCase):
     def setUp(self) -> None:
         copyfile(CONFIG_PATH, WRITE_PATH)
         self.tree = ElementTree.parse(WRITE_PATH)
+
+    def test_write_domain(self):
+        config.write_domain(
+            new_values=EXPECTED_DOMAIN_WRITE,
+            tree=self.tree,
+            path="domain",
+        )
+        self.tree.write(WRITE_PATH)
+
+        new_tree = ElementTree.parse(WRITE_PATH)
+        domain_data = config.parse_domain(
+            tree=new_tree,
+            path="domain",
+        )
+        self.assertEqual(EXPECTED_DOMAIN_WRITE, domain_data)
 
     def test_write_cycle_durations(self):
         config.write_cycle(
@@ -315,12 +360,18 @@ class PhysiCellConfigTest(unittest.TestCase):
         cell_list = self.xml_data.cell_definitions_list
         self.assertEqual(cell_list, ["default", "cancer"])
 
-    def test_read_overall_data(self):
+    def test_read_domain_params(self):
+        """Asserts that the XML domain data was properly read into a Domain object."""
+        expected_data = config.Domain(**EXPECTED_DOMAIN_READ)
+        domain_data = self.xml_data.read_domain_params()
+        self.assertEqual(expected_data, domain_data)
+
+    def test_read_overall_params(self):
         expected_data = config.Overall(**EXPECTED_OVERALL_READ)
         overall_data = self.xml_data.read_overall_data()
         self.assertEqual(expected_data, overall_data)
 
-    def test_read_me_data(self):
+    def test_read_me_params(self):
         expected_data = [config.Substance(**EXPECTED_SUBSTANCE_READ)]
         me_data = self.xml_data.read_me_data()
         self.assertEqual(expected_data, me_data)
@@ -384,7 +435,22 @@ class PhysiCellConfigTest(unittest.TestCase):
         user_data = self.xml_data.read_user_parameters()
         self.assertEqual(expected_data, user_data)
 
-    def test_write_mechanics_parameters(self):
+    def test_write_domain_params(self):
+        """Asserts that Domain data is properly written to the XML file."""
+        domain_data = self.xml_write.read_domain_params()
+        domain_data.x_min = -200.0
+        domain_data.x_max = 200.0
+        domain_data.use_2d = False
+        self.xml_write.write_domain_params(domain=domain_data)
+
+        new_tree = ElementTree.parse(WRITE_PATH)
+        mechanics_data = config.parse_domain(
+            tree=new_tree,
+            path="domain",
+        )
+        self.assertEqual(EXPECTED_DOMAIN_WRITE, domain_data)
+
+    def test_write_mechanics_params(self):
         mechanics_data = self.xml_write.read_mechanics_params("default")
         mechanics_data.cell_cell_adhesion_strength = 4.0
         mechanics_data.cell_cell_repulsion_strength = 100.0

@@ -15,17 +15,17 @@ class Domain(BaseModel):
     y_max: int
     z_min: int
     z_max: int
-    dx: conint(ge=0.0)
-    dy: conint(ge=0.0)
-    dz: conint(ge=0.0)
+    dx: conint(ge=0)
+    dy: conint(ge=0)
+    dz: conint(ge=0)
     use_2d: bool
 
 
 class Overall(BaseModel):
-    max_time: conint(ge=0.0)
-    dt_diffusion: conint(ge=0.0)
-    dt_mechanics: conint(ge=0.0)
-    dt_phenotype: conint(ge=0.0)
+    max_time: conint(ge=0)
+    dt_diffusion: conint(ge=0)
+    dt_mechanics: conint(ge=0)
+    dt_phenotype: conint(ge=0)
 
 
 class Substance(BaseModel):
@@ -138,6 +138,32 @@ class CellParameters:
     motility: Motility
     secretion: List[Secretion]
     custom: List[CustomData]
+
+
+def parse_domain(tree: ElementTree, path: str) -> Dict[str, Union[bool, float]]:
+    x_min = float(tree.find(path + "/x_min").text)
+    x_max = float(tree.find(path + "/x_max").text)
+    y_min = float(tree.find(path + "/y_min").text)
+    y_max = float(tree.find(path + "/y_max").text)
+    z_min = float(tree.find(path + "/z_min").text)
+    z_max = float(tree.find(path + "/z_max").text)
+    dx = float(tree.find(path + "/dx").text)
+    dy = float(tree.find(path + "/dy").text)
+    dz = float(tree.find(path + "/dz").text)
+    use_2d = tree.find(path + "/use_2D").text == "true"
+
+    return {
+        "x_min": x_min,
+        "x_max": x_max,
+        "y_min": y_min,
+        "y_max": y_max,
+        "z_min": z_min,
+        "z_max": z_max,
+        "dx": dx,
+        "dy": dy,
+        "dz": dz,
+        "use_2d": use_2d
+    }
 
 
 def parse_overall(tree: ElementTree, path: str) -> Dict[str, float]:
@@ -389,31 +415,64 @@ def parse_custom(tree: ElementTree, path: str) -> List[Dict[str, Union[float, st
     ]
 
 
-def write_cycle(new_values: Dict[str, Union[float, List[float]]], tree: ElementTree, path: str
+def write_domain(new_values: Dict[str, Union[float, bool]], tree: ElementTree, path: str) -> None:
+    tree.find(path + "/x_min").text = str(new_values["x_min"])
+    tree.find(path + "/x_max").text = str(new_values["x_max"])
+    tree.find(path + "/y_min").text = str(new_values["y_min"])
+    tree.find(path + "/y_max").text = str(new_values["y_max"])
+    tree.find(path + "/z_min").text = str(new_values["z_min"])
+    tree.find(path + "/z_max").text = str(new_values["z_max"])
+    tree.find(path + "/dx").text = str(new_values["dx"])
+    tree.find(path + "/dy").text = str(new_values["dy"])
+    tree.find(path + "/dz").text = str(new_values["dz"])
+    if new_values["use_2d"]:
+        tree.find(path + "/use_2D").text = "true"
+    else:
+        tree.find(path + "/use_2D").text = "false"
+
+
+def write_overall(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
+    tree.find(path + "/max_time").text = str(new_values["max_time"])
+    tree.find(path + "/dt_diffusion").text = str(new_values["dt_diffusion"])
+    tree.find(path + "/dt_mechanics").text = str(new_values["dt_mechanics"])
+    tree.find(path + "/dt_phenotype").text = str(new_values["dt_phenotype"])
+
+
+def write_cycle(
+    new_values: Dict[str, Union[float, List[float]]], tree: ElementTree, path: str
 ) -> None:
     if tree.find(path + "/phase_durations"):
-        for new_value, element in zip(new_values["phase_durations"], tree.find(path + "/phase_durations")):
+        for new_value, element in zip(
+            new_values["phase_durations"], tree.find(path + "/phase_durations")
+        ):
             element.text = str(new_value)
-    else: 
-        for new_value, element in zip(new_values["phase_transition_rates"], tree.find(path + "/phase_transition_rates")):
+    else:
+        for new_value, element in zip(
+            new_values["phase_transition_rates"],
+            tree.find(path + "/phase_transition_rates"),
+        ):
             element.text = str(new_value)
 
-def write_volume(new_values: Dict[str, float], tree: ElementTree, path: str
-) -> None:
+
+def write_volume(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
     tree.find(path + "/total").text = str(new_values["total"])
     tree.find(path + "/fluid_fraction").text = str(new_values["fluid_fraction"])
     tree.find(path + "/nuclear").text = str(new_values["nuclear"])
     tree.find(path + "/fluid_change_rate").text = str(new_values["fluid_change_rate"])
-    tree.find(path + "/cytoplasmic_biomass_change_rate").text = str(new_values["cytoplasmic_biomass_change_rate"])
-    tree.find(path + "/nuclear_biomass_change_rate").text = str(new_values["nuclear_biomass_change_rate"])
+    tree.find(path + "/cytoplasmic_biomass_change_rate").text = str(
+        new_values["cytoplasmic_biomass_change_rate"]
+    )
+    tree.find(path + "/nuclear_biomass_change_rate").text = str(
+        new_values["nuclear_biomass_change_rate"]
+    )
     tree.find(path + "/calcified_fraction").text = str(new_values["calcified_fraction"])
     tree.find(path + "/calcification_rate").text = str(new_values["calcification_rate"])
-    tree.find(path + "/relative_rupture_volume").text = str(new_values["relative_rupture_volume"])
+    tree.find(path + "/relative_rupture_volume").text = str(
+        new_values["relative_rupture_volume"]
+    )
 
 
-def write_mechanics(
-    new_values: Dict[str, float], tree: ElementTree, path: str
-) -> None:
+def write_mechanics(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
     """
     Writes the new motility parameter values to the XML tree object, for a given cell definition.
     Values will not be updated in the XML file.
@@ -427,11 +486,21 @@ def write_mechanics(
     """
 
     # Extract and save the motility data from the config file
-    tree.find(path + "/cell_cell_adhesion_strength").text = str(new_values["cell_cell_adhesion_strength"])
-    tree.find(path + "/cell_cell_repulsion_strength").text = str(new_values["cell_cell_repulsion_strength"])
-    tree.find(path + "/relative_maximum_adhesion_distance").text = str(new_values["relative_maximum_adhesion_distance"])
-    tree.find(path + "/options/set_relative_equilibrium_distance").text = str(new_values["set_relative_equilibrium_distance"])
-    tree.find(path + "/options/set_absolute_equilibrium_distance").text = str(new_values["set_absolute_equilibrium_distance"])
+    tree.find(path + "/cell_cell_adhesion_strength").text = str(
+        new_values["cell_cell_adhesion_strength"]
+    )
+    tree.find(path + "/cell_cell_repulsion_strength").text = str(
+        new_values["cell_cell_repulsion_strength"]
+    )
+    tree.find(path + "/relative_maximum_adhesion_distance").text = str(
+        new_values["relative_maximum_adhesion_distance"]
+    )
+    tree.find(path + "/options/set_relative_equilibrium_distance").text = str(
+        new_values["set_relative_equilibrium_distance"]
+    )
+    tree.find(path + "/options/set_absolute_equilibrium_distance").text = str(
+        new_values["set_absolute_equilibrium_distance"]
+    )
 
 
 def write_motility(
@@ -502,6 +571,9 @@ class ConfigFileParser:
         substances = root.find("microenvironment/domain/variables").findall("variable")
 
         return [substance.attrib["name"] for substance in substances]
+
+    def read_domain_params(self) -> Domain:
+        return Domain(**parse_domain(tree=self.tree, path="domain"))
 
     def read_overall_data(self) -> Overall:
         return Overall(**parse_overall(tree=self.tree, path="overall"))
@@ -594,6 +666,11 @@ class ConfigFileParser:
             CustomData(**custom)
             for custom in parse_custom(self.tree, "user_parameters")
         ]
+
+    def write_domain_params(self, domain: Domain, update_file: bool = True) -> None:
+        write_domain(new_values=domain.dict(), tree=self.tree, path="domain")
+        if update_file:
+            self.tree.write(self.config_file)
 
     def write_cycle_params(self, name: str, cycle: Cycle) -> None:
         cell_string = f"cell_definitions/cell_definition[@name='{name}']"
