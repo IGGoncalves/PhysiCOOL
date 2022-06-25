@@ -201,5 +201,16 @@ def compute_error(model_data, reference_data):
     return ((model_data - reference_data) ** 2).sum()
 
 
-OutputProcessor = Callable[[Path], Union[float, np.ndarray]]
+OutputProcessor = Callable[[Path], np.ndarray]
 
+def get_number_of_cells(output_path: Path = Path("output")) -> np.ndarray:
+    pattern = "output*_cells_physicell.mat"
+    number_of_timepoints = len([file for file in output_path.glob(pattern)])
+
+    number_of_cells = np.empty(shape=(number_of_timepoints,))
+
+    for i in range(number_of_timepoints):
+        cells = get_cell_data(timestep=i, variables=["ID"], output_path=output_path)
+        number_of_cells[i] = cells["ID"].size
+
+    return number_of_cells

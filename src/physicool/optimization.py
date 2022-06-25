@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from sys import platform
 import subprocess
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from distutils.dir_util import copy_tree, remove_tree
 
 import numpy as np
@@ -106,6 +106,16 @@ class PhysiCellBlackBox:
 
         if self.processor:
             return output_metrics
+
+
+
+def run_sweep(black_box: PhysiCellBlackBox, bounds: Tuple[float, float], step: float) -> List[np.array]:
+    input_values = np.arange(bounds[0], bounds[1], step)
+    output_metrics  = []
+    for value in input_values:
+        output_metrics.append(black_box.run([value]))
+
+    return output_metrics
 
 
 class MultiSweep:

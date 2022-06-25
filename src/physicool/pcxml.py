@@ -1,0 +1,819 @@
+# This module enables users to programmatically read and write to the PhysiCell XML config file.
+# Data validation is not performed by this module. To safely write to the XML file, use the
+# ConfigFileParser (from the config module) instead.
+from xml.etree import ElementTree
+from typing import List, Union, Dict
+
+
+def parse_domain(tree: ElementTree, path: str) -> Dict[str, Union[bool, float]]:
+    """
+    Reads and returns the <domain> data.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the domain node (e.g., "domain").
+
+    Returns
+    -------
+    Dict[str, Union[bool, float]]
+        A dictionary with the domain data for a simulation (x_min, x_max,
+        y_min, y_max, z_min, z_max, dx, dy, dz and use_2D).
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the domain node, preventing
+        the code from trying to read data from nodes that aren't there.
+    """
+    if tree.find(path).tag != "domain":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    x_min = float(tree.find(path + "/x_min").text)
+    x_max = float(tree.find(path + "/x_max").text)
+    y_min = float(tree.find(path + "/y_min").text)
+    y_max = float(tree.find(path + "/y_max").text)
+    z_min = float(tree.find(path + "/z_min").text)
+    z_max = float(tree.find(path + "/z_max").text)
+    dx = float(tree.find(path + "/dx").text)
+    dy = float(tree.find(path + "/dy").text)
+    dz = float(tree.find(path + "/dz").text)
+    use_2d = tree.find(path + "/use_2D").text == "true"
+
+    return {
+        "x_min": x_min,
+        "x_max": x_max,
+        "y_min": y_min,
+        "y_max": y_max,
+        "z_min": z_min,
+        "z_max": z_max,
+        "dx": dx,
+        "dy": dy,
+        "dz": dz,
+        "use_2d": use_2d,
+    }
+
+
+def parse_overall(tree: ElementTree, path: str) -> Dict[str, float]:
+    """
+    Reads and returns the <overall> data.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the overall node (e.g., "overall").
+
+    Returns
+    -------
+    Dict[str, float]
+        A dictionary with the overall data for a simulation (max_time,
+        dt_diffusion, dt_mechanics, dt_phenotype).
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the overall node, preventing
+        the code from trying to read data from nodes that aren't there.
+    """
+    if tree.find(path).tag != "overall":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    max_time = float(tree.find(path + "/max_time").text)
+    dt_diffusion = float(tree.find(path + "/dt_diffusion").text)
+    dt_mechanics = float(tree.find(path + "/dt_mechanics").text)
+    dt_phenotype = float(tree.find(path + "/dt_phenotype").text)
+
+    return {
+        "max_time": max_time,
+        "dt_diffusion": dt_diffusion,
+        "dt_mechanics": dt_mechanics,
+        "dt_phenotype": dt_phenotype,
+    }
+
+
+def parse_substance(
+        tree: ElementTree, path: str, name: str
+) -> Dict[str, Union[str, float]]:
+    """
+    Reads and returns the <variable> data for a microenvironment substance.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the microenvironment node
+        (e.g., "microenvironment_setup").
+    name:
+        A string with the name of the microenvironment variable to be read.
+    Returns
+    -------
+    Dict[str, Union[str, float]]
+        A dictionary with the data for one of the substances in a simulation
+        (name, diffusion_coefficient, decay_rate, initial_condition,
+        Dirichlet_boundary_condition).
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the microenvironment node, preventing
+        the code from trying to read data from nodes that aren't there.
+    ValueError
+        When the passed name does not match any of the variables in the file.
+    """
+    if tree.find(path).tag != "microenvironment_setup":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    substances = [
+        substance.attrib["name"] for substance in tree.find(path).findall("variable")
+    ]
+
+    if name not in substances:
+        raise ValueError("The passed substance name is not valid.")
+
+    substance_stem = path + f"/variable[@name='{name}']"
+    diffusion_coefficient = float(
+        tree.find(substance_stem + "/physical_parameter_set/diffusion_coefficient").text
+    )
+    decay_rate = float(
+        tree.find(substance_stem + "/physical_parameter_set/decay_rate").text
+    )
+    initial_condition = float(tree.find(substance_stem + "/initial_condition").text)
+    dirichlet_boundary_condition = float(
+        tree.find(substance_stem + "/Dirichlet_boundary_condition").text
+    )
+
+    return {
+        "name": name,
+        "diffusion_coefficient": diffusion_coefficient,
+        "decay_rate": decay_rate,
+        "initial_condition": initial_condition,
+        "dirichlet_boundary_condition": dirichlet_boundary_condition,
+    }
+
+
+def parse_microenvironment(
+        tree: ElementTree, path: str
+) -> List[Dict[str, Union[float, str]]]:
+    """
+    Reads and returns the <microenvironment> data.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the microenvironment node
+        (e.g., "microenvironment_setup").
+
+    Returns
+    -------
+    List[Dict[str, Union[float, str]]]
+        A list of dictionaries with the data for all the substances in a simulation
+        (name, diffusion_coefficient, decay_rate, initial_condition,
+        Dirichlet_boundary_condition).
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the microenvironment node, preventing
+        the code from trying to read data from nodes that aren't there.
+    """
+    if tree.find(path).tag != "microenvironment_setup":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    substances = [
+        substance.attrib["name"] for substance in tree.find(path).findall("variable")
+    ]
+    substance_data = []
+
+    for substance in substances:
+        data = parse_substance(tree=tree, path=path, name=substance)
+        substance_data.append(data)
+
+    return substance_data
+
+
+def parse_cycle(tree: ElementTree, path: str) -> Dict[str, Union[float, List[float]]]:
+    """
+    Reads and returns the <cycle> data.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the cycle node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/cycle").
+
+    Returns
+    -------
+    Dict[str, Union[float, List[float]]]
+        A dictionary with the cycle data for a cell definition in a simulation
+        (code, phase_durations or phase_transition_rates).
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to a valid cycle node, preventing
+        the code from trying to read data from nodes that aren't there.
+    """
+    if tree.find(path).tag != "cycle":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    cycle_node = tree.find(path)
+    code = float(cycle_node.attrib["code"])
+    data_type = list(cycle_node)[0].tag
+    durations = None
+    rates = None
+
+    if data_type == "phase_durations":
+        durations = [float(duration.text) for duration in cycle_node[0]]
+    elif data_type == "phase_transition_rates":
+        rates = [float(duration.text) for duration in cycle_node[0]]
+
+    return {"code": code, "phase_durations": durations, "phase_transition_rates": rates}
+
+
+def parse_death_model(
+        tree: ElementTree, path: str, name: str
+) -> Dict[str, Union[float, List[float]]]:
+    """
+    Reads and returns the <death> data for a death model.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the death node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/death").
+    name:
+        A string with the name of the death model to be read.
+    Returns
+    -------
+    Dict[str, Union[float, List[float]]]
+        A dictionary with the data for one of the death models for a cell definition
+         in a simulation (code, death_rate, phase_duration_rates or phase_transition_rates,
+         unlysed_fluid_change_rate, unlysed_fluid_change_rate, cytoplasmic_biomass_change_rate,
+         nuclear_biomass_change_rate, calcification_rate, relative_rupture_volume).
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the death node, preventing
+        the code from trying to read data from nodes that aren't there.
+    ValueError
+        When the passed name does not match any of the death models for the cell definition.
+    """
+    if tree.find(path).tag != "death":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    models = [model.attrib["name"] for model in tree.find(path).findall("model")]
+    if name not in models:
+        raise ValueError("The passed name does not match a valid death model.")
+
+    model_stem = path + f"/model[@name='{name}']"
+    death_node = tree.find(model_stem)
+    code = float(death_node.attrib["code"])
+    data_type = list(death_node)[1].tag
+    durations = None
+    rates = None
+
+    death_rate = float(
+        tree.find(model_stem + "/death_rate").text
+    )
+
+    if data_type == "phase_durations":
+        durations = [float(duration.text) for duration in death_node[1]]
+    elif data_type == "phase_transition_rates":
+        rates = [float(duration.text) for duration in death_node[1]]
+
+    model_stem += "/parameters"
+    unlysed_fluid_change_rate = float(
+        tree.find(model_stem + "/unlysed_fluid_change_rate").text
+    )
+    lysed_fluid_change_rate = float(
+        tree.find(model_stem + "/lysed_fluid_change_rate").text
+    )
+    cytoplasmic_biomass_change_rate = float(
+        tree.find(model_stem + "/cytoplasmic_biomass_change_rate").text
+    )
+    nuclear_biomass_change_rate = float(
+        tree.find(model_stem + "/nuclear_biomass_change_rate").text
+    )
+    calcification_rate = float(tree.find(model_stem + "/calcification_rate").text)
+    relative_rupture_volume = float(
+        tree.find(model_stem + "/relative_rupture_volume").text
+    )
+
+    return {
+        "code": code,
+        "death_rate": death_rate,
+        "phase_durations": durations,
+        "phase_transition_rates": rates,
+        "unlysed_fluid_change_rate": unlysed_fluid_change_rate,
+        "lysed_fluid_change_rate": lysed_fluid_change_rate,
+        "cytoplasmic_biomass_change_rate": cytoplasmic_biomass_change_rate,
+        "nuclear_biomass_change_rate": nuclear_biomass_change_rate,
+        "calcification_rate": calcification_rate,
+        "relative_rupture_volume": relative_rupture_volume,
+    }
+
+
+def parse_death(
+        tree: ElementTree, path: str
+) -> List[Dict[str, Union[float, List[float]]]]:
+    """
+    Reads and returns the <death> data.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the death node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/death").
+
+    Returns
+    -------
+    List[Dict[str, Union[float, List[float]]]]
+        A list of dictionaries with the data for all the death models for a cell definition
+         in a simulation (code, death_rate, phase_duration_rates or phase_transition_rates,
+         unlysed_fluid_change_rate, unlysed_fluid_change_rate, cytoplasmic_biomass_change_rate,
+         nuclear_biomass_change_rate, calcification_rate, relative_rupture_volume).
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the death node, preventing
+        the code from trying to read data from nodes that aren't there.
+    """
+    if tree.find(path).tag != "death":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    models = [model.attrib["name"] for model in tree.find(path).findall("model")]
+    death_data = []
+
+    for model in models:
+        data = parse_death_model(tree=tree, path=path, name=model)
+        death_data.append(data)
+
+    return death_data
+
+
+def parse_volume(tree: ElementTree, path: str) -> Dict[str, float]:
+    """
+    Reads and returns the <volume> data.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the volume node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/volume").
+
+    Returns
+    -------
+    Dict[str, float]
+        A dictionary with the volume data for a cell definition in a simulation
+        (total, fluid_fraction, nuclear, fluid_change_rate, cytoplasmic_biomass_change_rate,
+        nuclear_biomass_change_rate, calcified_fraction, calcification_rat,
+        relative_rupture_volume).
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to a valid volume node, preventing
+        the code from trying to read data from nodes that aren't there.
+    """
+    if tree.find(path).tag != "volume":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    total = float(tree.find(path + "/total").text)
+    fluid_fraction = float(tree.find(path + "/fluid_fraction").text)
+    nuclear = float(tree.find(path + "/nuclear").text)
+    fluid_change_rate = float(tree.find(path + "/fluid_change_rate").text)
+    cytoplasmic_biomass_change_rate = float(
+        tree.find(path + "/cytoplasmic_biomass_change_rate").text
+    )
+    nuclear_biomass_change_rate = float(
+        tree.find(path + "/nuclear_biomass_change_rate").text
+    )
+    calcified_fraction = float(tree.find(path + "/calcified_fraction").text)
+    calcification_rate = float(tree.find(path + "/calcification_rate").text)
+    relative_rupture_volume = float(tree.find(path + "/relative_rupture_volume").text)
+
+    return {
+        "total": total,
+        "fluid_fraction": fluid_fraction,
+        "nuclear": nuclear,
+        "fluid_change_rate": fluid_change_rate,
+        "cytoplasmic_biomass_change_rate": cytoplasmic_biomass_change_rate,
+        "nuclear_biomass_change_rate": nuclear_biomass_change_rate,
+        "calcified_fraction": calcified_fraction,
+        "calcification_rate": calcification_rate,
+        "relative_rupture_volume": relative_rupture_volume,
+    }
+
+
+def parse_mechanics(tree: ElementTree, path: str) -> Dict[str, float]:
+    """
+    Reads and returns the <mechanics> data.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the mechanics node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/mechanics").
+
+    Returns
+    -------
+    Dict[str, float]
+        A dictionary with the mechanics data for a cell definition in a simulation
+        (cell_cell_adhesion_strength, cell_cell_repulsion_strength,
+        set_relative_maximum_adhesion_distance, set_relative_equilibrium_distance,
+        set_absolute_equilibrium_distance).
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to a valid mechanics node, preventing
+        the code from trying to read data from nodes that aren't there.
+    """
+    if tree.find(path).tag != "mechanics":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    cell_cell_adhesion_strength = float(
+        tree.find(path + "/cell_cell_adhesion_strength").text
+    )
+    cell_cell_repulsion_strength = float(
+        tree.find(path + "/cell_cell_repulsion_strength").text
+    )
+    relative_maximum_adhesion_distance = float(
+        tree.find(path + "/relative_maximum_adhesion_distance").text
+    )
+
+    relative_equilibrium_distance = float(
+        tree.find(path + "/options/set_relative_equilibrium_distance").text
+    )
+
+    absolute_equilibrium_distance = float(
+        tree.find(path + "/options/set_absolute_equilibrium_distance").text
+    )
+
+    return {
+        "cell_cell_adhesion_strength": cell_cell_adhesion_strength,
+        "cell_cell_repulsion_strength": cell_cell_repulsion_strength,
+        "relative_maximum_adhesion_distance": relative_maximum_adhesion_distance,
+        "set_relative_equilibrium_distance": relative_equilibrium_distance,
+        "set_absolute_equilibrium_distance": absolute_equilibrium_distance,
+    }
+
+
+def parse_motility(tree: ElementTree, path: str) -> Dict[str, Union[float, str, bool]]:
+    """
+    Reads and returns the <motility> data.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the motility node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/motility").
+
+    Returns
+    -------
+    Dict[str, Union[float, str, bool]]
+        A dictionary with the motility data for a cell definition in a simulation
+        (code, phase_durations or phase_transition_rates).
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to a valid motility node, preventing
+        the code from trying to read data from nodes that aren't there.
+    """
+    if tree.find(path).tag != "motility":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    speed = float(tree.find(path + "/speed").text)
+    persistence_time = float(tree.find(path + "/persistence_time").text)
+    migration_bias = float(tree.find(path + "/migration_bias").text)
+    motility_enabled = tree.find(path + "/options/enabled").text == "true"
+    use_2d = tree.find(path + "/options/use_2D").text == "true"
+    chemotaxis_enabled = tree.find(path + "/options/chemotaxis/enabled").text == "true"
+    chemotaxis_substrate = tree.find(path + "/options/chemotaxis/substrate").text
+    chemotaxis_direction = float(tree.find(path + "/options/chemotaxis/direction").text)
+
+    return {
+        "speed": speed,
+        "persistence_time": persistence_time,
+        "migration_bias": migration_bias,
+        "motility_enabled": motility_enabled,
+        "use_2d": use_2d,
+        "chemotaxis_enabled": chemotaxis_enabled,
+        "chemotaxis_substrate": chemotaxis_substrate,
+        "chemotaxis_direction": chemotaxis_direction,
+    }
+
+
+def parse_secretion_substance(
+        tree: ElementTree, path: str, name: str
+) -> Dict[str, Union[str, float]]:
+    """
+    Reads and returns the data for a secretion <substrate>.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the secretion node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/secretion").
+    name:
+        A string with the name of the secretion substance to be read.
+    Returns
+    -------
+    Dict[str, Union[str, float]]
+        A dictionary with the data for one of the substances in a simulation
+        (name, secretion_rate, secretion_target, uptake_rate, net_export_rate).
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the secretion node, preventing
+        the code from trying to read data from nodes that aren't there.
+    ValueError
+        When the passed name does not match any of the substances in the secretion data.
+    """
+    if tree.find(path).tag != "secretion":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    substrates = [
+        substrate.attrib["name"] for substrate in tree.find(path).findall("substrate")
+    ]
+
+    if name not in substrates:
+        raise ValueError("The passed name does not match a valid death model.")
+
+    substrate_stem = path + f"/substrate[@name='{name}']"
+    secretion_rate = float(tree.find(substrate_stem + "/secretion_rate").text)
+    secretion_target = float(tree.find(substrate_stem + "/secretion_target").text)
+    uptake_rate = float(tree.find(substrate_stem + "/uptake_rate").text)
+    net_export_rate = float(tree.find(substrate_stem + "/net_export_rate").text)
+
+    return {
+        "name": name,
+        "secretion_rate": secretion_rate,
+        "secretion_target": secretion_target,
+        "uptake_rate": uptake_rate,
+        "net_export_rate": net_export_rate,
+    }
+
+
+def parse_secretion(tree: ElementTree, path: str) -> List[Dict[str, Union[str, float]]]:
+    """
+    Reads and returns the <secretion> data.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the secretion node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/secretion").
+
+    Returns
+    -------
+    List[Dict[str, Union[str, float]]]
+        A list of dictionaries with the data for all the secretion models for a cell definition
+         in a simulation (name, secretion_rate, secretion_target, uptake_rate, net_export_rate).
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the secretion node, preventing
+        the code from trying to read data from nodes that aren't there.
+    """
+    if tree.find(path).tag != "secretion":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    substrates = [
+        substrate.attrib["name"] for substrate in tree.find(path).findall("substrate")
+    ]
+    secretion_data = []
+
+    for substrate in substrates:
+        data = parse_secretion_substance(tree=tree, path=path, name=substrate)
+        secretion_data.append(data)
+
+    return secretion_data
+
+
+def parse_custom(tree: ElementTree, path: str) -> List[Dict[str, Union[float, str]]]:
+    return [
+        {"name": variable.tag, "value": float(variable.text)}
+        for variable in list(tree.find(path))
+        if variable.text
+    ]
+
+
+def write_domain(
+        new_values: Dict[str, Union[float, bool]], tree: ElementTree, path: str
+) -> None:
+    tree.find(path + "/x_min").text = str(new_values["x_min"])
+    tree.find(path + "/x_max").text = str(new_values["x_max"])
+    tree.find(path + "/y_min").text = str(new_values["y_min"])
+    tree.find(path + "/y_max").text = str(new_values["y_max"])
+    tree.find(path + "/z_min").text = str(new_values["z_min"])
+    tree.find(path + "/z_max").text = str(new_values["z_max"])
+    tree.find(path + "/dx").text = str(new_values["dx"])
+    tree.find(path + "/dy").text = str(new_values["dy"])
+    tree.find(path + "/dz").text = str(new_values["dz"])
+    if new_values["use_2d"]:
+        tree.find(path + "/use_2D").text = "true"
+    else:
+        tree.find(path + "/use_2D").text = "false"
+
+
+def write_overall(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
+    tree.find(path + "/max_time").text = str(new_values["max_time"])
+    tree.find(path + "/dt_diffusion").text = str(new_values["dt_diffusion"])
+    tree.find(path + "/dt_mechanics").text = str(new_values["dt_mechanics"])
+    tree.find(path + "/dt_phenotype").text = str(new_values["dt_phenotype"])
+
+
+def write_substance(new_values, tree: ElementTree, path: str, name: str) -> None:
+    substance_stem = path + f"/variable[@name='{name}']"
+    tree.find(
+        substance_stem + "/physical_parameter_set/diffusion_coefficient"
+    ).text = str(new_values["diffusion_coefficient"])
+    tree.find(substance_stem + "/physical_parameter_set/decay_rate").text = str(
+        new_values["decay_rate"]
+    )
+    tree.find(substance_stem + "/initial_condition").text = str(
+        new_values["initial_condition"]
+    )
+    tree.find(substance_stem + "/Dirichlet_boundary_condition").text = str(
+        new_values["dirichlet_boundary_condition"]
+    )
+
+
+def write_cycle(
+        new_values: Dict[str, Union[float, List[float]]], tree: ElementTree, path: str
+) -> None:
+    if tree.find(path + "/phase_durations"):
+        for new_value, element in zip(
+                new_values["phase_durations"], tree.find(path + "/phase_durations")
+        ):
+            element.text = str(new_value)
+    else:
+        for new_value, element in zip(
+                new_values["phase_transition_rates"],
+                tree.find(path + "/phase_transition_rates"),
+        ):
+            element.text = str(new_value)
+
+
+def write_death_model(
+        new_values: Dict[str, Union[float, List[float]]],
+        tree: ElementTree,
+        path: str,
+        name: str,
+) -> None:
+    model_stem = path + f"/model[@name='{name}']"
+    tree.find(model_stem + "/death_rate").text = str(new_values["death_rate"])
+    if tree.find(model_stem + "/phase_durations"):
+        for new_value, element in zip(
+                new_values["phase_durations"], tree.find(model_stem + "/phase_durations")
+        ):
+            element.text = str(new_value)
+    else:
+        for new_value, element in zip(
+                new_values["phase_transition_rates"],
+                tree.find(model_stem + "/phase_transition_rates"),
+        ):
+            element.text = str(new_value)
+
+    tree.find(model_stem + "/parameters/unlysed_fluid_change_rate").text = str(
+        new_values["unlysed_fluid_change_rate"]
+    )
+    tree.find(model_stem + "/parameters/lysed_fluid_change_rate").text = str(
+        new_values["lysed_fluid_change_rate"]
+    )
+    tree.find(model_stem + "/parameters/cytoplasmic_biomass_change_rate").text = str(
+        new_values["cytoplasmic_biomass_change_rate"]
+    )
+    tree.find(model_stem + "/parameters/nuclear_biomass_change_rate").text = str(
+        new_values["nuclear_biomass_change_rate"]
+    )
+    tree.find(model_stem + "/parameters/calcification_rate").text = str(
+        new_values["calcification_rate"]
+    )
+    tree.find(model_stem + "/parameters/relative_rupture_volume").text = str(
+        new_values["relative_rupture_volume"]
+    )
+
+
+def write_volume(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
+    tree.find(path + "/total").text = str(new_values["total"])
+    tree.find(path + "/fluid_fraction").text = str(new_values["fluid_fraction"])
+    tree.find(path + "/nuclear").text = str(new_values["nuclear"])
+    tree.find(path + "/fluid_change_rate").text = str(new_values["fluid_change_rate"])
+    tree.find(path + "/cytoplasmic_biomass_change_rate").text = str(
+        new_values["cytoplasmic_biomass_change_rate"]
+    )
+    tree.find(path + "/nuclear_biomass_change_rate").text = str(
+        new_values["nuclear_biomass_change_rate"]
+    )
+    tree.find(path + "/calcified_fraction").text = str(new_values["calcified_fraction"])
+    tree.find(path + "/calcification_rate").text = str(new_values["calcification_rate"])
+    tree.find(path + "/relative_rupture_volume").text = str(
+        new_values["relative_rupture_volume"]
+    )
+
+
+def write_mechanics(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
+    """
+    Writes the new motility parameter values to the XML tree object, for a given cell definition.
+    Values will not be updated in the XML file.
+
+    Parameters
+    ----------
+    name: str
+        The name of the cell definition to be updated.
+    motility: dt.MotilityParams
+        The new parameter values to be written to the XML object.
+    """
+
+    # Extract and save the motility data from the config file
+    tree.find(path + "/cell_cell_adhesion_strength").text = str(
+        new_values["cell_cell_adhesion_strength"]
+    )
+    tree.find(path + "/cell_cell_repulsion_strength").text = str(
+        new_values["cell_cell_repulsion_strength"]
+    )
+    tree.find(path + "/relative_maximum_adhesion_distance").text = str(
+        new_values["relative_maximum_adhesion_distance"]
+    )
+    tree.find(path + "/options/set_relative_equilibrium_distance").text = str(
+        new_values["set_relative_equilibrium_distance"]
+    )
+    tree.find(path + "/options/set_absolute_equilibrium_distance").text = str(
+        new_values["set_absolute_equilibrium_distance"]
+    )
+
+
+def write_motility(
+        new_values: Dict[str, Union[float, bool, str]], tree: ElementTree, path: str
+) -> None:
+    """
+    Writes the new motility parameter values to the XML tree object, for a given cell definition.
+    Values will not be updated in the XML file.
+
+    Parameters
+    ----------
+    name: str
+        The name of the cell definition to be updated.
+    motility: dt.MotilityParams
+        The new parameter values to be written to the XML object.
+    """
+
+    # Extract and save the motility data from the config file
+    tree.find(path + "/speed").text = str(new_values["speed"])
+    tree.find(path + "/persistence_time").text = str(new_values["persistence_time"])
+    tree.find(path + "/migration_bias").text = str(new_values["migration_bias"])
+
+    if new_values["motility_enabled"]:
+        tree.find(path + "/options/enabled").text = "true"
+    else:
+        tree.find(path + "/options/enabled").text = "false"
+
+    if new_values["use_2d"]:
+        tree.find(path + "/options/use_2D").text = "true"
+    else:
+        tree.find(path + "/options/use_2D").text = "false"
+
+    chemo_str = path + "/options/chemotaxis"
+
+    if new_values["chemotaxis_enabled"]:
+        tree.find(chemo_str + "/enabled").text = "true"
+    else:
+        tree.find(chemo_str + "/enabled").text = "false"
+
+    tree.find(chemo_str + "/substrate").text = new_values["chemotaxis_substrate"]
+    tree.find(chemo_str + "/direction").text = str(new_values["chemotaxis_direction"])
+
+
+def write_custom_data(new_values: List[Dict[str, float]], tree: ElementTree, path: str) -> None:
+    for variable in new_values:
+        tree.find(path + f"/{variable['name']}").text = str(variable["value"])
