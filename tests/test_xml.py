@@ -372,8 +372,7 @@ class WriteDataTest(unittest.TestCase):
         pcxml.write_death_model(
             new_values=EXPECTED_DEATH_APOPTOSIS_WRITE,
             tree=self.tree,
-            path="cell_definitions/cell_definition[@name='default']/phenotype/death",
-            name="apoptosis",
+            path="cell_definitions/cell_definition[@name='default']/phenotype/death"
         )
         self.tree.write(WRITE_PATH)
 
@@ -393,7 +392,6 @@ class WriteDataTest(unittest.TestCase):
             EXPECTED_DEATH_APOPTOSIS_WRITE,
             self.tree,
             "domain",
-            "apoptosis",
         )
 
     def test_write_volume(self):

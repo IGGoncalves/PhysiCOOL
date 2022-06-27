@@ -304,6 +304,7 @@ def parse_death_model(
     )
 
     return {
+        "name": name,
         "code": code,
         "death_rate": death_rate,
         "phase_durations": durations,
@@ -829,13 +830,10 @@ def write_cycle(
 
 
 def write_death_model(
-    new_values: Dict[str, Union[float, List[float]]],
-    tree: ElementTree,
-    path: str,
-    name: str,
+    new_values: Dict[str, Union[float, List[float]]], tree: ElementTree, path: str
 ) -> None:
     """
-    Writes new values for the <death> data in the XML tree.
+    Writes new values for a <death> model in the XML tree.
     The phase durations or rates should have the same length as the XML file.
     Values will not be saved to the XML file, only to the ElementTree.
 
@@ -849,8 +847,6 @@ def write_death_model(
     path:
         A string with the path to the death node
         (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/death").
-    name:
-        A string with the name of the death model to be written.
 
     Raises
     ------
@@ -865,6 +861,7 @@ def write_death_model(
     if tree.find(path).tag != "death":
         raise ValueError("The passed path does not point to the correct node.")
 
+    name = new_values["name"]
     models = [model.attrib["name"] for model in tree.find(path).findall("model")]
     if name not in models:
         raise ValueError("The passed name does not match a valid death model.")

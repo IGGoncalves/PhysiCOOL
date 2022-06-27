@@ -106,6 +106,7 @@ class DeathCode(Enum):
 
 class Death(BaseModel):
     code: float
+    name: str
     death_rate: confloat(ge=0.0)
     phase_durations: Optional[List[confloat(ge=0.0)]]
     phase_transition_rates: Optional[List[confloat(ge=0.0)]]

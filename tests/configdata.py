@@ -90,6 +90,7 @@ WRONG_CYCLE_RATES_WRITE = {
 }
 
 EXPECTED_DEATH_APOPTOSIS_READ = {
+    "name": "apoptosis",
     "code": 100.0,
     "death_rate": 5.31667e-05,
     "phase_durations": [516],
@@ -103,6 +104,7 @@ EXPECTED_DEATH_APOPTOSIS_READ = {
 }
 
 EXPECTED_DEATH_APOPTOSIS_WRITE = {
+    "name": "apoptosis",
     "code": 100.0,
     "death_rate": 5.31667e-05,
     "phase_durations": [518],
@@ -116,6 +118,7 @@ EXPECTED_DEATH_APOPTOSIS_WRITE = {
 }
 
 EXPECTED_DEATH_NECROSIS_READ = {
+    "name": "necrosis",
     "code": 101.0,
     "death_rate": 0.0,
     "phase_durations": [0.0, 86400],
