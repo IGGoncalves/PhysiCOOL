@@ -1,4 +1,4 @@
-"""Script to test the config module of the PhysiCOOL package."""
+"""Script to test the config module."""
 import unittest
 from shutil import copyfile
 from xml.etree import ElementTree

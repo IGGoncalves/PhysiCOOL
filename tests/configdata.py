@@ -1,3 +1,4 @@
+"""Data to be used in the unit tests for the ConfigFileParser and the pcxml module."""
 from pathlib import Path
 
 CONFIG_PATH = Path("PhysiCell/config/settings_read_only.xml")
