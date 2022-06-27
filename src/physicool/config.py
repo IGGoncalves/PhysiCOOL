@@ -187,6 +187,12 @@ class ConfigFileParser:
         if update_file:
             self.tree.write(self.config_file)
 
+    def write_secretion_params(self, name: str, death: dt.Death, substance: str, update_file: bool = True) -> None:
+        stem = f"cell_definitions/cell_definition[@name='{name}']/phenotype/secretion"
+        pcxml.write_secretion_substance(new_values=death.dict(), tree=self.tree, path=stem, name=substance)
+        if update_file:
+            self.tree.write(self.config_file)
+
     def write_custom_params(self, name: str, custom_data: List[dt.CustomData], update_file: bool = True):
         stem = f"cell_definitions/cell_definition[@name='{name}']/custom_data"
         data = [variable.dict() for variable in custom_data]
