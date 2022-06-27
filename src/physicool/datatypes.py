@@ -1,3 +1,5 @@
+# This module offers data objects with the expected data types for PhysiCell objects.
+# Type and value validation is performed through Pydantic when writing to these objects.
 from typing import List, Optional
 from enum import Enum
 
@@ -124,7 +126,6 @@ class CustomData(BaseModel):
 
 
 class CellParameters(BaseModel):
-    """A class to store the cell data for a given cell definition of the config file."""
     name: str
     cycle: Cycle
     death: List[Death]

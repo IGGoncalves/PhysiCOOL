@@ -163,14 +163,18 @@ class ReadDataTest(unittest.TestCase):
         data = pcxml.parse_secretion_substance(
             tree=self.tree,
             path=f"cell_definitions/cell_definition[@name='default']/phenotype/secretion",
-            name="substrate"
+            name="substrate",
         )
         self.assertEqual(EXPECTED_SECRETION_READ_SUBSTRATE, data)
 
     def test_parse_secretion_substance_wrong_path(self):
         """Asserts that an Exception is raised when the wrong path is passed."""
         self.assertRaises(
-            ValueError, pcxml.parse_secretion_substance, self.tree, "domain", name="substrate"
+            ValueError,
+            pcxml.parse_secretion_substance,
+            self.tree,
+            "domain",
+            name="substrate",
         )
 
     def test_parse_secretion_substance_wrong_name(self):
@@ -185,7 +189,10 @@ class ReadDataTest(unittest.TestCase):
 
     def test_parse_secretion(self):
         """Asserts that the <secretion> data is correctly read."""
-        expected_data = [EXPECTED_SECRETION_READ_SUBSTRATE, EXPECTED_SECRETION_READ_OXYGEN]
+        expected_data = [
+            EXPECTED_SECRETION_READ_SUBSTRATE,
+            EXPECTED_SECRETION_READ_OXYGEN,
+        ]
         data = pcxml.parse_secretion(
             tree=self.tree,
             path=f"cell_definitions/cell_definition[@name='default']/phenotype/secretion",
@@ -194,9 +201,7 @@ class ReadDataTest(unittest.TestCase):
 
     def test_parse_secretion_wrong_path(self):
         """Asserts that an Exception is raised when the wrong path is passed."""
-        self.assertRaises(
-            ValueError, pcxml.parse_secretion, self.tree, "domain"
-        )
+        self.assertRaises(ValueError, pcxml.parse_secretion, self.tree, "domain")
 
     def test_parse_custom(self):
         """Asserts that the custom data is correctly read."""
@@ -206,13 +211,30 @@ class ReadDataTest(unittest.TestCase):
         )
         self.assertEqual(EXPECTED_CUSTOM_READ, data)
 
+    def test_parse_user_parameters(self):
+        """Asserts that the custom data is correctly read."""
+        data = pcxml.parse_custom(
+            tree=self.tree,
+            path=f"user_parameters",
+        )
+        self.assertEqual(EXPECTED_USER_PARAMETERS_READ, data)
+
+    def test_parse_custom_wrong_path(self):
+        """Asserts that an Exception is raised when the wrong path is passed."""
+        self.assertRaises(ValueError, pcxml.parse_custom, self.tree, "domain")
+
 
 class WriteDataTest(unittest.TestCase):
     def setUp(self) -> None:
+        """
+        Creates a copy of the config file to be modified during the tests.
+        Reads the data in the file to an ElementTree to be accessed by the class.
+        """
         copyfile(CONFIG_PATH, WRITE_PATH)
         self.tree = ElementTree.parse(WRITE_PATH)
 
     def test_write_domain(self):
+        """Asserts that the domain data is correctly written to a new file."""
         pcxml.write_domain(
             new_values=EXPECTED_DOMAIN_WRITE,
             tree=self.tree,
@@ -226,6 +248,12 @@ class WriteDataTest(unittest.TestCase):
             path="domain",
         )
         self.assertEqual(EXPECTED_DOMAIN_WRITE, domain_data)
+
+    def test_write_domain_wrong_path(self):
+        """Asserts that an Exception is raised when the wrong path is passed."""
+        self.assertRaises(
+            ValueError, pcxml.write_domain, EXPECTED_DOMAIN_WRITE, self.tree, "overall"
+        )
 
     def test_write_overall(self):
         pcxml.write_overall(

@@ -25,8 +25,7 @@ def parse_domain(tree: ElementTree, path: str) -> Dict[str, Union[bool, float]]:
     Raises
     ------
     ValueError
-        When the passed path does not point to the domain node, preventing
-        the code from trying to read data from nodes that aren't there.
+        When the passed path does not point to the domain node.
     """
     if tree.find(path).tag != "domain":
         raise ValueError("The passed path does not point to the correct node.")
@@ -76,8 +75,7 @@ def parse_overall(tree: ElementTree, path: str) -> Dict[str, float]:
     Raises
     ------
     ValueError
-        When the passed path does not point to the overall node, preventing
-        the code from trying to read data from nodes that aren't there.
+        When the passed path does not point to the overall node.
     """
     if tree.find(path).tag != "overall":
         raise ValueError("The passed path does not point to the correct node.")
@@ -120,8 +118,7 @@ def parse_substance(
     Raises
     ------
     ValueError
-        When the passed path does not point to the microenvironment node, preventing
-        the code from trying to read data from nodes that aren't there.
+        When the passed path does not point to the microenvironment node.
     ValueError
         When the passed name does not match any of the variables in the file.
     """
@@ -180,8 +177,7 @@ def parse_microenvironment(
     Raises
     ------
     ValueError
-        When the passed path does not point to the microenvironment node, preventing
-        the code from trying to read data from nodes that aren't there.
+        When the passed path does not point to the microenvironment node.
     """
     if tree.find(path).tag != "microenvironment_setup":
         raise ValueError("The passed path does not point to the correct node.")
@@ -219,8 +215,7 @@ def parse_cycle(tree: ElementTree, path: str) -> Dict[str, Union[float, List[flo
     Raises
     ------
     ValueError
-        When the passed path does not point to a valid cycle node, preventing
-        the code from trying to read data from nodes that aren't there.
+        When the passed path does not point to a valid cycle node.
     """
     if tree.find(path).tag != "cycle":
         raise ValueError("The passed path does not point to the correct node.")
@@ -265,8 +260,7 @@ def parse_death_model(
     Raises
     ------
     ValueError
-        When the passed path does not point to the death node, preventing
-        the code from trying to read data from nodes that aren't there.
+        When the passed path does not point to the death node.
     ValueError
         When the passed name does not match any of the death models for the cell definition.
     """
@@ -350,8 +344,7 @@ def parse_death(
     Raises
     ------
     ValueError
-        When the passed path does not point to the death node, preventing
-        the code from trying to read data from nodes that aren't there.
+        When the passed path does not point to the death node.
     """
     if tree.find(path).tag != "death":
         raise ValueError("The passed path does not point to the correct node.")
@@ -389,8 +382,7 @@ def parse_volume(tree: ElementTree, path: str) -> Dict[str, float]:
     Raises
     ------
     ValueError
-        When the passed path does not point to a valid volume node, preventing
-        the code from trying to read data from nodes that aren't there.
+        When the passed path does not point to a valid volume node.
     """
     if tree.find(path).tag != "volume":
         raise ValueError("The passed path does not point to the correct node.")
@@ -445,8 +437,7 @@ def parse_mechanics(tree: ElementTree, path: str) -> Dict[str, float]:
     Raises
     ------
     ValueError
-        When the passed path does not point to a valid mechanics node, preventing
-        the code from trying to read data from nodes that aren't there.
+        When the passed path does not point to a valid mechanics node.
     """
     if tree.find(path).tag != "mechanics":
         raise ValueError("The passed path does not point to the correct node.")
@@ -499,8 +490,7 @@ def parse_motility(tree: ElementTree, path: str) -> Dict[str, Union[float, str, 
     Raises
     ------
     ValueError
-        When the passed path does not point to a valid motility node, preventing
-        the code from trying to read data from nodes that aren't there.
+        When the passed path does not point to a valid motility node.
     """
     if tree.find(path).tag != "motility":
         raise ValueError("The passed path does not point to the correct node.")
@@ -550,8 +540,7 @@ def parse_secretion_substance(
     Raises
     ------
     ValueError
-        When the passed path does not point to the secretion node, preventing
-        the code from trying to read data from nodes that aren't there.
+        When the passed path does not point to the secretion node.
     ValueError
         When the passed name does not match any of the substances in the secretion data.
     """
@@ -601,8 +590,7 @@ def parse_secretion(tree: ElementTree, path: str) -> List[Dict[str, Union[str, f
     Raises
     ------
     ValueError
-        When the passed path does not point to the secretion node, preventing
-        the code from trying to read data from nodes that aren't there.
+        When the passed path does not point to the secretion node.
     """
     if tree.find(path).tag != "secretion":
         raise ValueError("The passed path does not point to the correct node.")
@@ -620,6 +608,31 @@ def parse_secretion(tree: ElementTree, path: str) -> List[Dict[str, Union[str, f
 
 
 def parse_custom(tree: ElementTree, path: str) -> List[Dict[str, Union[float, str]]]:
+    """
+    Reads and returns the custom data.
+
+    Parameters
+    ----------
+    tree:
+        A ElementTree object of the XML config file to be read.
+    path:
+        A string with the path to the motility node
+        (e.g., "cell_definitions/cell_definition[@name='default']/custom_data", "user_parameters").
+
+    Returns
+    -------
+    List[Dict[str, Union[float, str]]]
+        A list of dictionaries with data for the custom variables (custom cell data and
+        user parameters). Dictionaries have the format {"name": ..., "value": ...}.
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to a valid custom node.
+    """
+    if (tree.find(path).tag != "custom_data") & (tree.find(path).tag != "user_parameters"):
+        raise ValueError("The passed path does not point to the correct node.")
+
     return [
         {"name": variable.tag, "value": float(variable.text)}
         for variable in list(tree.find(path))
@@ -630,19 +643,45 @@ def parse_custom(tree: ElementTree, path: str) -> List[Dict[str, Union[float, st
 def write_domain(
         new_values: Dict[str, Union[float, bool]], tree: ElementTree, path: str
 ) -> None:
-    tree.find(path + "/x_min").text = str(new_values["x_min"])
-    tree.find(path + "/x_max").text = str(new_values["x_max"])
-    tree.find(path + "/y_min").text = str(new_values["y_min"])
-    tree.find(path + "/y_max").text = str(new_values["y_max"])
-    tree.find(path + "/z_min").text = str(new_values["z_min"])
-    tree.find(path + "/z_max").text = str(new_values["z_max"])
-    tree.find(path + "/dx").text = str(new_values["dx"])
-    tree.find(path + "/dy").text = str(new_values["dy"])
-    tree.find(path + "/dz").text = str(new_values["dz"])
-    if new_values["use_2d"]:
-        tree.find(path + "/use_2D").text = "true"
-    else:
-        tree.find(path + "/use_2D").text = "false"
+    """
+    Writes new values for the <domain> data in the XML tree.
+    Values will not be saved to the XML file, only to the ElementTree.
+
+    Parameters
+    ----------
+    new_values:
+        A dictionary with the name of the domain variables and their
+        values (must include all the variables).
+    tree:
+        A ElementTree object of the XML config file to be written.
+    path:
+        A string with the path to the motility node (e.g., "domain").
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to a valid custom node.
+    """
+    if tree.find(path).tag != "domain":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    try:
+        tree.find(path + "/x_min").text = str(new_values["x_min"])
+        tree.find(path + "/x_max").text = str(new_values["x_max"])
+        tree.find(path + "/y_min").text = str(new_values["y_min"])
+        tree.find(path + "/y_max").text = str(new_values["y_max"])
+        tree.find(path + "/z_min").text = str(new_values["z_min"])
+        tree.find(path + "/z_max").text = str(new_values["z_max"])
+        tree.find(path + "/dx").text = str(new_values["dx"])
+        tree.find(path + "/dy").text = str(new_values["dy"])
+        tree.find(path + "/dz").text = str(new_values["dz"])
+        if new_values["use_2d"]:
+            tree.find(path + "/use_2D").text = "true"
+        else:
+            tree.find(path + "/use_2D").text = "false"
+
+    except KeyError:
+        print("The passed dictionary does not have all the domain variables.")
 
 
 def write_overall(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
@@ -815,5 +854,29 @@ def write_motility(
 
 
 def write_custom_data(new_values: List[Dict[str, float]], tree: ElementTree, path: str) -> None:
+    """
+    Writes new values
+
+    Parameters
+    ----------
+    new_values:
+
+    tree:
+        A ElementTree object of the XML config file to be written.
+    path:
+        A string with the path to the motility node
+        (e.g., "cell_definitions/cell_definition[@name='default']/custom_data", "user_parameters").
+
+    Returns
+    -------
+    List[Dict[str, Union[float, str]]]
+        A list of dictionaries with data for the custom variables (custom cell data and
+        user parameters). Dictionaries have the format {"name": ..., "value": ...}.
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to a valid custom node.
+    """
     for variable in new_values:
         tree.find(path + f"/{variable['name']}").text = str(variable["value"])
