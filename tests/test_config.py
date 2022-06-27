@@ -165,13 +165,15 @@ class PhysiCellConfigTest(unittest.TestCase):
         death_data = self.xml_write.read_death_params("default")
         death_data[0].phase_durations = [518.0]
         death_data[0].calcification_rate = 0.5
-        self.xml_write.write_death_model_params(name="default", death=death_data[0], model_name="apoptosis")
+        self.xml_write.write_death_model_params(
+            name="default", death=death_data[0], model_name="apoptosis"
+        )
 
         new_tree = ElementTree.parse(WRITE_PATH)
         death_data = pcxml.parse_death_model(
             tree=new_tree,
             path="cell_definitions/cell_definition[@name='default']/phenotype/death",
-            name="apoptosis"
+            name="apoptosis",
         )
         self.assertEqual(EXPECTED_DEATH_APOPTOSIS_WRITE, death_data)
 

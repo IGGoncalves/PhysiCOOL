@@ -83,6 +83,12 @@ EXPECTED_CYCLE_RATES_WRITE = {
     "phase_transition_rates": [0.001, 0.001, 0.00416667, 0.0166667],
 }
 
+WRONG_CYCLE_RATES_WRITE = {
+    "code": 6.0,
+    "phase_durations": None,
+    "phase_transition_rates": [0.001, 0.00416667, 0.0166667],
+}
+
 EXPECTED_DEATH_APOPTOSIS_READ = {
     "code": 100.0,
     "death_rate": 5.31667e-05,
@@ -204,6 +210,14 @@ EXPECTED_SECRETION_READ = [
     EXPECTED_SECRETION_READ_SUBSTRATE,
     EXPECTED_SECRETION_READ_OXYGEN,
 ]
+
+EXPECTED_SECRETION_WRITE_SUBSTRATE = {
+    "name": "substrate",
+    "secretion_rate": 1.0,
+    "secretion_target": 1.0,
+    "uptake_rate": 0.0,
+    "net_export_rate": 0.0,
+}
 
 EXPECTED_CUSTOM_READ = [{"name": "sample", "value": 1.0}]
 EXPECTED_CUSTOM_WRITE = [{"name": "sample", "value": 5.0}]

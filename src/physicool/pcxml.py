@@ -94,7 +94,7 @@ def parse_overall(tree: ElementTree, path: str) -> Dict[str, float]:
 
 
 def parse_substance(
-        tree: ElementTree, path: str, name: str
+    tree: ElementTree, path: str, name: str
 ) -> Dict[str, Union[str, float]]:
     """
     Reads and returns the <variable> data for a microenvironment substance.
@@ -154,7 +154,7 @@ def parse_substance(
 
 
 def parse_microenvironment(
-        tree: ElementTree, path: str
+    tree: ElementTree, path: str
 ) -> List[Dict[str, Union[float, str]]]:
     """
     Reads and returns the <microenvironment> data.
@@ -235,7 +235,7 @@ def parse_cycle(tree: ElementTree, path: str) -> Dict[str, Union[float, List[flo
 
 
 def parse_death_model(
-        tree: ElementTree, path: str, name: str
+    tree: ElementTree, path: str, name: str
 ) -> Dict[str, Union[float, List[float]]]:
     """
     Reads and returns the <death> data for a death model.
@@ -278,9 +278,7 @@ def parse_death_model(
     durations = None
     rates = None
 
-    death_rate = float(
-        tree.find(model_stem + "/death_rate").text
-    )
+    death_rate = float(tree.find(model_stem + "/death_rate").text)
 
     if data_type == "phase_durations":
         durations = [float(duration.text) for duration in death_node[1]]
@@ -320,7 +318,7 @@ def parse_death_model(
 
 
 def parse_death(
-        tree: ElementTree, path: str
+    tree: ElementTree, path: str
 ) -> List[Dict[str, Union[float, List[float]]]]:
     """
     Reads and returns the <death> data.
@@ -517,7 +515,7 @@ def parse_motility(tree: ElementTree, path: str) -> Dict[str, Union[float, str, 
 
 
 def parse_secretion_substance(
-        tree: ElementTree, path: str, name: str
+    tree: ElementTree, path: str, name: str
 ) -> Dict[str, Union[str, float]]:
     """
     Reads and returns the data for a secretion <substrate>.
@@ -630,7 +628,9 @@ def parse_custom(tree: ElementTree, path: str) -> List[Dict[str, Union[float, st
     ValueError
         When the passed path does not point to a valid custom node.
     """
-    if (tree.find(path).tag != "custom_data") & (tree.find(path).tag != "user_parameters"):
+    if (tree.find(path).tag != "custom_data") & (
+        tree.find(path).tag != "user_parameters"
+    ):
         raise ValueError("The passed path does not point to the correct node.")
 
     return [
@@ -641,7 +641,7 @@ def parse_custom(tree: ElementTree, path: str) -> List[Dict[str, Union[float, st
 
 
 def write_domain(
-        new_values: Dict[str, Union[float, bool]], tree: ElementTree, path: str
+    new_values: Dict[str, Union[float, bool]], tree: ElementTree, path: str
 ) -> None:
     """
     Writes new values for the <domain> data in the XML tree.
@@ -655,12 +655,12 @@ def write_domain(
     tree:
         A ElementTree object of the XML config file to be written.
     path:
-        A string with the path to the motility node (e.g., "domain").
+        A string with the path to the domain node (e.g., "domain").
 
     Raises
     ------
     ValueError
-        When the passed path does not point to a valid custom node.
+        When the passed path does not point to the valid domain node.
     """
     if tree.find(path).tag != "domain":
         raise ValueError("The passed path does not point to the correct node.")
@@ -685,198 +685,477 @@ def write_domain(
 
 
 def write_overall(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
-    tree.find(path + "/max_time").text = str(new_values["max_time"])
-    tree.find(path + "/dt_diffusion").text = str(new_values["dt_diffusion"])
-    tree.find(path + "/dt_mechanics").text = str(new_values["dt_mechanics"])
-    tree.find(path + "/dt_phenotype").text = str(new_values["dt_phenotype"])
-
-
-def write_substance(new_values, tree: ElementTree, path: str, name: str) -> None:
-    substance_stem = path + f"/variable[@name='{name}']"
-    tree.find(
-        substance_stem + "/physical_parameter_set/diffusion_coefficient"
-    ).text = str(new_values["diffusion_coefficient"])
-    tree.find(substance_stem + "/physical_parameter_set/decay_rate").text = str(
-        new_values["decay_rate"]
-    )
-    tree.find(substance_stem + "/initial_condition").text = str(
-        new_values["initial_condition"]
-    )
-    tree.find(substance_stem + "/Dirichlet_boundary_condition").text = str(
-        new_values["dirichlet_boundary_condition"]
-    )
-
-
-def write_cycle(
-        new_values: Dict[str, Union[float, List[float]]], tree: ElementTree, path: str
-) -> None:
-    if tree.find(path + "/phase_durations"):
-        for new_value, element in zip(
-                new_values["phase_durations"], tree.find(path + "/phase_durations")
-        ):
-            element.text = str(new_value)
-    else:
-        for new_value, element in zip(
-                new_values["phase_transition_rates"],
-                tree.find(path + "/phase_transition_rates"),
-        ):
-            element.text = str(new_value)
-
-
-def write_death_model(
-        new_values: Dict[str, Union[float, List[float]]],
-        tree: ElementTree,
-        path: str,
-        name: str,
-) -> None:
-    model_stem = path + f"/model[@name='{name}']"
-    tree.find(model_stem + "/death_rate").text = str(new_values["death_rate"])
-    if tree.find(model_stem + "/phase_durations"):
-        for new_value, element in zip(
-                new_values["phase_durations"], tree.find(model_stem + "/phase_durations")
-        ):
-            element.text = str(new_value)
-    else:
-        for new_value, element in zip(
-                new_values["phase_transition_rates"],
-                tree.find(model_stem + "/phase_transition_rates"),
-        ):
-            element.text = str(new_value)
-
-    tree.find(model_stem + "/parameters/unlysed_fluid_change_rate").text = str(
-        new_values["unlysed_fluid_change_rate"]
-    )
-    tree.find(model_stem + "/parameters/lysed_fluid_change_rate").text = str(
-        new_values["lysed_fluid_change_rate"]
-    )
-    tree.find(model_stem + "/parameters/cytoplasmic_biomass_change_rate").text = str(
-        new_values["cytoplasmic_biomass_change_rate"]
-    )
-    tree.find(model_stem + "/parameters/nuclear_biomass_change_rate").text = str(
-        new_values["nuclear_biomass_change_rate"]
-    )
-    tree.find(model_stem + "/parameters/calcification_rate").text = str(
-        new_values["calcification_rate"]
-    )
-    tree.find(model_stem + "/parameters/relative_rupture_volume").text = str(
-        new_values["relative_rupture_volume"]
-    )
-
-
-def write_volume(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
-    tree.find(path + "/total").text = str(new_values["total"])
-    tree.find(path + "/fluid_fraction").text = str(new_values["fluid_fraction"])
-    tree.find(path + "/nuclear").text = str(new_values["nuclear"])
-    tree.find(path + "/fluid_change_rate").text = str(new_values["fluid_change_rate"])
-    tree.find(path + "/cytoplasmic_biomass_change_rate").text = str(
-        new_values["cytoplasmic_biomass_change_rate"]
-    )
-    tree.find(path + "/nuclear_biomass_change_rate").text = str(
-        new_values["nuclear_biomass_change_rate"]
-    )
-    tree.find(path + "/calcified_fraction").text = str(new_values["calcified_fraction"])
-    tree.find(path + "/calcification_rate").text = str(new_values["calcification_rate"])
-    tree.find(path + "/relative_rupture_volume").text = str(
-        new_values["relative_rupture_volume"]
-    )
-
-
-def write_mechanics(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
     """
-    Writes the new motility parameter values to the XML tree object, for a given cell definition.
-    Values will not be updated in the XML file.
-
-    Parameters
-    ----------
-    name: str
-        The name of the cell definition to be updated.
-    motility: dt.MotilityParams
-        The new parameter values to be written to the XML object.
-    """
-
-    # Extract and save the motility data from the config file
-    tree.find(path + "/cell_cell_adhesion_strength").text = str(
-        new_values["cell_cell_adhesion_strength"]
-    )
-    tree.find(path + "/cell_cell_repulsion_strength").text = str(
-        new_values["cell_cell_repulsion_strength"]
-    )
-    tree.find(path + "/relative_maximum_adhesion_distance").text = str(
-        new_values["relative_maximum_adhesion_distance"]
-    )
-    tree.find(path + "/options/set_relative_equilibrium_distance").text = str(
-        new_values["set_relative_equilibrium_distance"]
-    )
-    tree.find(path + "/options/set_absolute_equilibrium_distance").text = str(
-        new_values["set_absolute_equilibrium_distance"]
-    )
-
-
-def write_motility(
-        new_values: Dict[str, Union[float, bool, str]], tree: ElementTree, path: str
-) -> None:
-    """
-    Writes the new motility parameter values to the XML tree object, for a given cell definition.
-    Values will not be updated in the XML file.
-
-    Parameters
-    ----------
-    name: str
-        The name of the cell definition to be updated.
-    motility: dt.MotilityParams
-        The new parameter values to be written to the XML object.
-    """
-
-    # Extract and save the motility data from the config file
-    tree.find(path + "/speed").text = str(new_values["speed"])
-    tree.find(path + "/persistence_time").text = str(new_values["persistence_time"])
-    tree.find(path + "/migration_bias").text = str(new_values["migration_bias"])
-
-    if new_values["motility_enabled"]:
-        tree.find(path + "/options/enabled").text = "true"
-    else:
-        tree.find(path + "/options/enabled").text = "false"
-
-    if new_values["use_2d"]:
-        tree.find(path + "/options/use_2D").text = "true"
-    else:
-        tree.find(path + "/options/use_2D").text = "false"
-
-    chemo_str = path + "/options/chemotaxis"
-
-    if new_values["chemotaxis_enabled"]:
-        tree.find(chemo_str + "/enabled").text = "true"
-    else:
-        tree.find(chemo_str + "/enabled").text = "false"
-
-    tree.find(chemo_str + "/substrate").text = new_values["chemotaxis_substrate"]
-    tree.find(chemo_str + "/direction").text = str(new_values["chemotaxis_direction"])
-
-
-def write_custom_data(new_values: List[Dict[str, float]], tree: ElementTree, path: str) -> None:
-    """
-    Writes new values
+    Writes new values for the <overall> data in the XML tree.
+    Values will not be saved to the XML file, only to the ElementTree.
 
     Parameters
     ----------
     new_values:
+        A dictionary with the name of the overall variables and their
+        values (must include all the variables).
+    tree:
+        A ElementTree object of the XML config file to be written.
+    path:
+        A string with the path to the overall node (e.g., "overall").
 
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the valid overall node.
+    """
+    if tree.find(path).tag != "overall":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    try:
+        tree.find(path + "/max_time").text = str(new_values["max_time"])
+        tree.find(path + "/dt_diffusion").text = str(new_values["dt_diffusion"])
+        tree.find(path + "/dt_mechanics").text = str(new_values["dt_mechanics"])
+        tree.find(path + "/dt_phenotype").text = str(new_values["dt_phenotype"])
+
+    except KeyError:
+        print("The passed dictionary does not have all the domain variables.")
+
+
+def write_substance(new_values, tree: ElementTree, path: str, name: str) -> None:
+    """
+    Writes new values for a microenvironment substance the XML tree.
+    Values will not be saved to the XML file, only to the ElementTree.
+
+    Parameters
+    ----------
+    new_values:
+        A dictionary with the name of the substance variables and their
+        values (must include all the variables).
+    tree:
+        A ElementTree object of the XML config file to be written.
+    path:
+        A string with the path to the microenvironment node (e.g., "microenvironment_setup").
+    name:
+        A string with the name of the substance to be written.
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the valid microenvironment node.
+    ValueError
+        When the passed name does not match any of the substances in the file.
+    """
+    if tree.find(path).tag != "microenvironment_setup":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    substances = [
+        substance.attrib["name"] for substance in tree.find(path).findall("variable")
+    ]
+
+    if name not in substances:
+        raise ValueError("The passed substance name is not valid.")
+
+    try:
+        substance_stem = path + f"/variable[@name='{name}']"
+        tree.find(
+            substance_stem + "/physical_parameter_set/diffusion_coefficient"
+        ).text = str(new_values["diffusion_coefficient"])
+        tree.find(substance_stem + "/physical_parameter_set/decay_rate").text = str(
+            new_values["decay_rate"]
+        )
+        tree.find(substance_stem + "/initial_condition").text = str(
+            new_values["initial_condition"]
+        )
+        tree.find(substance_stem + "/Dirichlet_boundary_condition").text = str(
+            new_values["dirichlet_boundary_condition"]
+        )
+
+    except KeyError:
+        print("The passed dictionary does not have all the domain variables.")
+
+
+def write_cycle(
+    new_values: Dict[str, Union[float, List[float]]], tree: ElementTree, path: str
+) -> None:
+    """
+    Writes new values for the <cycle> data in the XML tree.
+    The phase durations or rates should have the same length as the XML file.
+    Values will not be saved to the XML file, only to the ElementTree.
+
+    Parameters
+    ----------
+    new_values:
+        A dictionary with the name of the cycle variables and their
+        values (must include all the variables).
+    tree:
+        A ElementTree object of the XML config file to be written.
+    path:
+        A string with the path to the cycle node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/cycle").
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the valid cycle node.
+    ValueError
+        When the number of transition rates/durations does not match the values
+        in the XML file.
+    """
+    if tree.find(path).tag != "cycle":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    try:
+        if tree.find(path + "/phase_durations"):
+            durations = list(tree.find(path + "/phase_durations"))
+            new_durations = new_values["phase_durations"]
+
+            if len(durations) != len(new_durations):
+                raise ValueError(
+                    "The length of the durations list does not match the XML file."
+                )
+
+            for new_value, element in zip(new_durations, durations):
+                element.text = str(new_value)
+        else:
+            rates = list(tree.find(path + "/phase_transition_rates"))
+            new_rates = new_values["phase_transition_rates"]
+
+            if len(rates) != len(new_rates):
+                raise ValueError(
+                    "The length of the rates list does not match the XML file."
+                )
+
+            for new_value, element in zip(new_rates, rates):
+                element.text = str(new_value)
+
+    except KeyError:
+        print("The passed dictionary does not have all the domain variables.")
+
+
+def write_death_model(
+    new_values: Dict[str, Union[float, List[float]]],
+    tree: ElementTree,
+    path: str,
+    name: str,
+) -> None:
+    """
+    Writes new values for the <death> data in the XML tree.
+    The phase durations or rates should have the same length as the XML file.
+    Values will not be saved to the XML file, only to the ElementTree.
+
+    Parameters
+    ----------
+    new_values:
+        A dictionary with the name of the death variables and their
+        values (must include all the variables).
+    tree:
+        A ElementTree object of the XML config file to be written.
+    path:
+        A string with the path to the death node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/death").
+    name:
+        A string with the name of the death model to be written.
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the valid death node.
+    ValueError
+        When the passed name does not match any of the death models in the XML file.
+    ValueError
+        When the number of transition rates/durations does not match the values
+        in the XML file.
+    """
+    if tree.find(path).tag != "death":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    models = [model.attrib["name"] for model in tree.find(path).findall("model")]
+    if name not in models:
+        raise ValueError("The passed name does not match a valid death model.")
+
+    try:
+        model_stem = path + f"/model[@name='{name}']"
+        tree.find(model_stem + "/death_rate").text = str(new_values["death_rate"])
+
+        if tree.find(model_stem + "/phase_durations"):
+            durations = list(tree.find(model_stem + "/phase_durations"))
+            new_durations = new_values["phase_durations"]
+
+            if len(durations) != len(new_durations):
+                raise ValueError(
+                    "The length of the durations list does not match the XML file."
+                )
+
+            for new_value, element in zip(new_durations, durations):
+                element.text = str(new_value)
+
+        else:
+            rates = list(tree.find(model_stem + "/phase_transition_rates"))
+            new_rates = new_values["phase_transition_rates"]
+
+            if len(rates) != len(new_rates):
+                raise ValueError(
+                    "The length of the rates list does not match the XML file."
+                )
+
+            for new_value, element in zip(new_rates, rates):
+                element.text = str(new_value)
+
+        tree.find(model_stem + "/parameters/unlysed_fluid_change_rate").text = str(
+            new_values["unlysed_fluid_change_rate"]
+        )
+        tree.find(model_stem + "/parameters/lysed_fluid_change_rate").text = str(
+            new_values["lysed_fluid_change_rate"]
+        )
+        tree.find(
+            model_stem + "/parameters/cytoplasmic_biomass_change_rate"
+        ).text = str(new_values["cytoplasmic_biomass_change_rate"])
+        tree.find(model_stem + "/parameters/nuclear_biomass_change_rate").text = str(
+            new_values["nuclear_biomass_change_rate"]
+        )
+        tree.find(model_stem + "/parameters/calcification_rate").text = str(
+            new_values["calcification_rate"]
+        )
+        tree.find(model_stem + "/parameters/relative_rupture_volume").text = str(
+            new_values["relative_rupture_volume"]
+        )
+
+    except KeyError:
+        print("The passed dictionary does not have all the domain variables.")
+
+
+def write_volume(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
+    """
+    Writes new values for the <volume> data in the XML tree.
+    Values will not be saved to the XML file, only to the ElementTree.
+
+    Parameters
+    ----------
+    new_values:
+        A dictionary with the name of the volume variables and their
+        values (must include all the variables).
+    tree:
+        A ElementTree object of the XML config file to be written.
+    path:
+        A string with the path to the volume node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/volume").
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the valid volume node.
+    """
+    if tree.find(path).tag != "volume":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    try:
+        tree.find(path + "/total").text = str(new_values["total"])
+        tree.find(path + "/fluid_fraction").text = str(new_values["fluid_fraction"])
+        tree.find(path + "/nuclear").text = str(new_values["nuclear"])
+        tree.find(path + "/fluid_change_rate").text = str(
+            new_values["fluid_change_rate"]
+        )
+        tree.find(path + "/cytoplasmic_biomass_change_rate").text = str(
+            new_values["cytoplasmic_biomass_change_rate"]
+        )
+        tree.find(path + "/nuclear_biomass_change_rate").text = str(
+            new_values["nuclear_biomass_change_rate"]
+        )
+        tree.find(path + "/calcified_fraction").text = str(
+            new_values["calcified_fraction"]
+        )
+        tree.find(path + "/calcification_rate").text = str(
+            new_values["calcification_rate"]
+        )
+        tree.find(path + "/relative_rupture_volume").text = str(
+            new_values["relative_rupture_volume"]
+        )
+
+    except KeyError:
+        print("The passed dictionary does not have all the domain variables.")
+
+
+def write_mechanics(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
+    """
+    Writes new values for the <mechanics> data in the XML tree.
+    Values will not be saved to the XML file, only to the ElementTree.
+
+    Parameters
+    ----------
+    new_values:
+        A dictionary with the name of the mechanics variables and their
+        values (must include all the variables).
+    tree:
+        A ElementTree object of the XML config file to be written.
+    path:
+        A string with the path to the mechanics node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/mechanics").
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the valid mechanics node.
+    """
+    if tree.find(path).tag != "mechanics":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    try:
+        tree.find(path + "/cell_cell_adhesion_strength").text = str(
+            new_values["cell_cell_adhesion_strength"]
+        )
+        tree.find(path + "/cell_cell_repulsion_strength").text = str(
+            new_values["cell_cell_repulsion_strength"]
+        )
+        tree.find(path + "/relative_maximum_adhesion_distance").text = str(
+            new_values["relative_maximum_adhesion_distance"]
+        )
+        tree.find(path + "/options/set_relative_equilibrium_distance").text = str(
+            new_values["set_relative_equilibrium_distance"]
+        )
+        tree.find(path + "/options/set_absolute_equilibrium_distance").text = str(
+            new_values["set_absolute_equilibrium_distance"]
+        )
+
+    except KeyError:
+        print("The passed dictionary does not have all the domain variables.")
+
+
+def write_motility(
+    new_values: Dict[str, Union[float, bool, str]], tree: ElementTree, path: str
+) -> None:
+    """
+    Writes new values for the <motility> data in the XML tree.
+    Values will not be saved to the XML file, only to the ElementTree.
+
+    Parameters
+    ----------
+    new_values:
+        A dictionary with the name of the motility variables and their
+        values (must include all the variables).
+    tree:
+        A ElementTree object of the XML config file to be written.
+    path:
+        A string with the path to the motility node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/motility").
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the valid motility node.
+    """
+    if tree.find(path).tag != "motility":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    try:
+        tree.find(path + "/speed").text = str(new_values["speed"])
+        tree.find(path + "/persistence_time").text = str(new_values["persistence_time"])
+        tree.find(path + "/migration_bias").text = str(new_values["migration_bias"])
+
+        if new_values["motility_enabled"]:
+            tree.find(path + "/options/enabled").text = "true"
+        else:
+            tree.find(path + "/options/enabled").text = "false"
+
+        if new_values["use_2d"]:
+            tree.find(path + "/options/use_2D").text = "true"
+        else:
+            tree.find(path + "/options/use_2D").text = "false"
+
+        chemo_str = path + "/options/chemotaxis"
+
+        if new_values["chemotaxis_enabled"]:
+            tree.find(chemo_str + "/enabled").text = "true"
+        else:
+            tree.find(chemo_str + "/enabled").text = "false"
+
+        tree.find(chemo_str + "/substrate").text = new_values["chemotaxis_substrate"]
+        tree.find(chemo_str + "/direction").text = str(
+            new_values["chemotaxis_direction"]
+        )
+
+    except KeyError:
+        print("The passed dictionary does not have all the domain variables.")
+
+
+def write_secretion_substance(
+    new_values, tree: ElementTree, path: str, name: str
+) -> None:
+    """
+    Writes new values for a secretion substance the XML tree.
+    Values will not be saved to the XML file, only to the ElementTree.
+
+    Parameters
+    ----------
+    new_values:
+        A dictionary with the name of the substance variables and their
+        values (must include all the variables).
+    tree:
+        A ElementTree object of the XML config file to be written.
+    path:
+        A string with the path to the microenvironment node
+        (e.g., "cell_definitions/cell_definition[@name='default']/phenotype/secretion").
+    name:
+        A string with the name of the substance to be written.
+
+    Raises
+    ------
+    ValueError
+        When the passed path does not point to the valid microenvironment node.
+    ValueError
+        When the passed name does not match any of the substances in the file.
+    """
+    if tree.find(path).tag != "secretion":
+        raise ValueError("The passed path does not point to the correct node.")
+
+    substances = [
+        substance.attrib["name"] for substance in tree.find(path).findall("substrate")
+    ]
+
+    if name not in substances:
+        raise ValueError("The passed substance name is not valid.")
+
+    try:
+        stem = path + f"/substrate[@name='{name}']"
+        tree.find(stem + "/secretion_rate").text = str(new_values["secretion_rate"])
+        tree.find(stem + "/secretion_target").text = str(new_values["secretion_target"])
+        tree.find(stem + "/uptake_rate").text = str(new_values["uptake_rate"])
+        tree.find(stem + "/net_export_rate").text = str(new_values["net_export_rate"])
+
+    except KeyError:
+        print("The passed dictionary does not have all the domain variables.")
+
+
+def write_custom_data(
+    new_values: List[Dict[str, float]], tree: ElementTree, path: str
+) -> None:
+    """
+    Writes new values to the custom user variables in the XML tree.
+    The list must match the custom variables in the XML file.
+    Values will not be saved to the XML file, only to the ElementTree.
+
+    Parameters
+    ----------
+    new_values:
+        A list of dictionaries with the custom variables to be written.
     tree:
         A ElementTree object of the XML config file to be written.
     path:
         A string with the path to the motility node
         (e.g., "cell_definitions/cell_definition[@name='default']/custom_data", "user_parameters").
 
-    Returns
-    -------
-    List[Dict[str, Union[float, str]]]
-        A list of dictionaries with data for the custom variables (custom cell data and
-        user parameters). Dictionaries have the format {"name": ..., "value": ...}.
-
     Raises
     ------
     ValueError
         When the passed path does not point to a valid custom node.
+    ValueError
+        When the passed list does not match the variables in the config file.
     """
+    if (tree.find(path).tag != "custom_data") & (
+        tree.find(path).tag != "user_parameters"
+    ):
+        raise ValueError("The passed path does not point to the correct node.")
+
+    variables_names = [var.tag for var in list(tree.find(path)) if var.text]
+    new_variables_names = [var["name"] for var in new_values]
+
+    if variables_names != new_variables_names:
+        raise ValueError("The custom variables do not match those in the XML file.")
+
     for variable in new_values:
         tree.find(path + f"/{variable['name']}").text = str(variable["value"])
