@@ -86,7 +86,23 @@ CELL_DATA = {
 }
 
 
-EXPECTED_MOTILITY_WRITE = Motility(
+EXPECTED_CYCLE = Cycle(
+    code=6.0, phase_durations=[20.0, 180.0, 240.0, 60.0], phase_transition_rates=None
+)
+
+EXPECTED_VOLUME = Volume(
+    total=2494.0,
+    fluid_fraction=0.75,
+    nuclear=540.0,
+    fluid_change_rate=0.05,
+    cytoplasmic_biomass_change_rate=0.0045,
+    nuclear_biomass_change_rate=0.0055,
+    calcified_fraction=0.0,
+    calcification_rate=0.0,
+    relative_rupture_volume=2.0,
+)
+
+EXPECTED_MOTILITY = Motility(
     speed=5.0,
     persistence_time=10.0,
     migration_bias=1.0,
@@ -97,11 +113,35 @@ EXPECTED_MOTILITY_WRITE = Motility(
     chemotaxis_direction=1.0,
 )
 
-EXPECTED_MOTILITY_WRITE_2 = EXPECTED_MOTILITY_WRITE.copy(deep=True)
-EXPECTED_MOTILITY_WRITE_2.migration_bias = 0.5
+EXPECTED_MOTILITY_2 = EXPECTED_MOTILITY.copy(deep=True)
+EXPECTED_MOTILITY_2.migration_bias = 0.5
 
 
 class UpdaterFunctionsTest(unittest.TestCase):
+    def test_cycle_updater_function(self):
+        """Asserts that the cycle parameters are correctly updated."""
+        data = CellParameters(**CELL_DATA)
+        new_cycle_values = {
+            "phase_0": 20.0,
+            "phase_1": 180.0,
+            "phase_2": 240.0,
+            "phase_3": 60.0,
+        }
+        updaters.update_cycle_values(cell_data=data, new_values=new_cycle_values)
+        self.assertEqual(EXPECTED_CYCLE, data.cycle)
+
+    def test_cycle_updater_function_wrong_length(self):
+        """Asserts that the cycle parameters are correctly updated."""
+        data = CellParameters(**CELL_DATA)
+        new_cycle_values = {
+            "phase_0": 20.0,
+            "phase_1": 180.0,
+            "phase_2": 240.0,
+        }
+        self.assertRaises(
+            ValueError, updaters.update_cycle_values, data, new_values=new_cycle_values
+        )
+
     def test_motility_updater_function(self):
         """Asserts that the motility parameters are correctly updated."""
         data = CellParameters(**CELL_DATA)
@@ -111,19 +151,14 @@ class UpdaterFunctionsTest(unittest.TestCase):
             "migration_bias": 1.0,
         }
         updaters.update_motility_values(cell_data=data, new_values=new_motility_values)
-        self.assertEqual(EXPECTED_MOTILITY_WRITE, data.motility)
+        self.assertEqual(EXPECTED_MOTILITY, data.motility)
 
     def test_motility_updater_function_incomplete(self):
         """Asserts that the motility parameters are correctly updated when not all parameters are defined."""
         data = CellParameters(**CELL_DATA)
         new_motility_values = {"speed": 5.0, "persistence_time": 10.0}
         updaters.update_motility_values(cell_data=data, new_values=new_motility_values)
-        self.assertEqual(EXPECTED_MOTILITY_WRITE_2, data.motility)
-
-
-class SimpleBlackBoxTest(unittest.TestCase):
-    def test_something(self):
-        self.assertEqual(True, True)  # add assertion here
+        self.assertEqual(EXPECTED_MOTILITY_2, data.motility)
 
 
 if __name__ == "__main__":
