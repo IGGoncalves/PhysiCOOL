@@ -120,10 +120,12 @@ class Microenvironment:
         return me_data
 
 
-def get_cell_data(timestep: int, variables: List[str], output_path: Path = Path("output")) -> pd.DataFrame:
+def get_cell_data(
+    timestep: int, variables: List[str], output_path: Path = Path("output")
+) -> pd.DataFrame:
     """
     Reads the PhysiCell output data into a Pandas DataFrame.
-    
+
     Parameters
     ----------
     timestep
@@ -132,7 +134,7 @@ def get_cell_data(timestep: int, variables: List[str], output_path: Path = Path(
         The variables to be extracted from the file.
     output_path
         The path to where the output files can be found.
-        
+
     Returns
     -------
     pd.DataFrame
@@ -156,8 +158,9 @@ def get_cell_data(timestep: int, variables: List[str], output_path: Path = Path(
 
     # Select and save the variables of interest
     variables_indexes = [CELL_OUTPUT_LABELS.index(var) for var in variables]
-    cells = pd.DataFrame.from_dict({var: cell_data[index, :]
-                                    for var, index in zip(variables, variables_indexes)})
+    cells = pd.DataFrame.from_dict(
+        {var: cell_data[index, :] for var, index in zip(variables, variables_indexes)}
+    )
     # Save the time point just in case
     cells["timestep"] = timestep
 
@@ -168,7 +171,7 @@ def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
     """
     Selects the cells inside a z-axis slice and returns them.
     The slice will be centered at 0 and have the passed size.
-    
+
     Parameters
     ----------
     data
@@ -176,7 +179,7 @@ def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
         (must contain a column called "position_z").
     size
         The size of the z-slice.
-    
+
     Returns
     -------
     pd.DataFrame
@@ -185,7 +188,9 @@ def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
     if "position_z" not in data.columns:
         raise ValueError("The DataFrame doesn't include the cells' z coordinates.")
 
-    return data[(data["position_z"] >= -size / 2) & (data["position_z"] <= size / 2)].copy()
+    return data[
+        (data["position_z"] >= -size / 2) & (data["position_z"] <= size / 2)
+    ].copy()
 
 
 OutputProcessor = Callable[[Path], np.ndarray]
@@ -207,6 +212,8 @@ def get_number_of_cells(output_path: Path = Path("output")) -> np.ndarray:
 ErrorQuantification = Callable[[np.ndarray, np.ndarray], float]
 
 
-def compute_mean_squared_error(model_data: np.ndarray, reference_data: np.ndarray) -> float:
+def compute_mean_squared_error(
+    model_data: np.ndarray, reference_data: np.ndarray
+) -> float:
     """Returns the mean squared error value between the reference and simulated datasets."""
     return ((model_data - reference_data) ** 2).sum()

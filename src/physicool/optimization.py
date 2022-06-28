@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from sys import platform
 import subprocess
-from typing import List, Optional, Tuple
+from typing import List, Dict, Optional, Tuple
 from distutils.dir_util import copy_tree, remove_tree
 
 import numpy as np
@@ -33,7 +33,6 @@ def _create_project_command(project_name: str) -> str:
     """
     if platform == "win32":
         return f"{project_name}.exe"
-
     return f"./{project_name}"
 
 
@@ -68,7 +67,10 @@ class PhysiCellBlackBox:
         self.project_command = _create_project_command(self.project_name)
 
     def run(
-        self, params: Optional[List[float]] = None, number_of_replicates: int = 1, keep_files: bool = True
+        self,
+        params: Optional[Dict[str, float]] = None,
+        number_of_replicates: int = 1,
+        keep_files: bool = True,
     ) -> Optional[np.ndarray]:
         """
         Runs the black box pipeline.
@@ -124,7 +126,9 @@ class PhysiCellBlackBox:
             return output_metrics
 
 
-def run_sweep(black_box: PhysiCellBlackBox, bounds: Tuple[float, float], step: float) -> List[np.array]:
+def run_sweep(
+    black_box: PhysiCellBlackBox, bounds: Tuple[float, float], step: float
+) -> List[np.array]:
     input_values = np.arange(bounds[0], bounds[1], step)
     output_metrics = []
     for value in input_values:

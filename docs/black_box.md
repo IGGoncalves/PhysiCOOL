@@ -43,69 +43,34 @@ from physicool.updaters import CellUpdater, update_motility_values
 
 # Define motility parameters to be changed by update_motility_values
 # (speed, persistence time and migration bias)
-motility_params = [5.0, 20.0, 0.5]
 motility_updater = CellUpdater(config_path="output/PhysiCell_settings.xml",
                                updater_function=update_motility_values,
                                cell_definition_name="default")
 ```
 
 Once the `CellUpdater` object is created, it can be passed to the `PhysiCellBlackBox`. Then, when we want to run our
-model with updated values, we should pass in a list with the new values we want to test.
+model with updated values, we should pass in a dictionary with the new values we want to test.
 
 ```python
 from physicool.optimization import PhysiCellBlackBox
+
+motility_params = {"speed": 5.0, "persistence_time": 20.0, "migration_bias": 0.5}
 
 my_model = PhysiCellBlackBox(project_name="project", updater=motility_updater)
 my_model.run(params=motility_params, number_of_replicates=1, keep_files=True)
 ```
 
-To understand what the `update_motility_values` function is doing let's take a look at its implementation:
-
-```python
-from typing import List
-from physicool import datatypes as dt
-
-def update_motility_values(cell_data: dt.CellParameters, new_values=List[float]):
-    """Updates the Motility class by assigning the passed values to the motility parameters."""
-    cell_data.motility.speed = new_values[0]
-    cell_data.motility.persistence_time = new_values[1]
-    cell_data.motility.migration_bias = new_values[2]
-```
-
 ## Results processing functions
 
 The results processing function should take in the path where the output files are stored and return either a 
-NumPy array (e.g., the number of cells through time) or a float (e.g., the mean travelled distance by cells). In 
+NumPy array (e.g., the number of cells over time) or a float (e.g., the mean travelled distance by cells). In 
 the example below, a processing function is defined to return the y-coordinates at a given time point.
 
 ```python
-import numpy as np
-from physicool.processing import get_cell_data
+from physicool.processing import get_number_of_cells
 
+my_model = PhysiCellBlackBox(processor=get_number_of_cells,
+                             project_name="project")
 
-def output_processor(output_path):
-    """
-    Reads the output files and returns the y coordinates at a time point.
-
-    Parameters
-    ----------
-    output_path: pathlib.Path
-        The folder where the output files are stored.
-    """
-    cell_data = get_cell_data(timestep=10, output_path=output_path, variables=["position_y"])
-    
-    return np.array([cell["position_y"] for cell in cell_data])
-```
-
-## Running the black box model
-
-At this point, the black box model is ready to be built and run, which can be done with the `PhysiCellBlackBox` class.
-This class takes in as input the two functions previously described. The model can be run with the method `run`, 
-that takes in as input the list of parameter values to study.
-
-```python
-from physicool.optimization import PhysiCellBlackBox
-
-my_model = PhysiCellBlackBox(params_updater, output_processor)
-my_model.run(params=[3.0, 0.5])
+number_of_cells = my_model.run()
 ```
