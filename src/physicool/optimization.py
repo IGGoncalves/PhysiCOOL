@@ -1,3 +1,4 @@
+"""A module for model calibration and optimization routines."""
 from dataclasses import dataclass, field
 from pathlib import Path
 from sys import platform
@@ -11,8 +12,8 @@ from matplotlib import colors
 from matplotlib.patches import Rectangle
 import mpl_toolkits.mplot3d.art3d as art3d
 
-from physicool.config import ParamsUpdater
-from physicool.processing import OutputProcessor, compute_error
+from physicool.updaters import ParamsUpdater
+from physicool.processing import OutputProcessor
 
 
 def _create_project_command(project_name: str) -> str:
@@ -46,7 +47,7 @@ def _clean_outputs() -> None:
 class PhysiCellBlackBox:
     """
     A class to run PhysiCell models through Python as a black box.
-    Models can be run as they are and it's possible to run replicates.
+    Models can be run as they are, and it's possible to run replicates.
 
     Alternatively, users can decide to include a ParamsUpdater object to
     change values in the XML file before the model is run and/or a
@@ -60,20 +61,35 @@ class PhysiCellBlackBox:
     updater: Optional[ParamsUpdater] = None
     processor: Optional[OutputProcessor] = None
     project_name: str = "project"
-    keep_files: bool = True
     project_command: str = field(init=False)
 
     def __post_init__(self):
+        """Create the right command to call the PhysiCell project based on the OS."""
         self.project_command = _create_project_command(self.project_name)
 
     def run(
-        self, params: Optional[List[float]] = None, number_of_replicates: int = 1
+        self, params: Optional[List[float]] = None, number_of_replicates: int = 1, keep_files: bool = True
     ) -> Optional[np.ndarray]:
         """
-        Runs the black box pipeline according to
+        Runs the black box pipeline.
+
+        Parameters
+        ----------
+        params
+            The new parameter values, to be updated in the XML file
+            by the ParamsUpdater class.
+        number_of_replicates
+            The number of simulation replicates to be run.
+        keep_files
+            If the output files should be stored in a tmp folder.
+
+        Returns
+        -------
+        Optional[np.ndarray]
+            The output metrics computed by the OutputProcessor class
         """
         # Create a new directory to store the output files
-        if self.keep_files:
+        if keep_files:
             storage_folder = "temp"
             Path(storage_folder).mkdir()
 
@@ -89,7 +105,7 @@ class PhysiCellBlackBox:
         # Create a new directory, run the model and save the files to this
         # location and compute and store the model output metrics
         for i in range(number_of_replicates):
-            if (number_of_replicates > 1) & self.keep_files:
+            if (number_of_replicates > 1) & keep_files:
                 storage_folder = f"temp/replicate{i}"
                 Path(storage_folder).mkdir()
 
@@ -98,7 +114,7 @@ class PhysiCellBlackBox:
             if self.processor:
                 output_metrics[i] = self.processor(Path("output"))
 
-            if self.keep_files:
+            if keep_files:
                 copy_tree("output", storage_folder)
 
         # Delete the files from the "output" folder
@@ -108,10 +124,9 @@ class PhysiCellBlackBox:
             return output_metrics
 
 
-
 def run_sweep(black_box: PhysiCellBlackBox, bounds: Tuple[float, float], step: float) -> List[np.array]:
     input_values = np.arange(bounds[0], bounds[1], step)
-    output_metrics  = []
+    output_metrics = []
     for value in input_values:
         output_metrics.append(black_box.run([value]))
 

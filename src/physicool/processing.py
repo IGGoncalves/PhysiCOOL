@@ -1,3 +1,4 @@
+"""A module to process output PhysiCell files and extract metrics from the data."""
 from pathlib import Path
 from typing import Callable, Union, List
 from xml.etree import ElementTree
@@ -5,7 +6,6 @@ from xml.etree import ElementTree
 import numpy as np
 import pandas as pd
 from scipy import io as sio
-
 
 CELL_OUTPUT_LABELS = [
     "ID",
@@ -40,7 +40,6 @@ CELL_OUTPUT_LABELS = [
 
 class Microenvironment:
     def __init__(self, time_point: int, path: Union[Path, str]):
-
         self.storage = path
 
         self.time = time_point
@@ -121,7 +120,7 @@ class Microenvironment:
         return me_data
 
 
-def get_cell_data(timestep: int, variables: List[str], output_path: Path=Path("output")) -> pd.DataFrame:
+def get_cell_data(timestep: int, variables: List[str], output_path: Path = Path("output")) -> pd.DataFrame:
     """
     Reads the PhysiCell output data into a Pandas DataFrame.
     
@@ -132,42 +131,38 @@ def get_cell_data(timestep: int, variables: List[str], output_path: Path=Path("o
     variables
         The variables to be extracted from the file.
     output_path
-        The path to where the ouput files can be found.
+        The path to where the output files can be found.
         
     Returns
     -------
     pd.DataFrame
         A DataFrame with the passed variables for every cell.
     """
-    try:
-        # Make sure that the variables can be found in the file
-        if any([var not in CELL_OUTPUT_LABELS for var in variables]):
-            raise ValueError("ValueError: The passed variables are not valid names.")
-            
-        # Create path name
-        time_str = str(timestep).zfill(8)
-        file_name = "output{}_cells_physicell.mat".format(time_str)
-        path_name = output_path / file_name
-        
-        # Make sure that the timestep has been recorded and saved
-        if path_name not in output_path.glob("output*_cells_physicell.mat"):
-            raise ValueError("ValueError: The passed time point does not match any file.")
-        
-        # Read output file
-        cell_data = sio.loadmat(path_name)["cells"]
+    # Make sure that the variables can be found in the file
+    if any([var not in CELL_OUTPUT_LABELS for var in variables]):
+        raise ValueError("The passed variables are not valid names.")
 
-        # Select and save the variables of interest
-        variables_indexes = [CELL_OUTPUT_LABELS.index(var) for var in variables]
-        cells = pd.DataFrame.from_dict({var: cell_data[index, :] 
-                                        for var, index in zip(variables, variables_indexes)})
-        # Save the time point just in case
-        cells["timestep"] = timestep
+    # Create path name
+    time_str = str(timestep).zfill(8)
+    file_name = "output{}_cells_physicell.mat".format(time_str)
+    path_name = output_path / file_name
 
-        return cells
-    
-    except ValueError as err:
-        print(err)
-        
+    # Make sure that the timestep has been recorded and saved
+    if path_name not in output_path.glob("output*_cells_physicell.mat"):
+        raise ValueError("The passed time point does not match any file.")
+
+    # Read output file
+    cell_data = sio.loadmat(path_name)["cells"]
+
+    # Select and save the variables of interest
+    variables_indexes = [CELL_OUTPUT_LABELS.index(var) for var in variables]
+    cells = pd.DataFrame.from_dict({var: cell_data[index, :]
+                                    for var, index in zip(variables, variables_indexes)})
+    # Save the time point just in case
+    cells["timestep"] = timestep
+
+    return cells
+
 
 def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
     """
@@ -187,21 +182,14 @@ def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
     pd.DataFrame
         A DataFrame that only contains the cells inside the slice.
     """
-    try:
-        if "position_z" not in data.columns:
-            raise ValueError("ValueError: The DataFrame doesn't include the cells' z coordinates.")
+    if "position_z" not in data.columns:
+        raise ValueError("The DataFrame doesn't include the cells' z coordinates.")
 
-        return data[(data["position_z"] >= -size/2) & (data["position_z"] <= size/2)].copy()
-    except ValueError as err:
-        print(err)
-
-
-def compute_error(model_data, reference_data):
-    """Returns the mean squared error value between the reference and simulated datasets."""
-    return ((model_data - reference_data) ** 2).sum()
+    return data[(data["position_z"] >= -size / 2) & (data["position_z"] <= size / 2)].copy()
 
 
 OutputProcessor = Callable[[Path], np.ndarray]
+
 
 def get_number_of_cells(output_path: Path = Path("output")) -> np.ndarray:
     pattern = "output*_cells_physicell.mat"
@@ -214,3 +202,11 @@ def get_number_of_cells(output_path: Path = Path("output")) -> np.ndarray:
         number_of_cells[i] = cells["ID"].size
 
     return number_of_cells
+
+
+ErrorQuantification = Callable[[np.ndarray, np.ndarray], float]
+
+
+def compute_mean_squared_error(model_data: np.ndarray, reference_data: np.ndarray) -> float:
+    """Returns the mean squared error value between the reference and simulated datasets."""
+    return ((model_data - reference_data) ** 2).sum()
