@@ -36,10 +36,16 @@ def _create_project_command(project_name: str) -> str:
     return f"./{project_name}"
 
 
-def _clean_outputs() -> None:
+def clean_outputs() -> None:
     """Removes the files from the output folder (make data-cleanup)."""
     remove_tree("output")
     Path("output").mkdir()
+    remove_tree("temp")
+
+
+def compile_project() -> None:
+    """Compiles the current project by calling make."""
+    subprocess.run("make", shell=True)
 
 
 @dataclass
@@ -120,7 +126,7 @@ class PhysiCellBlackBox:
                 copy_tree("output", storage_folder)
 
         # Delete the files from the "output" folder
-        _clean_outputs()
+        clean_outputs()
 
         if self.processor:
             return output_metrics

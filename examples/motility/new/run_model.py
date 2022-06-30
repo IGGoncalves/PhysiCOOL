@@ -5,9 +5,7 @@ from physicool import optimization as opt
 
 def prepare_environment():
     opt.compile_project()
-    if Path("temp").is_dir():
-        Path("temp").rmdir()
-
+    opt.clean_outputs()
     black_box = opt.PhysiCellBlackBox()
 
     return black_box
