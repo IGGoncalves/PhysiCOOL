@@ -261,12 +261,12 @@
 				</mechanics>
 				
 				<motility>  
-					<speed units="micron/min">1</speed>
+					<speed units="micron/min">10</speed>
 					<persistence_time units="min">1</persistence_time>
 					<migration_bias units="dimensionless">.5</migration_bias>
 					
 					<options>
-						<enabled>false</enabled>
+						<enabled>true</enabled>
 						<use_2D>true</use_2D>
 						<chemotaxis>
 							<enabled>false</enabled>
@@ -301,7 +301,7 @@
 	</initial_conditions>	
 	
 	<user_parameters>
-		<random_seed type="int" units="dimensionless">0</random_seed> 
+		<random_seed type="int" units="dimensionless">1</random_seed>
 		<!-- example parameters from the template --> 
 		
 		<div_initialization type="divider" description="---Initialization settings---"/>
