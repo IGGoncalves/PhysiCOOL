@@ -52,8 +52,6 @@ Once the `CellUpdater` object is created, it can be passed to the `PhysiCellBlac
 model with updated values, we should pass in a dictionary with the new values we want to test.
 
 ```python
-from physicool.optimization import PhysiCellBlackBox
-
 motility_params = {"speed": 5.0, "persistence_time": 20.0, "migration_bias": 0.5}
 
 my_model = PhysiCellBlackBox(project_name="project", updater=motility_updater)

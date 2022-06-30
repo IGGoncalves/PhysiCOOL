@@ -169,7 +169,7 @@ def get_cell_data(
 
 def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
     """
-    Selects the cells inside a z-axis slice and returns them.
+    Returns the cells inside a z-axis slice and returns them.
     The slice will be centered at 0 and have the passed size.
 
     Parameters
@@ -193,13 +193,25 @@ def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
     ].copy()
 
 
-OutputProcessor = Callable[[Path], np.ndarray]
+OutputProcessor = Callable[[Path], Union[float, np.ndarray]]
 
 
 def get_number_of_cells(output_path: Path = Path("output")) -> np.ndarray:
+    """
+    Returns the number of cells over time (one value for each simulation time point).
+
+    Parameters
+    ----------
+    output_path
+        The path to where the output files can be found.
+
+    Returns
+    -------
+    np.nddarray
+        An array with the number of cells at every simulation time point.
+    """
     pattern = "output*_cells_physicell.mat"
     number_of_timepoints = len([file for file in output_path.glob(pattern)])
-
     number_of_cells = np.empty(shape=(number_of_timepoints,))
 
     for i in range(number_of_timepoints):
