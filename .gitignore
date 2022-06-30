@@ -1,3 +1,7 @@
+# PhysiCell stuff
+examples/motility/new/output/
+examples/motility/new/temp/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
