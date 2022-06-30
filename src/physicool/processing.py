@@ -121,7 +121,7 @@ class Microenvironment:
 
 
 def get_cell_data(
-    timestep: int, variables: List[str], output_path: Path = Path("output")
+    timestep: int, variables: List[str], output_path: Union[str, Path] = Path("output")
 ) -> pd.DataFrame:
     """
     Reads the PhysiCell output data into a Pandas DataFrame.
@@ -145,6 +145,9 @@ def get_cell_data(
         raise ValueError("The passed variables are not valid names.")
 
     # Create path name
+    if isinstance(output_path, str):
+        output_path = Path(output_path)
+
     time_str = str(timestep).zfill(8)
     file_name = "output{}_cells_physicell.mat".format(time_str)
     path_name = output_path / file_name

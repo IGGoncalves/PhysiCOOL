@@ -4,6 +4,7 @@
 #include "StochasticSimulationEngine.h"
 #include "BooleanNetwork.h"
 #include "RunConfig.h"
+#include "utils.h"
 #include "../../../core/PhysiCell_utilities.h"
 
 /**
@@ -34,11 +35,7 @@ class MaBoSSNetwork
 		/** \brief Real time to update, after applying noise */
 		double time_to_update;
 
-		/** \brief Scaling coefficient for time */
 		double scaling = 1.0;
-		
-		/** \brief Noise coefficient for time to update */
-		double time_stochasticity = 0;
 		
 		/** \brief Initial value probabilities, by node */
 		std::map< std::string, double > initial_values;
@@ -49,7 +46,7 @@ class MaBoSSNetwork
 		std::map< std::string, Node*> nodesByName;
 		std::map< std::string, const Symbol*> parametersByName;
 	
-		inline void set_time_to_update(){this->time_to_update = PhysiCell::LogNormalRandom( this->get_update_time_step() , time_stochasticity );}
+		inline void set_time_to_update(){this->time_to_update = this->get_update_time_step();}
 
 	
 	public:
@@ -132,8 +129,6 @@ class MaBoSSNetwork
 		}
 
 		inline void set_scaling(double scaling) { this->scaling = scaling; }
-		
-		inline void set_time_stochasticity(double t_stochasticity) { this->time_stochasticity = t_stochasticity; }
 		
 		/** 
 		 * \brief Print current state of all the nodes of the network 

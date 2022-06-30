@@ -37,10 +37,15 @@ def _create_project_command(project_name: str) -> str:
 
 
 def clean_outputs() -> None:
-    """Removes the files from the output folder (make data-cleanup)."""
-    remove_tree("output")
-    Path("output").mkdir()
-    remove_tree("temp")
+    """Removes the files from the output and tmp folders."""
+    if Path("output").is_dir():
+        remove_tree("output")
+        Path("output").mkdir()
+
+
+def clean_tmp_files() -> None:
+    if Path("temp").is_dir():
+        remove_tree("temp")
 
 
 def compile_project() -> None:

@@ -98,19 +98,7 @@ void create_cell_types( void )
 	*/
 	
 	initialize_cell_definitions_from_pugixml(); 
-
-	/*
-	   This builds the map of cell definitions and summarizes the setup. 
-	*/
-		
-	build_cell_definitions_maps(); 
-
-	/*
-	   This intializes cell signal and response dictionaries 
-	*/
-
-	setup_signal_behavior_dictionaries(); 	
-
+	
 	/* 
 	   Put any modifications to individual cell definitions here. 
 	   
@@ -125,6 +113,7 @@ void create_cell_types( void )
 	   This builds the map of cell definitions and summarizes the setup. 
 	*/
 		
+	build_cell_definitions_maps(); 
 	display_cell_definitions( std::cout ); 
 	
 	return; 
@@ -145,43 +134,7 @@ void setup_microenvironment( void )
 }
 
 void setup_tissue( void )
-{
-	double Xmin = microenvironment.mesh.bounding_box[0]; 
-	double Ymin = microenvironment.mesh.bounding_box[1]; 
-	double Zmin = microenvironment.mesh.bounding_box[2]; 
-
-	double Xmax = microenvironment.mesh.bounding_box[3]; 
-	double Ymax = microenvironment.mesh.bounding_box[4]; 
-	double Zmax = microenvironment.mesh.bounding_box[5]; 
-	
-	if( default_microenvironment_options.simulate_2D == true )
-	{
-		Zmin = 0.0; 
-		Zmax = 0.0; 
-	}
-	
-	double Xrange = Xmax - Xmin; 
-	double Yrange = Ymax - Ymin; 
-	double Zrange = Zmax - Zmin; 
-	
-	// create some of each type of cell 
-	
-	Cell* pC;
-	
-	for( float z = -90.0 ; z <= 90.0 ; z = z + 20.0 )
-	{
-		for( float x = -450.0 ; x <= 450.0 ; x = x + 100.0 )
-		{	
-			std::vector<double> position = {0,0,0}; 
-			position[0] = x; 
-			position[1] = -450.0; 
-			position[2] = z; 
-			
-			pC = create_cell( ); 
-			pC->assign_position( position );
-		}
-	}
-	
+{	
 	// load cells from your CSV file (if enabled)
 	load_cells_from_pugixml(); 	
 	

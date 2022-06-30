@@ -95,7 +95,6 @@ class dFBAIntracellular : public PhysiCell::Intracellular
          void print_current_nodes() {}
 	
         // static void save_PhysiBoSS(std::string path, std::string index);
-	void display(std::ostream&os) {}
 	static void save_dFBA(std::string path, std::string index);
 };
 
