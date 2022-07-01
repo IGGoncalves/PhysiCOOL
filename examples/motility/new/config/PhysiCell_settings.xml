@@ -165,7 +165,7 @@
 					<migration_bias units="dimensionless">0.0</migration_bias>
 					
 					<options>
-						<enabled>true</enabled>
+						<enabled>false</enabled>
 						<use_2D>true</use_2D>
 						<chemotaxis>
 							<enabled>false</enabled>

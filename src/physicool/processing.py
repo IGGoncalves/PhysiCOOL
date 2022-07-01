@@ -120,6 +120,21 @@ class Microenvironment:
         return me_data
 
 
+def read_mat_file_cells(path: str, variables: List[str]) -> pd.DataFrame:
+    # Make sure that the variables can be found in the file
+    if any([var not in CELL_OUTPUT_LABELS for var in variables]):
+        raise ValueError("The passed variables are not valid names.")
+
+    cell_data = sio.loadmat(path)["cells"]
+    # Select and save the variables of interest
+    variables_indexes = [CELL_OUTPUT_LABELS.index(var) for var in variables]
+    cells = pd.DataFrame.from_dict(
+        {var: cell_data[index, :] for var, index in zip(variables, variables_indexes)}
+    )
+
+    return cells
+
+
 def get_cell_data(
     timestep: int, variables: List[str], output_path: Union[str, Path] = Path("output")
 ) -> pd.DataFrame:
@@ -140,10 +155,6 @@ def get_cell_data(
     pd.DataFrame
         A DataFrame with the passed variables for every cell.
     """
-    # Make sure that the variables can be found in the file
-    if any([var not in CELL_OUTPUT_LABELS for var in variables]):
-        raise ValueError("The passed variables are not valid names.")
-
     # Create path name
     if isinstance(output_path, str):
         output_path = Path(output_path)
@@ -156,15 +167,11 @@ def get_cell_data(
     if path_name not in output_path.glob("output*_cells_physicell.mat"):
         raise ValueError("The passed time point does not match any file.")
 
-    # Read output file
-    cell_data = sio.loadmat(path_name)["cells"]
+    # Read output file into a DataFrame
+    # (changing Path to a string with its absolute path. loadmat takes strings as input)
+    cells = read_mat_file_cells(path=path_name.absolute().as_posix(),
+                                variables=variables)
 
-    # Select and save the variables of interest
-    variables_indexes = [CELL_OUTPUT_LABELS.index(var) for var in variables]
-    cells = pd.DataFrame.from_dict(
-        {var: cell_data[index, :] for var, index in zip(variables, variables_indexes)}
-    )
-    # Save the time point just in case
     cells["timestep"] = timestep
 
     return cells
@@ -196,10 +203,46 @@ def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
     ].copy()
 
 
+def get_cell_trajectories(output_path: Union[str, Path]):
+    """
+    Reads the PhysiCell output data into a Pandas DataFrame.
+
+    Parameters
+    ----------
+    output_path
+        The path to where the output files can be found.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame with the passed variables for every cell.
+    """
+    # Create path name
+    if isinstance(output_path, str):
+        output_path = Path(output_path)
+
+    variables = ["ID", "position_x", "position_y", "position_z"]
+    data = []
+
+    # Make sure that the timestep has been recorded and saved
+    for i, file in enumerate(output_path.glob("output*_cells_physicell.mat")):
+        # Read output file into a DataFrame
+        # (changing Path to a string with its absolute path. loadmat takes strings as input)
+        cells = read_mat_file_cells(path=file.absolute().as_posix(),
+                                    variables=variables)
+
+        cells["timestep"] = i
+        data.append(cells)
+
+    trajectories = pd.concat(data)
+
+    return trajectories
+
+
 OutputProcessor = Callable[[Path], Union[float, np.ndarray]]
 
 
-def get_number_of_cells(output_path: Path = Path("output")) -> np.ndarray:
+def get_cell_numbers_over_time(output_path: Path = Path("output")) -> np.ndarray:
     """
     Returns the number of cells over time (one value for each simulation time point).
 
@@ -210,9 +253,12 @@ def get_number_of_cells(output_path: Path = Path("output")) -> np.ndarray:
 
     Returns
     -------
-    np.nddarray
+    np.ndarray
         An array with the number of cells at every simulation time point.
     """
+    if isinstance(output_path, str):
+        output_path = Path(output_path)
+
     pattern = "output*_cells_physicell.mat"
     number_of_timepoints = len([file for file in output_path.glob(pattern)])
     number_of_cells = np.empty(shape=(number_of_timepoints,))
