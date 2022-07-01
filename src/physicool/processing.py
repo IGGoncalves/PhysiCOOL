@@ -225,16 +225,17 @@ def get_cell_trajectories(output_path: Union[str, Path]):
     data = []
 
     # Make sure that the timestep has been recorded and saved
-    for i, file in enumerate(output_path.glob("output*_cells_physicell.mat")):
-        # Read output file into a DataFrame
-        # (changing Path to a string with its absolute path. loadmat takes strings as input)
-        cells = read_mat_file_cells(path=file.absolute().as_posix(),
-                                    variables=variables)
+    pattern = "output*_cells_physicell.mat"
+    number_of_timepoints = len([file for file in output_path.glob(pattern)])
 
+    for i in range(number_of_timepoints):
+        cells = get_cell_data(timestep=i, variables=variables, output_path=output_path)
         cells["timestep"] = i
         data.append(cells)
 
-    trajectories = pd.concat(data)
+    new_data = pd.concat(data)
+    trajectories = [new_data[new_data["ID"] == cell_id][["position_x", "position_y", "position_z"]]
+                    for cell_id in new_data["ID"].unique()]
 
     return trajectories
 
@@ -268,6 +269,30 @@ def get_cell_numbers_over_time(output_path: Path = Path("output")) -> np.ndarray
         number_of_cells[i] = cells["ID"].size
 
     return number_of_cells
+
+
+def get_final_y_position(output_path: Path = Path("output")) -> np.ndarray:
+    """
+    Returns the number of cells over time (one value for each simulation time point).
+
+    Parameters
+    ----------
+    output_path
+        The path to where the output files can be found.
+
+    Returns
+    -------
+    np.ndarray
+        An array with the number of cells at every simulation time point.
+    """
+    if isinstance(output_path, str):
+        output_path = Path(output_path)
+
+    pattern = "output*_cells_physicell.mat"
+    last_point = len([file for file in output_path.glob(pattern)])
+    cells = get_cell_data(timestep=last_point-1, variables=["position_y"], output_path=output_path)
+
+    return cells["position_y"].values
 
 
 ErrorQuantification = Callable[[np.ndarray, np.ndarray], float]

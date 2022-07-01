@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def plot_trajectories_2d(trajectories: pd.DataFrame, ax: Optional[plt.Axes]):
+def plot_trajectories_2d(trajectories: pd.DataFrame, ax: Optional[plt.Axes] = None):
     """
     Plots the cell trajectories in 2D as a line and a point at the last coordinate.
 
@@ -28,7 +28,7 @@ def plot_trajectories_2d(trajectories: pd.DataFrame, ax: Optional[plt.Axes]):
     return ax
 
 
-def plot_trajectories_3d(trajectories: pd.DataFrame, ax: Optional[plt.Axes]):
+def plot_trajectories_3d(trajectories: pd.DataFrame, ax: Optional[plt.Axes] = None):
     """
     Plots the cell trajectories in 3D as a line and a point at the last coordinate.
 

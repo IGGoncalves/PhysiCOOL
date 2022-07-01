@@ -37,20 +37,21 @@ def _create_project_command(project_name: str) -> str:
 
 
 def clean_outputs() -> None:
-    """Removes the files from the output and tmp folders."""
+    """Removes the files from the output folder and creates it again (make data-cleanup)."""
     if Path("output").is_dir():
         remove_tree("output")
         Path("output").mkdir()
 
 
 def clean_tmp_files() -> None:
+    """Removes the temp folder if it exists."""
     if Path("temp").is_dir():
         remove_tree("temp")
 
 
 def compile_project() -> None:
     """Compiles the current project by calling make."""
-    subprocess.run("make", shell=True)
+    subprocess.run("make", shell=True, stdout=None, stderr=None)
 
 
 @dataclass
@@ -112,7 +113,7 @@ class PhysiCellBlackBox:
 
         # Create an array to store the metrics computed by the processor
         if self.processor:
-            output_metrics = np.empty(shape=(number_of_replicates,))
+            output_metrics = []
 
         # Run the PhysiCell model for each replicate
         # Create a new directory, run the model and save the files to this
@@ -125,7 +126,7 @@ class PhysiCellBlackBox:
             subprocess.run(self.project_command, shell=True)
 
             if self.processor:
-                output_metrics[i] = self.processor(Path("output"))
+                output_metrics.append(self.processor(Path("output")))
 
             if keep_files:
                 copy_tree("output", storage_folder)
@@ -134,7 +135,10 @@ class PhysiCellBlackBox:
         clean_outputs()
 
         if self.processor:
-            return output_metrics
+            if number_of_replicates == 1:
+                return output_metrics[0]
+
+            return np.asarray(output_metrics)
 
 
 def run_sweep(
