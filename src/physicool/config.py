@@ -584,3 +584,5 @@ class ConfigFileParser:
             cell_data.name, cell_data.motility, update_file=False
         )
         self.write_custom_params(cell_data.name, cell_data.custom, update_file=False)
+        self.tree.write(self.config_file)
+        

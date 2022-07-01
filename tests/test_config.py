@@ -104,6 +104,12 @@ class PhysiCellConfigTest(unittest.TestCase):
         user_data = self.xml_data.read_user_params()
         self.assertEqual(expected_data, user_data)
 
+    def test_read_cell_data(self):
+        """Asserts that the cell definition data is properly read."""
+        expected_data = dt.CellParameters(**EXPECTED_CELL_DATA_READ)
+        data = self.xml_data.read_cell_data("default")
+        self.assertEqual(expected_data, data)
+
     def test_write_domain_params(self):
         """Asserts that the <domain> data is properly written."""
         domain_data = self.xml_write.read_domain_params()
@@ -307,6 +313,18 @@ class PhysiCellConfigTest(unittest.TestCase):
             path="user_parameters",
         )
         self.assertEqual(EXPECTED_USER_PARAMETERS_WRITE, custom_data)
+
+    def test_write_cell_params(self):
+        """Asserts that the <cell definition> data is properly written."""
+        data = self.xml_write.read_cell_data("default")
+        data.volume.total = 100.0
+        data.mechanics.cell_cell_adhesion_strength = 4.0
+        data.motility.speed = 5.0
+        self.xml_write.write_cell_params(data)
+
+        new_tree = config.ConfigFileParser(WRITE_PATH)
+        data = new_tree.read_cell_data("default")
+        self.assertEqual(EXPECTED_CELL_DATA_WRITE, data.dict())
 
     def tearDown(self) -> None:
         """Deletes the tmp file that was created to test the writing functions."""
