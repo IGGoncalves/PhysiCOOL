@@ -1,12 +1,11 @@
+"""A module to process output PhysiCell files and extract metrics from the data."""
 from pathlib import Path
-from typing import Callable, Union
+from typing import Callable, Union, List
 from xml.etree import ElementTree
 
 import numpy as np
+import pandas as pd
 from scipy import io as sio
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 
 CELL_OUTPUT_LABELS = [
     "ID",
@@ -41,7 +40,6 @@ CELL_OUTPUT_LABELS = [
 
 class Microenvironment:
     def __init__(self, time_point: int, path: Union[Path, str]):
-
         self.storage = path
 
         self.time = time_point
@@ -122,51 +120,191 @@ class Microenvironment:
         return me_data
 
 
-class Cells:
-    def __init__(self, time, storage_path):
-        self.time = time
-        self.storage = storage_path
+def read_mat_file_cells(path: str, variables: List[str]) -> pd.DataFrame:
+    # Make sure that the variables can be found in the file
+    if any([var not in CELL_OUTPUT_LABELS for var in variables]):
+        raise ValueError("The passed variables are not valid names.")
 
-        self.positions = self.get_cell_positions()
+    cell_data = sio.loadmat(path)["cells"]
+    # Select and save the variables of interest
+    variables_indexes = [CELL_OUTPUT_LABELS.index(var) for var in variables]
+    cells = pd.DataFrame.from_dict(
+        {var: cell_data[index, :] for var, index in zip(variables, variables_indexes)}
+    )
 
-    def get_cell_positions(self):
-        """Returns a dictionary with the cell output data for the selected variables."""
-
-        variables = ["position_x", "position_y", "position_z"]
-
-        # Create path name
-        time_str = str(self.time).zfill(8)
-        file_name = "output{}_cells_physicell.mat".format(time_str)
-        path_name = self.storage / file_name
-
-        # Read output file
-        cell_data = sio.loadmat(path_name)["cells"]
-
-        # Select and save the variables of interest
-        variables_indexes = [CELL_OUTPUT_LABELS.index(var) for var in variables]
-        cells = {
-            var: cell_data[index, :] for var, index in zip(variables, variables_indexes)
-        }
-
-        return [
-            (x, y, z)
-            for x, y, z in zip(
-                cells["position_x"], cells["position_y"], cells["position_z"]
-            )
-        ]
+    return cells
 
 
-def compute_error(model_data, reference_data):
-    """Returns the mean squared error value between the reference and simulated datasets."""
-    return ((model_data - reference_data) ** 2).sum()
+def get_cell_data(
+    timestep: int, variables: List[str], output_path: Union[str, Path] = Path("output")
+) -> pd.DataFrame:
+    """
+    Reads the PhysiCell output data into a Pandas DataFrame.
+
+    Parameters
+    ----------
+    timestep
+        The time point to be read.
+    variables
+        The variables to be extracted from the file.
+    output_path
+        The path to where the output files can be found.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame with the passed variables for every cell.
+    """
+    # Create path name
+    if isinstance(output_path, str):
+        output_path = Path(output_path)
+
+    time_str = str(timestep).zfill(8)
+    file_name = "output{}_cells_physicell.mat".format(time_str)
+    path_name = output_path / file_name
+
+    # Make sure that the timestep has been recorded and saved
+    if path_name not in output_path.glob("output*_cells_physicell.mat"):
+        raise ValueError("The passed time point does not match any file.")
+
+    # Read output file into a DataFrame
+    # (changing Path to a string with its absolute path. loadmat takes strings as input)
+    cells = read_mat_file_cells(
+        path=path_name.absolute().as_posix(), variables=variables
+    )
+
+    cells["timestep"] = timestep
+
+    return cells
+
+
+def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
+    """
+    Returns the cells inside a z-axis slice and returns them.
+    The slice will be centered at 0 and have the passed size.
+
+    Parameters
+    ----------
+    data
+        A DataFrame with the cells' coordinates
+        (must contain a column called "position_z").
+    size
+        The size of the z-slice.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame that only contains the cells inside the slice.
+    """
+    if "position_z" not in data.columns:
+        raise ValueError("The DataFrame doesn't include the cells' z coordinates.")
+
+    return data[
+        (data["position_z"] >= -size / 2) & (data["position_z"] <= size / 2)
+    ].copy()
+
+
+def get_cell_trajectories(output_path: Union[str, Path]):
+    """
+    Reads the PhysiCell output data into a Pandas DataFrame.
+
+    Parameters
+    ----------
+    output_path
+        The path to where the output files can be found.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame with the passed variables for every cell.
+    """
+    # Create path name
+    if isinstance(output_path, str):
+        output_path = Path(output_path)
+
+    variables = ["ID", "position_x", "position_y", "position_z"]
+    data = []
+
+    # Make sure that the timestep has been recorded and saved
+    pattern = "output*_cells_physicell.mat"
+    number_of_timepoints = len([file for file in output_path.glob(pattern)])
+
+    for i in range(number_of_timepoints):
+        cells = get_cell_data(timestep=i, variables=variables, output_path=output_path)
+        cells["timestep"] = i
+        data.append(cells)
+
+    new_data = pd.concat(data)
+    trajectories = [
+        new_data[new_data["ID"] == cell_id][["position_x", "position_y", "position_z"]]
+        for cell_id in new_data["ID"].unique()
+    ]
+
+    return trajectories
 
 
 OutputProcessor = Callable[[Path], Union[float, np.ndarray]]
 
 
-def process_final_y_distance_data(storage_path: Path) -> np.ndarray:
-    # Read the data saved at each time point
-    coordinates = Cells(0, storage_path).get_cell_positions()
-    y_component = [coordinate[1] for coordinate in coordinates]
+def get_cell_numbers_over_time(output_path: Path = Path("output")) -> np.ndarray:
+    """
+    Returns the number of cells over time (one value for each simulation time point).
 
-    return np.array(y_component)
+    Parameters
+    ----------
+    output_path
+        The path to where the output files can be found.
+
+    Returns
+    -------
+    np.ndarray
+        An array with the number of cells at every simulation time point.
+    """
+    if isinstance(output_path, str):
+        output_path = Path(output_path)
+
+    pattern = "output*_cells_physicell.mat"
+    number_of_timepoints = len([file for file in output_path.glob(pattern)])
+    number_of_cells = np.empty(shape=(number_of_timepoints,))
+
+    for i in range(number_of_timepoints):
+        cells = get_cell_data(timestep=i, variables=["ID"], output_path=output_path)
+        number_of_cells[i] = cells["ID"].size
+
+    return number_of_cells
+
+
+def get_final_y_position(output_path: Path = Path("output")) -> np.ndarray:
+    """
+    Returns the number of cells over time (one value for each simulation time point).
+
+    Parameters
+    ----------
+    output_path
+        The path to where the output files can be found.
+
+    Returns
+    -------
+    np.ndarray
+        An array with the number of cells at every simulation time point.
+    """
+    if isinstance(output_path, str):
+        output_path = Path(output_path)
+
+    pattern = "output*_cells_physicell.mat"
+    last_point = len([file for file in output_path.glob(pattern)])
+    cells = get_cell_data(
+        timestep=last_point - 1, variables=["position_y"], output_path=output_path
+    )
+
+    return cells["position_y"].values
+
+
+ErrorQuantification = Callable[[np.ndarray, np.ndarray], float]
+
+
+def compute_mean_squared_error(
+    model_data: np.ndarray, reference_data: np.ndarray
+) -> float:
+    """Returns the mean squared error value between the reference and simulated datasets."""
+    return ((model_data - reference_data) ** 2).sum()
