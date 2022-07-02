@@ -169,8 +169,9 @@ def get_cell_data(
 
     # Read output file into a DataFrame
     # (changing Path to a string with its absolute path. loadmat takes strings as input)
-    cells = read_mat_file_cells(path=path_name.absolute().as_posix(),
-                                variables=variables)
+    cells = read_mat_file_cells(
+        path=path_name.absolute().as_posix(), variables=variables
+    )
 
     cells["timestep"] = timestep
 
@@ -234,8 +235,10 @@ def get_cell_trajectories(output_path: Union[str, Path]):
         data.append(cells)
 
     new_data = pd.concat(data)
-    trajectories = [new_data[new_data["ID"] == cell_id][["position_x", "position_y", "position_z"]]
-                    for cell_id in new_data["ID"].unique()]
+    trajectories = [
+        new_data[new_data["ID"] == cell_id][["position_x", "position_y", "position_z"]]
+        for cell_id in new_data["ID"].unique()
+    ]
 
     return trajectories
 
@@ -290,7 +293,9 @@ def get_final_y_position(output_path: Path = Path("output")) -> np.ndarray:
 
     pattern = "output*_cells_physicell.mat"
     last_point = len([file for file in output_path.glob(pattern)])
-    cells = get_cell_data(timestep=last_point-1, variables=["position_y"], output_path=output_path)
+    cells = get_cell_data(
+        timestep=last_point - 1, variables=["position_y"], output_path=output_path
+    )
 
     return cells["position_y"].values
 

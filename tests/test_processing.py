@@ -11,11 +11,15 @@ DATA_PATH = Path("data")
 
 def make_df_from_positions(path: Path) -> pd.DataFrame:
     """Returns a Dataframe with the output structure based on the initial cell values (csv)."""
-    data = pd.read_csv(path, names=["position_x", "position_y", "position_z", "definition"])
+    data = pd.read_csv(
+        path, names=["position_x", "position_y", "position_z", "definition"]
+    )
     data = data.drop(columns=["definition"])
     data["ID"] = [float(i) for i in data.index]
     data["timestep"] = 0
-    data = data.reindex(columns=["ID", "position_x", "position_y", "position_z",  "timestep"])
+    data = data.reindex(
+        columns=["ID", "position_x", "position_y", "position_z", "timestep"]
+    )
 
     return data
 
@@ -24,9 +28,11 @@ class TestReadCellData(unittest.TestCase):
     def test_read_positions(self):
         """Asserts that the cell positions are read correctly."""
         expected_data = make_df_from_positions(DATA_PATH / "cells.csv")
-        data = processing.get_cell_data(timestep=0,
-                                        variables=["ID", "position_x", "position_y", "position_z"],
-                                        output_path=DATA_PATH)
+        data = processing.get_cell_data(
+            timestep=0,
+            variables=["ID", "position_x", "position_y", "position_z"],
+            output_path=DATA_PATH,
+        )
 
         pd.testing.assert_frame_equal(data, expected_data)
 
@@ -38,5 +44,5 @@ class TestOutputProcessor(unittest.TestCase):
         np.testing.assert_array_equal(np.asarray([19, 19]), number_of_cells)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

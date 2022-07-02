@@ -182,9 +182,7 @@ class PhysiCellConfigTest(unittest.TestCase):
         death_data = self.xml_write.read_death_params("default")
         death_data[0].phase_durations = [518.0]
         death_data[0].calcification_rate = 0.5
-        self.xml_write.write_death_model_params(
-            name="default", death=death_data[0]
-        )
+        self.xml_write.write_death_model_params(name="default", death=death_data[0])
 
         new_tree = ElementTree.parse(WRITE_PATH)
         death_data = pcxml.parse_death_model(
@@ -199,16 +197,16 @@ class PhysiCellConfigTest(unittest.TestCase):
         death_data = self.xml_write.read_death_params("default")
         death_data[0].phase_durations = [518.0]
         death_data[0].calcification_rate = 0.5
-        self.xml_write.write_death_params(
-            name="default", death=death_data
-        )
+        self.xml_write.write_death_params(name="default", death=death_data)
 
         new_tree = ElementTree.parse(WRITE_PATH)
         death_data = pcxml.parse_death(
             tree=new_tree,
             path="cell_definitions/cell_definition[@name='default']/phenotype/death",
         )
-        self.assertEqual([EXPECTED_DEATH_APOPTOSIS_WRITE, EXPECTED_DEATH_NECROSIS_READ], death_data)
+        self.assertEqual(
+            [EXPECTED_DEATH_APOPTOSIS_WRITE, EXPECTED_DEATH_NECROSIS_READ], death_data
+        )
 
     def test_write_volume_params(self):
         """Asserts that the <volume> data is properly written."""
@@ -275,9 +273,7 @@ class PhysiCellConfigTest(unittest.TestCase):
         """Asserts that the <secretion> data is properly written."""
         secretion_data = self.xml_write.read_secretion_params("default")
         secretion_data[0].secretion_rate = 1.0
-        self.xml_write.write_secretion_params(
-            name="default", secretion=secretion_data
-        )
+        self.xml_write.write_secretion_params(name="default", secretion=secretion_data)
 
         new_tree = ElementTree.parse(WRITE_PATH)
         secretion_data = pcxml.parse_secretion_substance(

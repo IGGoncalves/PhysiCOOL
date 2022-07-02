@@ -26,7 +26,9 @@ def update_cycle_values(cell_data: dt.CellParameters, new_values: Dict[str, floa
     """
     if cell_data.cycle.phase_durations:
         if len(cell_data.cycle.phase_durations) != len(new_values):
-            raise ValueError("The passed values do not match the number of rates/durations.")
+            raise ValueError(
+                "The passed values do not match the number of rates/durations."
+            )
 
         cell_data.cycle.phase_durations = [
             new_values[f"phase_{i}"] for i, _ in enumerate(new_values)
@@ -34,7 +36,9 @@ def update_cycle_values(cell_data: dt.CellParameters, new_values: Dict[str, floa
 
     if cell_data.cycle.phase_transition_rates:
         if len(cell_data.cycle.phase_transition_rates) != len(new_values):
-            raise ValueError("The passed values do not match the number of rates/durations.")
+            raise ValueError(
+                "The passed values do not match the number of rates/durations."
+            )
 
         cell_data.cycle.phase_transition_rates = [
             new_values[f"phase_{i}"] for i, _ in enumerate(new_values)
@@ -63,9 +67,13 @@ def update_volume_values(cell_data: dt.CellParameters, new_values: Dict[str, flo
     if "fluid_change_rate" in new_values.keys():
         cell_data.volume.nuclear = new_values["fluid_change_rate"]
     if "cytoplasmic_biomass_change_rate" in new_values.keys():
-        cell_data.volume.cytoplasmic_biomass_change_rate = new_values["cytoplasmic_biomass_change_rate"]
+        cell_data.volume.cytoplasmic_biomass_change_rate = new_values[
+            "cytoplasmic_biomass_change_rate"
+        ]
     if "nuclear_biomass_change_rate" in new_values.keys():
-        cell_data.volume.nuclear_biomass_change_rate = new_values["nuclear_biomass_change_rate"]
+        cell_data.volume.nuclear_biomass_change_rate = new_values[
+            "nuclear_biomass_change_rate"
+        ]
     if "calcified_fraction" in new_values.keys():
         cell_data.volume.calcified_fraction = new_values["calcified_fraction"]
     if "calcification_rate" in new_values.keys():

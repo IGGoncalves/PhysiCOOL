@@ -372,7 +372,7 @@ class WriteDataTest(unittest.TestCase):
         pcxml.write_death_model(
             new_values=EXPECTED_DEATH_APOPTOSIS_WRITE,
             tree=self.tree,
-            path="cell_definitions/cell_definition[@name='default']/phenotype/death"
+            path="cell_definitions/cell_definition[@name='default']/phenotype/death",
         )
         self.tree.write(WRITE_PATH)
 
@@ -448,7 +448,7 @@ class WriteDataTest(unittest.TestCase):
             new_values=EXPECTED_SECRETION_WRITE_SUBSTRATE,
             tree=self.tree,
             path="cell_definitions/cell_definition[@name='default']/phenotype/secretion",
-            name="substrate"
+            name="substrate",
         )
         self.tree.write(WRITE_PATH)
 
