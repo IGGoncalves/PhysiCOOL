@@ -6,7 +6,7 @@ from physicool import processing
 import numpy as np
 import pandas as pd
 
-DATA_PATH = Path("data")
+DATA_PATH = Path(__file__).resolve().parent / "data"
 
 
 def make_df_from_positions(path: Path) -> pd.DataFrame:
