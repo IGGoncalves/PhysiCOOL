@@ -136,13 +136,13 @@
 					<nuclear_biomass_change_rate units="1/min">0.0055</nuclear_biomass_change_rate>
 					
 					<calcified_fraction units="dimensionless">0.0</calcified_fraction>
-					<calcification_rate units="1/min">0.0</calcification_rate>
+					<calcification_rate units="1/min">1.0</calcification_rate>
 					
 					<relative_rupture_volume units="dimensionless">2.0</relative_rupture_volume>
 				</volume> 				
 				
 				<mechanics> 
-					<cell_cell_adhesion_strength units="micron/min">0.4</cell_cell_adhesion_strength>
+					<cell_cell_adhesion_strength units="micron/min">4.0</cell_cell_adhesion_strength>
 					<cell_cell_repulsion_strength units="micron/min">10.0</cell_cell_repulsion_strength>
 					<relative_maximum_adhesion_distance units="dimensionless">1.25</relative_maximum_adhesion_distance>
 					
@@ -153,7 +153,7 @@
 				</mechanics>
 				
 				<motility>  
-					<speed units="micron/min">1.0</speed>
+					<speed units="micron/min">20.0</speed>
 					<persistence_time units="min">1.0</persistence_time>
 					<migration_bias units="dimensionless">0.5</migration_bias>
 					
