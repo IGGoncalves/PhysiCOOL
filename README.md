@@ -2,12 +2,12 @@
 
 <h1>PhysiCOOL: A generalized framework for model Calibration and Optimization Of modeLing projects</h1>
 
-<a href="">"![GitHub](https://img.shields.io/github/license/iggoncalves/PhysiCOOL)</a>
-<a href="">"[![Documentation Status](https://readthedocs.org/projects/physicool/badge/?version=latest)](https://physicool.readthedocs.io/en/latest/?badge=latest)</a>
-<a href="">"![Codecov](https://img.shields.io/codecov/c/gh/IGGoncalves/PhysiCOOL)</a>
-<a href="">"[![DOI](https://zenodo.org/badge/396329798.svg)](https://zenodo.org/badge/latestdoi/396329798)</a>
-<a href="">"[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)</a>
-<a href="">"[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)</a>
+<a href="">![GitHub](https://img.shields.io/github/license/iggoncalves/PhysiCOOL)</a>
+<a href="">[![Documentation Status](https://readthedocs.org/projects/physicool/badge/?version=latest)](https://physicool.readthedocs.io/en/latest/?badge=latest)</a>
+<a href="">![Codecov](https://img.shields.io/codecov/c/gh/IGGoncalves/PhysiCOOL)</a>
+<a href="">[![DOI](https://zenodo.org/badge/396329798.svg)](https://zenodo.org/badge/latestdoi/396329798)</a>
+<a href="">[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)</a>
+<a href="">[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)</a>
 
 </div>
 
