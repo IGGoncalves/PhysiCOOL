@@ -6,7 +6,7 @@
 <a href="">[![Documentation Status](https://readthedocs.org/projects/physicool/badge/?version=latest)](https://physicool.readthedocs.io/en/latest/?badge=latest)</a>
 <a href="">![Codecov](https://img.shields.io/codecov/c/gh/IGGoncalves/PhysiCOOL)</a>
 <a href="">[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6791030.svg)](https://doi.org/10.5281/zenodo.6791030)</a>
-<a href="">[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)</a>
+
 <a href="">[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)</a>
 
 </div>
@@ -96,18 +96,12 @@ the **number of points and ranges to explore at each level**.
 
 ### General examples
 
-You can run our examples that don't require PhysiCell on 
-[Binder](https://mybinder.org/v2/gh/IGGoncalves/PhysiCOOL/HEAD?urlpath=%2Ftree%2Fexamples)!
-
 - **Interactive parameter estimation example:**
 A simple example of logistic growth to showcase the multilevel sweep feature.
 
 - **Data analysis and visualization:**
 Examples of data visualization scripts, including interactive examples with Jupyter Widgets.
 
-### MultiSweep examples
-
-Examples to run with PhysiCell models:
 
 - **Single-cell motility:**
 Finding the best parameter values for migration bias and migration speed to model motility in the presence 
