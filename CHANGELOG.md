@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.10 (02/07/2022)
+
+- Full support for parsing XML files (with validation)
+- New updater and processing functions to create black boxes
+- Updated tests for parsing config data and data quantification from output files.
+- New working examples for building and using black box models.
+
 ## v0.1.1 (13/04/2022)
 
 - Minor fixes to the MultiLevel Sweep class

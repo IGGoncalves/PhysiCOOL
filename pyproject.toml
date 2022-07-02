@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "physicool"
-version = "0.1.1"
+version = "0.2.0"
 description = "A generalized, model-agnostic framework for model calibration in PhysiCell."
 authors = ["Inês Gonçalves, David Hormuth, Caleb Phillips, Sandhya Prabhakaran"]
 license = "MIT"
