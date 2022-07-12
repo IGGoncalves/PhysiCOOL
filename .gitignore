@@ -1,7 +1,6 @@
 # PhysiCell stuff
-examples/motility/new/*.o
-examples/motility/new/project
-examples/motility/new/temp/
+examples/motility/*.o
+examples/motility/temp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
