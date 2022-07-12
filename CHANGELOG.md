@@ -1,6 +1,11 @@
 # Changelog
 
-## v0.2.10 (02/07/2022)
+## v0.2.1 (12/07/2022)
+
+- Minor bug fixes to run examples locally
+- LICENSE update on PyPi
+
+## v0.2.0 (02/07/2022)
 
 - Full support for parsing XML files (with validation)
 - New updater and processing functions to create black boxes
