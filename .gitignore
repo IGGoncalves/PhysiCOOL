@@ -1,7 +1,6 @@
 # PhysiCell stuff
 examples/motility/new/*.o
 examples/motility/new/project
-examples/motility/output/
 examples/motility/new/temp/
 
 # Byte-compiled / optimized / DLL files
