@@ -178,9 +178,9 @@
 				</mechanics>
 				
 				<motility>  
-					<speed units="micron/min">2.2243385185185183</speed>
-					<persistence_time units="min">20.0</persistence_time>
-					<migration_bias units="dimensionless">0.875652962962963</migration_bias>
+					<speed units="micron/min">1.0</speed>
+					<persistence_time units="min">120.0</persistence_time>
+					<migration_bias units="dimensionless">0.2</migration_bias>
 					
 					<options>
 						<enabled>true</enabled>
