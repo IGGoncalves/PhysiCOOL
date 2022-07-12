@@ -5,7 +5,7 @@
 <a href="">![GitHub](https://img.shields.io/github/license/iggoncalves/PhysiCOOL)</a>
 <a href="">[![Documentation Status](https://readthedocs.org/projects/physicool/badge/?version=latest)](https://physicool.readthedocs.io/en/latest/?badge=latest)</a>
 <a href="">![Codecov](https://img.shields.io/codecov/c/gh/IGGoncalves/PhysiCOOL)</a>
-<a href="">[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6791030.svg)](https://doi.org/10.5281/zenodo.6791030)</a>
+<a href="">[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6458586.svg)](https://doi.org/10.5281/zenodo.6458586)</a>
 <a href="">[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)</a>
 
 </div>

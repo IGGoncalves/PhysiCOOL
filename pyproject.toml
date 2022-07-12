@@ -3,7 +3,7 @@ name = "physicool"
 version = "0.2.0"
 description = "A generalized, model-agnostic framework for model calibration in PhysiCell."
 authors = ["Inês Gonçalves, David Hormuth, Caleb Phillips, Sandhya Prabhakaran"]
-license = "MIT"
+license = "BSD-3-Clause"
 readme = "README.md"
 
 [tool.poetry.dependencies]

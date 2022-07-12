@@ -20,12 +20,18 @@ PhysiCOOL is available through pip using the following command:
 pip install physicool
 ```
 
+This package works with PhysiCell models up to and including PhysiCell v1.9.
+
 ## Usage
 
 - [Configuration file parser](xml_update.ipynb)
 - [Black box models](black_box.md)
 - [Multilevel parameter sweep](multi_level.md)
 - [Connecting to third-party packages](external_libs.md)
+
+## Running examples
+
+We currently offer an example that uses PhysiCOOL to study cell motility and the chemotactic response to oxygen gradients. All the files required to compile this PhysiCell model are available on our [GitHub repository](https://github.com/IGGoncalves/PhysiCOOL/tree/main/examples/motility). To run this analysis in a local machine, these files should be downloaded and physicool should be installed (through pip). Don't forget to make sure that Jupyter is also installed.
 
 ## Team
 
