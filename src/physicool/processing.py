@@ -1,12 +1,13 @@
 """A module to process output PhysiCell files and extract metrics from the data."""
 from pathlib import Path
-from typing import Callable, Union, List
+from typing import Callable, Union, List, Tuple
 from xml.etree import ElementTree
 
 import numpy as np
 import pandas as pd
 from scipy import io as sio
 
+LAST_WORKING_VERSION = (1, 10, 2)
 CELL_OUTPUT_LABELS = [
     "ID",
     "position_x",
@@ -121,6 +122,7 @@ class Microenvironment:
 
 
 def read_mat_file_cells(path: str, variables: List[str]) -> pd.DataFrame:
+    """Loads the data from the output mat files into a Pandas DataFrame."""
     # Make sure that the variables can be found in the file
     if any([var not in CELL_OUTPUT_LABELS for var in variables]):
         raise ValueError("The passed variables are not valid names.")
@@ -135,8 +137,30 @@ def read_mat_file_cells(path: str, variables: List[str]) -> pd.DataFrame:
     return cells
 
 
+def read_physicell_version() -> str:
+    """Reads the PhysiCell version number from VERSION.TXT."""
+    with open("VERSION.TXT", "r") as file:
+        return file.read()
+
+
+def check_version_status(version: str) -> Tuple[int]:
+    """Compares the passed version to the last version with the output*_cells_physicell.mat format."""
+    current_version = tuple([int(x) for x in version.split(".")])
+    return current_version > LAST_WORKING_VERSION
+
+
+def get_cell_file_name(version: str) -> str:
+    """Returns the expected file name for cell files based on PhysiCell version number."""
+    if check_version_status(version):
+        return "output{}_cells.mat"
+    return "output{}_cells_physicell.mat"
+
+
 def get_cell_data(
-    timestep: int, variables: List[str], output_path: Union[str, Path] = Path("output")
+    timestep: int,
+    variables: List[str],
+    output_path: Union[str, Path] = Path("output"),
+    version: str = "1.10.2",
 ) -> pd.DataFrame:
     """
     Reads the PhysiCell output data into a Pandas DataFrame.
@@ -160,11 +184,12 @@ def get_cell_data(
         output_path = Path(output_path)
 
     time_str = str(timestep).zfill(8)
-    file_name = "output{}_cells_physicell.mat".format(time_str)
+    file_stem = get_cell_file_name(version=version)
+    file_name = file_stem.format(time_str)
     path_name = output_path / file_name
 
     # Make sure that the timestep has been recorded and saved
-    if path_name not in output_path.glob("output*_cells_physicell.mat"):
+    if path_name not in output_path.glob(file_stem.format("*")):
         raise ValueError("The passed time point does not match any file.")
 
     # Read output file into a DataFrame
