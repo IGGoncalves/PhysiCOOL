@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy import io as sio
 
-LAST_WORKING_VERSION = (1, 10, 2)
+NEW_OUTPUTS_VERSION = "1.10.3"
 CELL_OUTPUT_LABELS = [
     "ID",
     "position_x",
@@ -143,10 +143,13 @@ def read_physicell_version() -> str:
         return file.read()
 
 
-def check_version_status(version: str) -> Tuple[int]:
-    """Compares the passed version to the last version with the output*_cells_physicell.mat format."""
-    current_version = tuple([int(x) for x in version.split(".")])
-    return current_version > LAST_WORKING_VERSION
+def convert_version_str_to_tuple(version: str) -> Tuple[int]:
+    """Converts a string with the version number to a tuple to ease version comparison."""
+    return tuple([int(x) for x in version.split(".")])
+
+def check_version_status(version: str) -> bool:
+    """Compares the passed version to the first version with the output*_cells.mat format."""
+    return convert_version_str_to_tuple(version) >= convert_version_str_to_tuple(NEW_OUTPUTS_VERSION)
 
 
 def get_cell_file_name(version: str) -> str:
@@ -160,7 +163,7 @@ def get_cell_data(
     timestep: int,
     variables: List[str],
     output_path: Union[str, Path] = Path("output"),
-    version: str = "1.10.2",
+    version: str = NEW_OUTPUTS_VERSION,
 ) -> pd.DataFrame:
     """
     Reads the PhysiCell output data into a Pandas DataFrame.
