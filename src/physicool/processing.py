@@ -147,9 +147,12 @@ def convert_version_str_to_tuple(version: str) -> Tuple[int]:
     """Converts a string with the version number to a tuple to ease version comparison."""
     return tuple([int(x) for x in version.split(".")])
 
+
 def check_version_status(version: str) -> bool:
     """Compares the passed version to the first version with the output*_cells.mat format."""
-    return convert_version_str_to_tuple(version) >= convert_version_str_to_tuple(NEW_OUTPUTS_VERSION)
+    return convert_version_str_to_tuple(version) >= convert_version_str_to_tuple(
+        NEW_OUTPUTS_VERSION
+    )
 
 
 def get_cell_file_name(version: str) -> str:
@@ -157,6 +160,15 @@ def get_cell_file_name(version: str) -> str:
     if check_version_status(version):
         return "output{}_cells.mat"
     return "output{}_cells_physicell.mat"
+
+
+def get_cell_file_num(output_path: Path, version: str) -> str:
+    pattern = (
+        "output*_cells.mat"
+        if check_version_status(version)
+        else "output*_cells_physicell.mat"
+    )
+    return len([file for file in output_path.glob(pattern)])
 
 
 def get_cell_data(
@@ -232,7 +244,7 @@ def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
     ].copy()
 
 
-def get_cell_trajectories(output_path: Union[str, Path]):
+def get_cell_trajectories(output_path: Union[str, Path], version):
     """
     Reads the PhysiCell output data into a Pandas DataFrame.
 
@@ -271,10 +283,12 @@ def get_cell_trajectories(output_path: Union[str, Path]):
     return trajectories
 
 
-OutputProcessor = Callable[[Path], Union[float, np.ndarray]]
+OutputProcessor = Callable[[Path, str], Union[float, np.ndarray]]
 
 
-def get_cell_numbers_over_time(output_path: Path = Path("output")) -> np.ndarray:
+def get_cell_numbers_over_time(
+    output_path: Path = Path("output"), version: str = NEW_OUTPUTS_VERSION
+) -> np.ndarray:
     """
     Returns the number of cells over time (one value for each simulation time point).
 
@@ -291,18 +305,21 @@ def get_cell_numbers_over_time(output_path: Path = Path("output")) -> np.ndarray
     if isinstance(output_path, str):
         output_path = Path(output_path)
 
-    pattern = "output*_cells_physicell.mat"
-    number_of_timepoints = len([file for file in output_path.glob(pattern)])
+    number_of_timepoints = get_cell_file_num(output_path=output_path, version=version)
     number_of_cells = np.empty(shape=(number_of_timepoints,))
 
     for i in range(number_of_timepoints):
-        cells = get_cell_data(timestep=i, variables=["ID"], output_path=output_path)
+        cells = get_cell_data(
+            timestep=i, variables=["ID"], output_path=output_path, version=version
+        )
         number_of_cells[i] = cells["ID"].size
 
     return number_of_cells
 
 
-def get_final_y_position(output_path: Path = Path("output")) -> np.ndarray:
+def get_final_y_position(
+    output_path: Path = Path("output"), version: str = NEW_OUTPUTS_VERSION
+) -> np.ndarray:
     """
     Returns the number of cells over time (one value for each simulation time point).
 
@@ -319,8 +336,7 @@ def get_final_y_position(output_path: Path = Path("output")) -> np.ndarray:
     if isinstance(output_path, str):
         output_path = Path(output_path)
 
-    pattern = "output*_cells_physicell.mat"
-    last_point = len([file for file in output_path.glob(pattern)])
+    last_point = get_cell_file_num(output_path=output_path, version=version)
     cells = get_cell_data(
         timestep=last_point - 1, variables=["position_y"], output_path=output_path
     )

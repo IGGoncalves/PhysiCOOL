@@ -32,6 +32,7 @@ class TestReadCellData(unittest.TestCase):
             timestep=0,
             variables=["ID", "position_x", "position_y", "position_z"],
             output_path=DATA_PATH,
+            version="1.9.1",
         )
 
         pd.testing.assert_frame_equal(data, expected_data)
@@ -40,7 +41,9 @@ class TestReadCellData(unittest.TestCase):
 class TestOutputProcessor(unittest.TestCase):
     def test_get_number_of_cells(self):
         """Asserts that the processing function reads the number of cells over time correctly."""
-        number_of_cells = processing.get_cell_numbers_over_time(output_path=DATA_PATH)
+        number_of_cells = processing.get_cell_numbers_over_time(
+            output_path=DATA_PATH, version="1.9.1"
+        )
         np.testing.assert_array_equal(np.asarray([19, 19]), number_of_cells)
 
 
