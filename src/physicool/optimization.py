@@ -1,7 +1,7 @@
 """A module for model calibration and optimization routines."""
 from dataclasses import dataclass, field
 from pathlib import Path
-from sys import platform
+import platform
 import subprocess
 from typing import List, Dict, Optional, Tuple, Union
 from distutils.dir_util import copy_tree, remove_tree
@@ -33,7 +33,7 @@ def _create_project_command(project_name: str) -> str:
         The full command to be called in order to run the
         executable in the shell, adapted to the current OS.
     """
-    if platform == "win32":
+    if platform.system == "Windows":
         return f"{project_name}.exe"
     return f"./{project_name}"
 
