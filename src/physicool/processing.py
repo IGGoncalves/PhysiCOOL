@@ -244,7 +244,9 @@ def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
     ].copy()
 
 
-def get_cell_trajectories(output_path: Union[str, Path], version):
+def get_cell_trajectories(
+    output_path: Union[str, Path], version: str = NEW_OUTPUTS_VERSION
+):
     """
     Reads the PhysiCell output data into a Pandas DataFrame.
 
@@ -264,13 +266,12 @@ def get_cell_trajectories(output_path: Union[str, Path], version):
 
     variables = ["ID", "position_x", "position_y", "position_z"]
     data = []
-
-    # Make sure that the timestep has been recorded and saved
-    pattern = "output*_cells_physicell.mat"
-    number_of_timepoints = len([file for file in output_path.glob(pattern)])
+    number_of_timepoints = get_cell_file_num(output_path=output_path, version=version)
 
     for i in range(number_of_timepoints):
-        cells = get_cell_data(timestep=i, variables=variables, output_path=output_path)
+        cells = get_cell_data(
+            timestep=i, variables=variables, output_path=output_path, version=version
+        )
         cells["timestep"] = i
         data.append(cells)
 
@@ -338,7 +339,10 @@ def get_final_y_position(
 
     last_point = get_cell_file_num(output_path=output_path, version=version)
     cells = get_cell_data(
-        timestep=last_point - 1, variables=["position_y"], output_path=output_path
+        timestep=last_point - 1,
+        variables=["position_y"],
+        output_path=output_path,
+        version=version,
     )
 
     return cells["position_y"].values
