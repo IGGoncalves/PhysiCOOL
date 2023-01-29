@@ -12,6 +12,8 @@
 
 ## Overview
 
+**Latest tested PhysiCell version: 1.10.4**
+
 PhysiCOOL is a Python library tailored to perform model calibration studies with 
 [PhysiCell](https://github.com/MathCancer/PhysiCell). 
 Using the PhysiCOOL package, PhysiCell projects can be converted into black-box models to evaluate how simulation outputs
