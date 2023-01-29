@@ -2,10 +2,10 @@
 
 <h1>PhysiCOOL: A generalized framework for model Calibration and Optimization Of modeLing projects</h1>
 
+<a href="">![PyPI - Python Version](https://img.shields.io/pypi/pyversions/physicool)</a>
 <a href="">![GitHub](https://img.shields.io/github/license/iggoncalves/PhysiCOOL)</a>
 <a href="">[![Documentation Status](https://readthedocs.org/projects/physicool/badge/?version=latest)](https://physicool.readthedocs.io/en/latest/?badge=latest)</a>
 <a href="">![Codecov](https://img.shields.io/codecov/c/gh/IGGoncalves/PhysiCOOL)</a>
-<a href="">[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6458586.svg)](https://doi.org/10.5281/zenodo.6458586)</a>
 <a href="">[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)</a>
 
 </div>
@@ -28,11 +28,13 @@ can be used for both parameter exploration and model calibration.
 
 ## Installation
 
-PhysiCOOL is available through pip using the following command:
+PhysiCOOL package is available through `pip` using the following command:
 
 ```sh
 pip install physicool
 ```
+
+Currently, Python versions `>=3.8` and `<3.11` are supported.
 
 ## Documentation
 
@@ -127,6 +129,8 @@ Preprint available on [bioRxiv](https://www.biorxiv.org/content/10.1101/2022.11.
 > Gonçalves, I. G., Hormuth, D. A., II, Prabhakaran, S., & Phillips, C. M. (2022). PhysiCOOL: A generalized framework for model Calibration and Optimization Of modeLing projects. Cold Spring Harbor Laboratory. https://doi.org/10.1101/2022.11.17.516671 
  
 Software available on [Zenodo](https://zenodo.org/record/6458586#.Y9XUxr7ML0o).
+
+<a href="">[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6458586.svg)](https://doi.org/10.5281/zenodo.6458586)</a>
 
 ## Team
 

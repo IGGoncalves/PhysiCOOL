@@ -45,6 +45,7 @@ Tool developed by Inês Gonçalves, David Hormuth, Sandhya Prabhakaran, Caleb Ph
 :maxdepth: 1
 :hidden:
 
+getting_started.md
 xml_update.ipynb
 black_box.md
 multi_level.md
