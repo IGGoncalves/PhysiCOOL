@@ -97,7 +97,7 @@ if __name__ == "__main__":
 ```
 
 - Run the Python script by calling `python run_model.py` from your PhysiCell folder;
-- Open the `output` folder that it contains the output files for the simulation.
+- Open the new `temp` folder that it contains the output files for the simulation.
 
 #### Reading results
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
 from physicool.processing import get_cell_numbers_over_time
 
 if __name__ == "__main__":
-    cells = get_cell_numbers_over_time(version="1.10.4")
+    cells = get_cell_numbers_over_time(output_path="temp", version="1.10.4")
     print(cells)
 ```
 
