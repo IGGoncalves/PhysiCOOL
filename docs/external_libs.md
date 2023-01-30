@@ -9,7 +9,7 @@ Too cool for PhysiCOOL? Don't want to use our parameter sweep functions? We can 
 Let's say you like using `psweep` and want to use it to call PhysiCell. `psweep` will takes as input some parameter values, which will be used to build a search grid, and a function that will be run for each parameter set. It also returns an output metric for each cell of the parameter grid. Thus, a `PhysiCellBlackBox` instance can be used to create an interface between `psweep` and `PhysiCell`.
 
 ```python
-from physicool. optimization import PhysiCellBlackBox
+from physicool.optimization import PhysiCellBlackBox
 
 # Create the black box model
 PARAMS_UPDATER = ...

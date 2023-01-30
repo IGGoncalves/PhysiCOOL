@@ -2,15 +2,17 @@
 
 <h1>PhysiCOOL: A generalized framework for model Calibration and Optimization Of modeLing projects</h1>
 
+<a href="">![PyPI - Python Version](https://img.shields.io/pypi/pyversions/physicool)</a>
 <a href="">![GitHub](https://img.shields.io/github/license/iggoncalves/PhysiCOOL)</a>
 <a href="">[![Documentation Status](https://readthedocs.org/projects/physicool/badge/?version=latest)](https://physicool.readthedocs.io/en/latest/?badge=latest)</a>
 <a href="">![Codecov](https://img.shields.io/codecov/c/gh/IGGoncalves/PhysiCOOL)</a>
-<a href="">[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6458586.svg)](https://doi.org/10.5281/zenodo.6458586)</a>
 <a href="">[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)</a>
 
 </div>
 
 ## Overview
+
+**Latest tested PhysiCell version: 1.10.4**
 
 PhysiCOOL is a Python library tailored to perform model calibration studies with 
 [PhysiCell](https://github.com/MathCancer/PhysiCell). 
@@ -26,15 +28,19 @@ new information is written to the files, assuring that the new values are consis
 and assumptions. Furthermore, PhysiCOOL also provides new functions to process and visualize simulation outputs which 
 can be used for both parameter exploration and model calibration.
 
-Check our [documentation](https://physicool.readthedocs.io) for some examples.
-
 ## Installation
 
-PhysiCOOL is available through pip using the following command:
+PhysiCOOL package is available through `pip` using the following command:
 
 ```sh
 pip install physicool
 ```
+
+Currently, Python versions `>=3.8` and `<3.11` are supported.
+
+## Documentation
+
+Documentation available on [readthedocs](https://physicool.readthedocs.io) with more information on getting started with PhysiCOOL and running examples.
 
 ## Usage
 
@@ -93,7 +99,9 @@ the **number of points and ranges to explore at each level**.
 
 ## Examples
 
-### General examples
+Examples can be run on Gitpod with a pre-defined environment that includes all the libraries and system requirements to run the examples available as Jupyter Notebooks.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/##https://github.com/IGGoncalves/PhysiCOOL)
 
 - **Interactive parameter estimation example:**
 A simple example of logistic growth to showcase the multilevel sweep feature.
@@ -101,20 +109,36 @@ A simple example of logistic growth to showcase the multilevel sweep feature.
 - **Data analysis and visualization:**
 Examples of data visualization scripts, including interactive examples with Jupyter Widgets.
 
-
 - **Single-cell motility:**
 Finding the best parameter values for migration bias and migration speed to model motility in the presence 
 of a chemotactic gradient.
 
-- 🏗️ **Cell growth:**
+- **Third-party libraries:**
+Using a third-party library ([psweep](https://github.com/elcorto/psweep)) to run parameter studies. Serves as an example of how PhysiCOOL can be integrated into a Python-based workflow to connect PhysiCell and other optimization libraries.
+
+- 🏗️ **Cell growth (under development):**
 Finding the best parameter values for cell cycling rates to model population growth. It also introduces 
-gradient-based approaches.
+gradient-based approaches. Code is available but this example has not been tested and depends on an older version of PhysiCOOL.
+
+## Getting help
+
+For usage questions, bug reports and suggested improvements, please open a new issue through the [GitHub "Issues" tab](https://github.com/IGGoncalves/PhysiCOOL/issues).
+
+## Citing PhysiCOOL
+
+Preprint available on [bioRxiv](https://www.biorxiv.org/content/10.1101/2022.11.17.516671v1).
+
+> Gonçalves, I. G., Hormuth, D. A., II, Prabhakaran, S., & Phillips, C. M. (2022). PhysiCOOL: A generalized framework for model Calibration and Optimization Of modeLing projects. Cold Spring Harbor Laboratory. https://doi.org/10.1101/2022.11.17.516671 
+ 
+Software available on [Zenodo](https://zenodo.org/record/6458586#.Y9XUxr7ML0o).
+
+<a href="">[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6458586.svg)](https://doi.org/10.5281/zenodo.6458586)</a>
 
 ## Team
 
-Tool developed by Inês Gonçalves, David Hormuth, Caleb Phillips, Sandhya Prabhakaran. 
-Runner-up team of the "Best Tool" prize at [PhysiCell 2021 Workshop & Hackaton](http://physicell.org/ws2021/#apply). 
-GO TEAM 7!
+Tool developed by Inês Gonçalves, David Hormuth, Sandhya Prabhakaran and Caleb Phillips.
+
+Runner-up team of the "Best Tool" prize @ [PhysiCell 2021 Workshop & Hackaton](http://physicell.org/ws2021/#apply).
 
 ## Credits
 

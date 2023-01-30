@@ -30,7 +30,7 @@ my_model.run(number_of_replicates=3, keep_files=True)
 
 ## Configuration file updater functions
 
-`PhysiCellBlackBox` can accept instances of the `ParamUpdater` class which read teh XML file, update some numerical 
+`PhysiCellBlackBox` can accept instances of the `ParamUpdater` class which read the XML file, update some numerical 
 values and then write the new values to the file. 
 PhysiCOOL offers some built-in parameter updater functions to make things 
 easier for users. For instance, if users want to update the cell motility data, they can create a `CellUpdater` that

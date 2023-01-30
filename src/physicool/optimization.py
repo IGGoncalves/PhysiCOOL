@@ -1,7 +1,7 @@
 """A module for model calibration and optimization routines."""
 from dataclasses import dataclass, field
 from pathlib import Path
-from sys import platform
+import platform
 import subprocess
 from typing import List, Dict, Optional, Tuple, Union
 from distutils.dir_util import copy_tree, remove_tree
@@ -13,6 +13,7 @@ from physicool.processing import (
     OutputProcessor,
     ErrorQuantification,
     compute_mean_squared_error,
+    NEW_OUTPUTS_VERSION,
 )
 from physicool.plotting import SweeperPlot
 
@@ -32,7 +33,7 @@ def _create_project_command(project_name: str) -> str:
         The full command to be called in order to run the
         executable in the shell, adapted to the current OS.
     """
-    if platform == "win32":
+    if platform.system == "Windows":
         return f"{project_name}.exe"
     return f"./{project_name}"
 
@@ -74,6 +75,7 @@ class PhysiCellBlackBox:
     processor: Optional[OutputProcessor] = None
     project_name: str = "project"
     project_command: str = field(init=False)
+    version: str = NEW_OUTPUTS_VERSION
 
     def __post_init__(self):
         """Create the right command to call the PhysiCell project based on the OS."""
@@ -127,7 +129,7 @@ class PhysiCellBlackBox:
             subprocess.run(self.project_command, shell=True, stdout=subprocess.DEVNULL)
 
             if self.processor:
-                output_metrics.append(self.processor(Path("output")))
+                output_metrics.append(self.processor(version=self.version))
 
             if keep_files:
                 copy_tree("output", storage_folder)

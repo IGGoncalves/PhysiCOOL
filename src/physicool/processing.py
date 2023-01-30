@@ -1,12 +1,13 @@
 """A module to process output PhysiCell files and extract metrics from the data."""
 from pathlib import Path
-from typing import Callable, Union, List
+from typing import Callable, Union, List, Tuple
 from xml.etree import ElementTree
 
 import numpy as np
 import pandas as pd
 from scipy import io as sio
 
+NEW_OUTPUTS_VERSION = "1.10.3"
 CELL_OUTPUT_LABELS = [
     "ID",
     "position_x",
@@ -121,6 +122,7 @@ class Microenvironment:
 
 
 def read_mat_file_cells(path: str, variables: List[str]) -> pd.DataFrame:
+    """Loads the data from the output mat files into a Pandas DataFrame."""
     # Make sure that the variables can be found in the file
     if any([var not in CELL_OUTPUT_LABELS for var in variables]):
         raise ValueError("The passed variables are not valid names.")
@@ -135,8 +137,45 @@ def read_mat_file_cells(path: str, variables: List[str]) -> pd.DataFrame:
     return cells
 
 
+def read_physicell_version() -> str:
+    """Reads the PhysiCell version number from VERSION.TXT."""
+    with open("VERSION.TXT", "r") as file:
+        return file.read()
+
+
+def convert_version_str_to_tuple(version: str) -> Tuple[int]:
+    """Converts a string with the version number to a tuple to ease version comparison."""
+    return tuple([int(x) for x in version.split(".")])
+
+
+def check_version_status(version: str) -> bool:
+    """Compares the passed version to the first version with the output*_cells.mat format."""
+    return convert_version_str_to_tuple(version) >= convert_version_str_to_tuple(
+        NEW_OUTPUTS_VERSION
+    )
+
+
+def get_cell_file_name(version: str) -> str:
+    """Returns the expected file name for cell files based on PhysiCell version number."""
+    if check_version_status(version):
+        return "output{}_cells.mat"
+    return "output{}_cells_physicell.mat"
+
+
+def get_cell_file_num(output_path: Path, version: str) -> str:
+    pattern = (
+        "output*_cells.mat"
+        if check_version_status(version)
+        else "output*_cells_physicell.mat"
+    )
+    return len([file for file in output_path.glob(pattern)])
+
+
 def get_cell_data(
-    timestep: int, variables: List[str], output_path: Union[str, Path] = Path("output")
+    timestep: int,
+    variables: List[str],
+    output_path: Union[str, Path] = Path("output"),
+    version: str = NEW_OUTPUTS_VERSION,
 ) -> pd.DataFrame:
     """
     Reads the PhysiCell output data into a Pandas DataFrame.
@@ -160,11 +199,12 @@ def get_cell_data(
         output_path = Path(output_path)
 
     time_str = str(timestep).zfill(8)
-    file_name = "output{}_cells_physicell.mat".format(time_str)
+    file_stem = get_cell_file_name(version=version)
+    file_name = file_stem.format(time_str)
     path_name = output_path / file_name
 
     # Make sure that the timestep has been recorded and saved
-    if path_name not in output_path.glob("output*_cells_physicell.mat"):
+    if path_name not in output_path.glob(file_stem.format("*")):
         raise ValueError("The passed time point does not match any file.")
 
     # Read output file into a DataFrame
@@ -204,7 +244,9 @@ def get_cells_in_z_slice(data: pd.DataFrame, size: float) -> pd.DataFrame:
     ].copy()
 
 
-def get_cell_trajectories(output_path: Union[str, Path]):
+def get_cell_trajectories(
+    output_path: Union[str, Path], version: str = NEW_OUTPUTS_VERSION
+):
     """
     Reads the PhysiCell output data into a Pandas DataFrame.
 
@@ -224,13 +266,12 @@ def get_cell_trajectories(output_path: Union[str, Path]):
 
     variables = ["ID", "position_x", "position_y", "position_z"]
     data = []
-
-    # Make sure that the timestep has been recorded and saved
-    pattern = "output*_cells_physicell.mat"
-    number_of_timepoints = len([file for file in output_path.glob(pattern)])
+    number_of_timepoints = get_cell_file_num(output_path=output_path, version=version)
 
     for i in range(number_of_timepoints):
-        cells = get_cell_data(timestep=i, variables=variables, output_path=output_path)
+        cells = get_cell_data(
+            timestep=i, variables=variables, output_path=output_path, version=version
+        )
         cells["timestep"] = i
         data.append(cells)
 
@@ -243,10 +284,12 @@ def get_cell_trajectories(output_path: Union[str, Path]):
     return trajectories
 
 
-OutputProcessor = Callable[[Path], Union[float, np.ndarray]]
+OutputProcessor = Callable[[Path, str], Union[float, np.ndarray]]
 
 
-def get_cell_numbers_over_time(output_path: Path = Path("output")) -> np.ndarray:
+def get_cell_numbers_over_time(
+    output_path: Path = Path("output"), version: str = NEW_OUTPUTS_VERSION
+) -> np.ndarray:
     """
     Returns the number of cells over time (one value for each simulation time point).
 
@@ -263,18 +306,21 @@ def get_cell_numbers_over_time(output_path: Path = Path("output")) -> np.ndarray
     if isinstance(output_path, str):
         output_path = Path(output_path)
 
-    pattern = "output*_cells_physicell.mat"
-    number_of_timepoints = len([file for file in output_path.glob(pattern)])
+    number_of_timepoints = get_cell_file_num(output_path=output_path, version=version)
     number_of_cells = np.empty(shape=(number_of_timepoints,))
 
     for i in range(number_of_timepoints):
-        cells = get_cell_data(timestep=i, variables=["ID"], output_path=output_path)
+        cells = get_cell_data(
+            timestep=i, variables=["ID"], output_path=output_path, version=version
+        )
         number_of_cells[i] = cells["ID"].size
 
     return number_of_cells
 
 
-def get_final_y_position(output_path: Path = Path("output")) -> np.ndarray:
+def get_final_y_position(
+    output_path: Path = Path("output"), version: str = NEW_OUTPUTS_VERSION
+) -> np.ndarray:
     """
     Returns the number of cells over time (one value for each simulation time point).
 
@@ -291,10 +337,12 @@ def get_final_y_position(output_path: Path = Path("output")) -> np.ndarray:
     if isinstance(output_path, str):
         output_path = Path(output_path)
 
-    pattern = "output*_cells_physicell.mat"
-    last_point = len([file for file in output_path.glob(pattern)])
+    last_point = get_cell_file_num(output_path=output_path, version=version)
     cells = get_cell_data(
-        timestep=last_point - 1, variables=["position_y"], output_path=output_path
+        timestep=last_point - 1,
+        variables=["position_y"],
+        output_path=output_path,
+        version=version,
     )
 
     return cells["position_y"].values

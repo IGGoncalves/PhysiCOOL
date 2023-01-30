@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.2 (30/01/2023)
+
+- Support for PhysiCell versions >= 1.10.3 (older versions still supported)
+- Improved documentation (more infro on the README file, new Getting Started and Examples pages on ReadTheDocs)
+- Improved examples guidelines for local testing. Source files added to run the third_party example locally.
+
 ## v0.2.1 (12/07/2022)
 
 - Minor bug fixes to run examples locally
