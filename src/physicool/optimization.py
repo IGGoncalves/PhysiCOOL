@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import platform
 import subprocess
+import logging
 from typing import List, Dict, Optional, Tuple, Union
 from distutils.dir_util import copy_tree, remove_tree
 
@@ -16,6 +17,15 @@ from physicool.processing import (
     NEW_OUTPUTS_VERSION,
 )
 from physicool.plotting import SweeperPlot
+
+
+LOG_FILE = "debug.log"
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%d-%b-%y %H:%M:%S",
+    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()],
+)
 
 
 def _create_project_command(project_name: str) -> str:
@@ -33,7 +43,7 @@ def _create_project_command(project_name: str) -> str:
         The full command to be called in order to run the
         executable in the shell, adapted to the current OS.
     """
-    if platform.system == "Windows":
+    if platform.system() == "Windows":
         return f"{project_name}.exe"
     return f"./{project_name}"
 
@@ -53,7 +63,15 @@ def clean_tmp_files() -> None:
 
 def compile_project() -> None:
     """Compiles the current project by calling make."""
-    subprocess.run("make", shell=True, stdout=None, stderr=None)
+    with open(LOG_FILE, "a") as log_file:
+        logging.info("compiling project...")
+        result = subprocess.run(
+            "make", shell=True, stdout=log_file, stderr=subprocess.PIPE, text=True
+        )
+        if result.stderr:
+            logging.error(result.stderr)
+        else:
+            logging.info("compiled project successfully")
 
 
 @dataclass
@@ -126,7 +144,19 @@ class PhysiCellBlackBox:
                 storage_folder = f"temp/replicate{i}"
                 Path(storage_folder).mkdir()
 
-            subprocess.run(self.project_command, shell=True, stdout=subprocess.DEVNULL)
+            logging.info("running project with command...")
+            with open(LOG_FILE, "a") as log_file:
+                result = subprocess.run(
+                    self.project_command,
+                    shell=True,
+                    stdout=log_file,
+                    stderr=subprocess.PIPE,
+                )
+                if result.stderr:
+                    print("kkk")
+                    # logging.error(result.stderr)
+                else:
+                    logging.info("project run successfully")
 
             if self.processor:
                 output_metrics.append(self.processor(version=self.version))
