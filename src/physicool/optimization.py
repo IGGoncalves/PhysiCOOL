@@ -63,15 +63,15 @@ def clean_tmp_files() -> None:
 
 def compile_project() -> None:
     """Compiles the current project by calling make."""
+    logging.info("compiling project...")
     with open(LOG_FILE, "a") as log_file:
-        logging.info("compiling project...")
         result = subprocess.run(
             "make", shell=True, stdout=log_file, stderr=subprocess.PIPE, text=True
         )
-        if result.stderr:
-            logging.error(result.stderr)
-        else:
-            logging.info("compiled project successfully")
+    if result.stderr:
+        logging.error(result.stderr)
+    else:
+        logging.info("compiled project successfully")
 
 
 @dataclass
@@ -126,7 +126,7 @@ class PhysiCellBlackBox:
         # Create a new directory to store the output files
         if keep_files:
             storage_folder = "temp"
-            Path(storage_folder).mkdir()
+            Path(storage_folder).mkdir(exist_ok=True)
 
         # Update the XML configuration file with the passed values
         if (self.updater is not None) and (params is not None):
@@ -144,19 +144,14 @@ class PhysiCellBlackBox:
                 storage_folder = f"temp/replicate{i}"
                 Path(storage_folder).mkdir()
 
-            logging.info("running project with command...")
+            logging.info(f"running project with command {self.project_command}...")
             with open(LOG_FILE, "a") as log_file:
-                result = subprocess.run(
+                subprocess.run(
                     self.project_command,
                     shell=True,
                     stdout=log_file,
                     stderr=subprocess.PIPE,
                 )
-                if result.stderr:
-                    print("kkk")
-                    # logging.error(result.stderr)
-                else:
-                    logging.info("project run successfully")
 
             if self.processor:
                 output_metrics.append(self.processor(version=self.version))
