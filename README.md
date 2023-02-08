@@ -36,7 +36,7 @@ PhysiCOOL package is available through `pip` using the following command:
 pip install physicool
 ```
 
-Currently, Python versions `>=3.8` and `<3.11` are supported.
+Currently, Python versions `>=3.8` are supported.
 
 ## Documentation
 
