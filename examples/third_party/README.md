@@ -16,4 +16,4 @@ PhysiCell version 1.10.4 was used to write this example.
 
 - If working on your local machine, make sure that your setup matches the system requirements to work with PhysiCOOL (more information can be found in the project [docs](https://physicool.readthedocs.io/en/latest/getting_started.html).
 
-- Open and run the `third_party.ipynb` notebook. It will generate the executable file to run the project and populate a new `calc` folder with the psweep data and a `temp` folder with the model outputs.
+- Open and run the `third_party.ipynb` notebook. It will generate the executable file to run the project and populate a new `calc` folder with the psweep data and a `temp` folder with the model outputs and a file called `debug.log` with the PhysiCell console logs.

@@ -97,7 +97,7 @@ if __name__ == "__main__":
 ```
 
 - Run the Python script by calling `python run_model.py` from your PhysiCell folder;
-- Open the new `temp` folder that it contains the output files for the simulation.
+- Open the new `temp` folder and check that it contains the output files for the simulation. For the PhysiCell console logs, check the `debug.log` file.
 
 #### Reading results
 

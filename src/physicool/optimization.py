@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import platform
 import subprocess
+import logging
 from typing import List, Dict, Optional, Tuple, Union
 from distutils.dir_util import copy_tree, remove_tree
 
@@ -16,6 +17,15 @@ from physicool.processing import (
     NEW_OUTPUTS_VERSION,
 )
 from physicool.plotting import SweeperPlot
+
+
+LOG_FILE = "debug.log"
+logging.basicConfig(
+    level=logging.WARNING,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%d-%b-%y %H:%M:%S",
+    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()],
+)
 
 
 def _create_project_command(project_name: str) -> str:
@@ -33,7 +43,7 @@ def _create_project_command(project_name: str) -> str:
         The full command to be called in order to run the
         executable in the shell, adapted to the current OS.
     """
-    if platform.system == "Windows":
+    if platform.system() == "Windows":
         return f"{project_name}.exe"
     return f"./{project_name}"
 
@@ -41,8 +51,14 @@ def _create_project_command(project_name: str) -> str:
 def clean_outputs() -> None:
     """Removes the files from the output folder and creates it again (make data-cleanup)."""
     if Path("output").is_dir():
-        remove_tree("output")
-        Path("output").mkdir()
+        with open(LOG_FILE, "a") as log_file:
+            subprocess.run(
+                "make data-cleanup",
+                shell=True,
+                stdout=log_file,
+                stderr=log_file,
+                text=True,
+            )
 
 
 def clean_tmp_files() -> None:
@@ -53,7 +69,9 @@ def clean_tmp_files() -> None:
 
 def compile_project() -> None:
     """Compiles the current project by calling make."""
-    subprocess.run("make", shell=True, stdout=None, stderr=None)
+    logging.info("compiling project...")
+    with open(LOG_FILE, "a") as log_file:
+        subprocess.run("make", shell=True, stdout=log_file, stderr=log_file, text=True)
 
 
 @dataclass
@@ -108,7 +126,7 @@ class PhysiCellBlackBox:
         # Create a new directory to store the output files
         if keep_files:
             storage_folder = "temp"
-            Path(storage_folder).mkdir()
+            Path(storage_folder).mkdir(exist_ok=True)
 
         # Update the XML configuration file with the passed values
         if (self.updater is not None) and (params is not None):
@@ -126,7 +144,16 @@ class PhysiCellBlackBox:
                 storage_folder = f"temp/replicate{i}"
                 Path(storage_folder).mkdir()
 
-            subprocess.run(self.project_command, shell=True, stdout=subprocess.DEVNULL)
+            log_status = f"running project with command {self.project_command}..."
+            logging.info(log_status)
+
+            with open(LOG_FILE, "a") as log_file:
+                subprocess.run(
+                    self.project_command,
+                    shell=True,
+                    stdout=log_file,
+                    stderr=subprocess.PIPE,
+                )
 
             if self.processor:
                 output_metrics.append(self.processor(version=self.version))

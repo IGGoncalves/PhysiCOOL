@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.3 (08/02/2023)
+
+- Support for Python 3.11
+- Minimal logging module to save PhysiCell console logs to file
+- Fixed missing output folders in version control
+
 ## v0.2.2 (30/01/2023)
 
 - Support for PhysiCell versions >= 1.10.3 (older versions still supported)

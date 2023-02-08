@@ -27,6 +27,6 @@ specific model initial conditions.
 
 - If working on your local machine, make sure that your setup matches the system requirements to work with PhysiCOOL (more information can be found in the project [docs](https://physicool.readthedocs.io/en/latest/getting_started.html).
 
-- Open the `black_box.ipynb` notebook and run it. It should compile your code and create an executable file called `project` in this folder. In addition, it should create a `temp` folder with the model results.
+- Open the `black_box.ipynb` notebook and run it. It should compile your code and create an executable file called `project` in this folder. In addition, it should create a `temp` folder with the model results and a file called `debug.log` with the PhysiCell console logs.
 
 - Open and run the `sweeper.ipynb` notebook. It will generate some target data and then use the executable file created before to try and replicate this data by finding the best parameter values in an optimization routine.
