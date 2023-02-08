@@ -128,7 +128,8 @@ For usage questions, bug reports and suggested improvements, please open a new i
 
 Preprint available on [bioRxiv](https://www.biorxiv.org/content/10.1101/2022.11.17.516671v1).
 
-> Gonçalves, I. G., Hormuth, D. A., II, Prabhakaran, S., & Phillips, C. M. (2022). PhysiCOOL: A generalized framework for model Calibration and Optimization Of modeLing projects. Cold Spring Harbor Laboratory. https://doi.org/10.1101/2022.11.17.516671 
+[![DOI:10.1101/2021.01.08.425840](http://img.shields.io/badge/DOI-10.1101/2022.11.17.516671-B31B1B.svg)](https://doi.org/10.1101/2022.11.17.516671)
+
  
 Software available on [Zenodo](https://zenodo.org/record/6458586#.Y9XUxr7ML0o).
 
