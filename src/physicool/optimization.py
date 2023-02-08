@@ -21,7 +21,7 @@ from physicool.plotting import SweeperPlot
 
 LOG_FILE = "debug.log"
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARNING,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%d-%b-%y %H:%M:%S",
     handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()],
@@ -51,8 +51,14 @@ def _create_project_command(project_name: str) -> str:
 def clean_outputs() -> None:
     """Removes the files from the output folder and creates it again (make data-cleanup)."""
     if Path("output").is_dir():
-        remove_tree("output")
-        Path("output").mkdir()
+        with open(LOG_FILE, "a") as log_file:
+            subprocess.run(
+                "make data-cleanup",
+                shell=True,
+                stdout=log_file,
+                stderr=log_file,
+                text=True,
+            )
 
 
 def clean_tmp_files() -> None:
@@ -65,13 +71,7 @@ def compile_project() -> None:
     """Compiles the current project by calling make."""
     logging.info("compiling project...")
     with open(LOG_FILE, "a") as log_file:
-        result = subprocess.run(
-            "make", shell=True, stdout=log_file, stderr=subprocess.PIPE, text=True
-        )
-    if result.stderr:
-        logging.error(result.stderr)
-    else:
-        logging.info("compiled project successfully")
+        subprocess.run("make", shell=True, stdout=log_file, stderr=log_file, text=True)
 
 
 @dataclass
@@ -144,7 +144,9 @@ class PhysiCellBlackBox:
                 storage_folder = f"temp/replicate{i}"
                 Path(storage_folder).mkdir()
 
-            logging.info(f"running project with command {self.project_command}...")
+            log_status = f"running project with command {self.project_command}..."
+            logging.info(log_status)
+
             with open(LOG_FILE, "a") as log_file:
                 subprocess.run(
                     self.project_command,
