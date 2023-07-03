@@ -124,10 +124,42 @@ def update_mechanics_values(cell_data: dt.CellParameters, new_values: Dict[str, 
         cell_data.mechanics.cell_cell_repulsion_strength = new_values[
             "cell_cell_repulsion_strength"
         ]
+    if "cell_BM_adhesion_strength" in new_values.keys():
+        cell_data.mechanics.cell_BM_adhesion_strength = new_values[
+            "cell_BM_adhesion_strength"
+        ]
+    if "cell_BM_repulsion_strength" in new_values.keys():
+        cell_data.mechanics.cell_BM_repulsion_strength = new_values[
+            "cell_BM_repulsion_strength"
+        ]
+    if "attachment_elastic_constant" in new_values.keys():
+        cell_data.mechanics.attachment_elastic_constant = new_values[
+            "attachment_elastic_constant"
+        ]
+    if "attachment_rate" in new_values.keys():
+        cell_data.mechanics.attachment_rate = new_values[
+            "attachment_rate"
+        ]
+    if "detachment_rate" in new_values.keys():
+        cell_data.mechanics.detachment_rate = new_values[
+            "detachment_rate"
+        ]
     if "relative_maximum_adhesion_distance" in new_values.keys():
         cell_data.mechanics.relative_maximum_adhesion_distance = new_values[
             "relative_maximum_adhesion_distance"
         ]
+    if "set_relative_equilibrium_distance" in new_values.keys():
+        cell_data.mechanics.set_relative_equilibrium_distance = new_values[
+            "set_relative_equilibrium_distance"
+        ]
+    if "set_absolute_equilibrium_distance" in new_values.keys():
+        cell_data.mechanics.set_absolute_equilibrium_distance = new_values[
+            "set_absolute_equilibrium_distance"
+        ]
+    if "cell_adhesion_affinities" in new_values.keys():
+        cell_data.mechanics.cell_adhesion_affinities.update(
+            new_values["cell_adhesion_affinities"]
+        )
 
 
 @dataclass
