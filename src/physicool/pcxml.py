@@ -413,7 +413,9 @@ def parse_volume(tree: ElementTree, path: str) -> Dict[str, float]:
     }
 
 
-def parse_mechanics(tree: ElementTree, path: str) -> Dict[str, float]:
+def parse_mechanics(
+    tree: ElementTree, path: str
+) -> Dict[str, Union[float, Dict[str, float]]]:
     """
     Reads and returns the <mechanics> data.
 
@@ -427,11 +429,13 @@ def parse_mechanics(tree: ElementTree, path: str) -> Dict[str, float]:
 
     Returns
     -------
-    Dict[str, float]
+    Dict[str, Union[float, Dict[float]]]
         A dictionary with the mechanics data for a cell definition in a simulation
         (cell_cell_adhesion_strength, cell_cell_repulsion_strength,
+        cell_BM_adhesion_strength, cell_BM_repulsion_strength,
+        attachment_elastic_constant, attachment_rate, detachment_rate,
         set_relative_maximum_adhesion_distance, set_relative_equilibrium_distance,
-        set_absolute_equilibrium_distance).
+        set_absolute_equilibrium_distance, cell_adhesion_affinities).
 
     Raises
     ------
@@ -447,24 +451,50 @@ def parse_mechanics(tree: ElementTree, path: str) -> Dict[str, float]:
     cell_cell_repulsion_strength = float(
         tree.find(path + "/cell_cell_repulsion_strength").text
     )
+    cell_BM_adhesion_strength = float(
+        tree.find(path + "/cell_BM_adhesion_strength").text
+    )
+    cell_BM_repulsion_strength = float(
+        tree.find(path + "/cell_BM_repulsion_strength").text
+    )
+    attachment_elastic_constant = float(
+        tree.find(path + "/attachment_elastic_constant").text
+    )
+    attachment_rate = float(
+        tree.find(path + "/attachment_rate").text
+    )
+    detachment_rate = float(
+        tree.find(path + "/detachment_rate").text
+    )
     relative_maximum_adhesion_distance = float(
         tree.find(path + "/relative_maximum_adhesion_distance").text
     )
-
     relative_equilibrium_distance = float(
         tree.find(path + "/options/set_relative_equilibrium_distance").text
     )
-
     absolute_equilibrium_distance = float(
         tree.find(path + "/options/set_absolute_equilibrium_distance").text
     )
 
+    cell_adhesion_affinity = {}
+    cell_adhesion_affinities = tree.find(path + "/cell_adhesion_affinities")
+    for cell_type in cell_adhesion_affinities.findall("cell_adhesion_affinity"):
+        cell_adhesion_affinity.update({
+            cell_type.get("name"): float(cell_type.text)
+        })
+
     return {
         "cell_cell_adhesion_strength": cell_cell_adhesion_strength,
         "cell_cell_repulsion_strength": cell_cell_repulsion_strength,
+        "cell_BM_adhesion_strength": cell_BM_adhesion_strength,
+        "cell_BM_repulsion_strength": cell_BM_repulsion_strength,
+        "attachment_elastic_constant": attachment_elastic_constant,
+        "attachment_rate": attachment_rate,
+        "detachment_rate": detachment_rate,
         "relative_maximum_adhesion_distance": relative_maximum_adhesion_distance,
         "set_relative_equilibrium_distance": relative_equilibrium_distance,
         "set_absolute_equilibrium_distance": absolute_equilibrium_distance,
+        "cell_adhesion_affinities": cell_adhesion_affinity,
     }
 
 
@@ -968,7 +998,9 @@ def write_volume(new_values: Dict[str, float], tree: ElementTree, path: str) -> 
         print("The passed dictionary does not have all the domain variables.")
 
 
-def write_mechanics(new_values: Dict[str, float], tree: ElementTree, path: str) -> None:
+def write_mechanics(
+    new_values: Dict[str, Union[float, Dict[str, float]]], tree: ElementTree, path: str
+) -> None:
     """
     Writes new values for the <mechanics> data in the XML tree.
     Values will not be saved to the XML file, only to the ElementTree.
@@ -993,24 +1025,60 @@ def write_mechanics(new_values: Dict[str, float], tree: ElementTree, path: str) 
         raise ValueError("The passed path does not point to the correct node.")
 
     try:
-        tree.find(path + "/cell_cell_adhesion_strength").text = str(
+        path_variable = path + "/cell_cell_adhesion_strength"
+        tree.find(path_variable).text = str(
             new_values["cell_cell_adhesion_strength"]
         )
-        tree.find(path + "/cell_cell_repulsion_strength").text = str(
+        path_variable = path + "/cell_cell_repulsion_strength"
+        tree.find(path_variable).text = str(
             new_values["cell_cell_repulsion_strength"]
         )
-        tree.find(path + "/relative_maximum_adhesion_distance").text = str(
+        path_variable = path + "/cell_BM_adhesion_strength"
+        tree.find(path_variable).text = str(
+            new_values["cell_BM_adhesion_strength"]
+        )
+        path_variable = path + "/cell_BM_repulsion_strength"
+        tree.find(path_variable).text = str(
+            new_values["cell_BM_repulsion_strength"]
+        )
+        path_variable = path + "/attachment_elastic_constant"
+        tree.find(path_variable).text = str(
+            new_values["attachment_elastic_constant"]
+        )
+        path_variable = path + "/attachment_rate"
+        tree.find(path_variable).text = str(
+            new_values["attachment_rate"]
+        )
+        path_variable = path + "/detachment_rate"
+        tree.find(path_variable).text = str(
+            new_values["detachment_rate"]
+        )
+        path_variable = path + "/relative_maximum_adhesion_distance"
+        tree.find(path_variable).text = str(
             new_values["relative_maximum_adhesion_distance"]
         )
-        tree.find(path + "/options/set_relative_equilibrium_distance").text = str(
+        path_variable = path + "/options/set_relative_equilibrium_distance"
+        tree.find(path_variable).text = str(
             new_values["set_relative_equilibrium_distance"]
         )
-        tree.find(path + "/options/set_absolute_equilibrium_distance").text = str(
+        path_variable = path + "/options/set_absolute_equilibrium_distance"
+        tree.find(path_variable).text = str(
             new_values["set_absolute_equilibrium_distance"]
         )
+        for cell_type, value in new_values["cell_adhesion_affinities"].items():
+            detected = False
+            path_variable = path + "/cell_adhesion_affinities"
+            cell_adhesion_affinities = tree.find(path_variable)
+            for cell_adhesion_affinity in cell_adhesion_affinities.findall("cell_adhesion_affinity"):
+                if cell_adhesion_affinity.get("name") == cell_type:
+                    cell_adhesion_affinity.text = str(value)
+                    detected = True
+                    break
+            if not detected:
+                print(f"The cell_adhesion_affinity node does not have an entry with attribute name={cell_type}.")
 
     except KeyError:
-        print("The passed dictionary does not have all the domain variables.")
+        print(f"The passed dictionary does not have all the domain variables.\n{path_variable} is missing.")
 
 
 def write_motility(

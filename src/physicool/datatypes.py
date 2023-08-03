@@ -1,6 +1,6 @@
 # This module offers data objects with the expected data types for PhysiCell objects.
 # Type and value validation is performed through Pydantic when writing to these objects.
-from typing import List, Optional
+from typing import Dict, List, Optional
 from enum import Enum
 
 from pydantic import BaseModel, confloat, conint
@@ -52,9 +52,15 @@ class Volume(BaseModel):
 class Mechanics(BaseModel):
     cell_cell_adhesion_strength: confloat(ge=0.0)
     cell_cell_repulsion_strength: confloat(ge=0.0)
+    cell_BM_adhesion_strength: confloat(ge=0.0)
+    cell_BM_repulsion_strength: confloat(ge=0.0)
+    attachment_elastic_constant: confloat(ge=0.0)
+    attachment_rate: confloat(ge=0.0)
+    detachment_rate: confloat(ge=0.0)
     relative_maximum_adhesion_distance: confloat(ge=0.0)
     set_relative_equilibrium_distance: confloat(ge=0.0)
     set_absolute_equilibrium_distance: confloat(ge=0.0)
+    cell_adhesion_affinities: Dict[str, confloat(ge=0.0, le=1.0)]
 
     class Config:
         validate_assignment = True

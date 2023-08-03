@@ -74,15 +74,15 @@ class Microenvironment:
         # X coordinates
         coord_str = mesh_node.find("x_coordinates").text
         delimiter = mesh_node.find("x_coordinates").get("delimiter")
-        x_coords = np.array(coord_str.split(delimiter), dtype=np.float)
+        x_coords = np.array(coord_str.split(delimiter), dtype=float)
         # Y coordinates
         coord_str = mesh_node.find("y_coordinates").text
         delimiter = mesh_node.find("y_coordinates").get("delimiter")
-        y_coords = np.array(coord_str.split(delimiter), dtype=np.float)
+        y_coords = np.array(coord_str.split(delimiter), dtype=float)
         # Z coordinates
         coord_str = mesh_node.find("z_coordinates").text
         delimiter = mesh_node.find("z_coordinates").get("delimiter")
-        z_coords = np.array(coord_str.split(delimiter), dtype=np.float)
+        z_coords = np.array(coord_str.split(delimiter), dtype=float)
 
         return [x_coords, y_coords, z_coords]
 

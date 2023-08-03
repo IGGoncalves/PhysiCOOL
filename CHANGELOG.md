@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.2.3 (15/02/2023)
+- Fixed deprecated numpy code for the processing module
+
 ## v0.2.3 (08/02/2023)
 
 - Support for Python 3.11

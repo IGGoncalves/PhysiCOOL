@@ -21,7 +21,7 @@ PDF versions of the setup process instructions can be found on [GitHub](https://
 
 ### Installing Python
 
-Python can be installed by itself (follow the instructions [here](https://www.python.org/downloads/). Be sure to use a version supported by PhysiCOOL, i.e., `>=3.8` and `<3.11`).
+Python can be installed by itself (follow the instructions [here](https://www.python.org/downloads/). Be sure to use a version supported by PhysiCOOL, i.e., `>=3.8`).
 
 However it is generally easier to install a Python distribution, such as Anaconda, which already includes tools and libraries that make it easier to get started coding in Python. A minimal version of Anaconda is also available, which does not include as many libraries as Anaconda, but is sufficient to work with PhysiCOOL.
 
