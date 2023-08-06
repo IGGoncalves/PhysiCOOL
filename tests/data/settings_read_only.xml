@@ -145,11 +145,19 @@
 					<cell_cell_adhesion_strength units="micron/min">0.4</cell_cell_adhesion_strength>
 					<cell_cell_repulsion_strength units="micron/min">10.0</cell_cell_repulsion_strength>
 					<relative_maximum_adhesion_distance units="dimensionless">1.25</relative_maximum_adhesion_distance>
-					
+					<cell_adhesion_affinities>
+                        <cell_adhesion_affinity name="cell_duration">1</cell_adhesion_affinity>
+                        <cell_adhesion_affinity name="cell_transrate">1.0</cell_adhesion_affinity>
+                    </cell_adhesion_affinities>
 					<options>
 						<set_relative_equilibrium_distance enabled="false" units="dimensionless">1.8</set_relative_equilibrium_distance>
 						<set_absolute_equilibrium_distance enabled="false" units="micron">15.12</set_absolute_equilibrium_distance>
 					</options>
+					<cell_BM_adhesion_strength units="micron/min">4.0</cell_BM_adhesion_strength>
+                    <cell_BM_repulsion_strength units="micron/min">10.0</cell_BM_repulsion_strength>
+                    <attachment_elastic_constant units="1/min">0.01</attachment_elastic_constant>
+                    <attachment_rate units="1/min">0.0</attachment_rate>
+                    <detachment_rate units="1/min">0.0</detachment_rate>
 				</mechanics>
 				
 				<motility>  
