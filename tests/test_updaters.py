@@ -52,6 +52,12 @@ CELL_DATA = {
     "mechanics": {
         "cell_cell_adhesion_strength": 0.4,
         "cell_cell_repulsion_strength": 10.0,
+        "cell_BM_adhesion_strength": 4.0,
+        "cell_BM_repulsion_strength": 10.0,
+        "cell_adhesion_affinities": {"cell_duration": 1, "cell_transrate": 1.0},
+        "attachment_elastic_constant": 0.01,
+        "attachment_rate": 0.0,
+        "detachment_rate": 0.0,
         "relative_maximum_adhesion_distance": 1.25,
         "set_relative_equilibrium_distance": 1.8,
         "set_absolute_equilibrium_distance": 15.12,
